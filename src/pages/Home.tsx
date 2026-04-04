@@ -12,8 +12,8 @@ import { useSearchStore } from '../store/useSearchStore';
 import translations from '../translations';
 
 const Home: React.FC = () => {
-  const language      = useSearchStore((s) => s.language);
-  const setLanguage   = useSearchStore((s) => s.setLanguage);
+  const language       = useSearchStore((s) => s.language);
+  const setLanguage    = useSearchStore((s) => s.setLanguage);
   const expImageSearch = useSearchStore((s) => s.expImageSearch);
   const t = useMemo(() => translations[language], [language]);
 
@@ -22,11 +22,16 @@ const Home: React.FC = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* Header */}
-      <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+      <Box sx={{
+        p: 2,
+        pt: 'calc(env(safe-area-inset-top) + 12px)',
+        display: 'flex',
+        justifyContent: 'flex-end',
+      }}>
         <Button
           variant="text"
           onClick={() => setLanguage(language === 'ja' ? 'en' : 'ja')}
-          sx={{ color: 'text.primary', textTransform: 'none' }}
+          sx={{ color: 'text.secondary', textTransform: 'none', fontSize: '13px', minHeight: 36 }}
         >
           {language === 'ja' ? 'English' : '日本語'}
         </Button>
@@ -40,33 +45,39 @@ const Home: React.FC = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          mt: { xs: -4, md: -12 },
-          px: 3,
+          // ボトムナビ分だけ上にシフト
+          mt: { xs: -6, md: -14 },
+          px: { xs: 2, md: 3 },
           pb: { xs: '80px', md: 0 },
+          width: '100%',
         }}
       >
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: { xs: 3, md: 4 }, width: '100%', display: 'flex', justifyContent: 'center' }}>
           <Logo size="large" />
         </Box>
 
-        {/* 実験的機能が有効なときだけタブを表示 */}
         {expImageSearch && (
           <Tabs
             value={activeTab}
             onChange={(_, v) => setActiveTab(v)}
-            sx={{ mb: 2, '& .MuiTab-root': { textTransform: 'none', minHeight: 40, fontSize: '14px' } }}
+            sx={{
+              mb: 2,
+              '& .MuiTab-root': { textTransform: 'none', minHeight: 40, fontSize: '14px' },
+              '& .MuiTabs-indicator': { borderRadius: '2px' },
+            }}
           >
             <Tab icon={<SearchIcon fontSize="small" />} iconPosition="start" label={t.search} />
             <Tab icon={<ImageSearchIcon fontSize="small" />} iconPosition="start" label={t.imageSearch} />
           </Tabs>
         )}
 
-        {/* タブに応じたコンテンツ */}
-        {activeTab === 0 || !expImageSearch ? (
-          <SearchBox variant="home" />
-        ) : (
-          <ImageSearch />
-        )}
+        <Box sx={{ width: '100%', maxWidth: { xs: '100%', sm: 600, md: 700 } }}>
+          {activeTab === 0 || !expImageSearch ? (
+            <SearchBox variant="home" />
+          ) : (
+            <ImageSearch />
+          )}
+        </Box>
       </Container>
 
       <Footer />
