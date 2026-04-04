@@ -21,10 +21,12 @@ import RelatedSearchesCard from './RelatedSearchesCard';
 import MediaCard from './MediaCard';
 import ItemBreadcrumbURL from './ItemBreadcrumbURL';
 
-const ResultItem: React.FC<{ item: ResultMeta; query: string }> = ({ item, query }) => {
+const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string }> = ({ item, query, type }) => {
   const setSelectedItem = useSearchStore((state) => state.setSelectedItem);
   
   const handleOpenPreview = async (e: React.MouseEvent) => {
+    // web検索のときはモーダルを開かず普通にリンクを開く
+    if (type === 'web') return;
     e.preventDefault();
     const detail = await fetchDetail({ q: query }, item._idx);
     setSelectedItem(detail);
@@ -171,7 +173,7 @@ const SearchResults: React.FC = () => {
               ) : results.length > 0 ? (
                 <Box>
                   {results.map((item, index) => (
-                    <ResultItem key={index} item={item} query={query} />
+                    <ResultItem key={index} item={item} query={query} type={type} />
                   ))}
                 </Box>
               ) : (

@@ -8,15 +8,16 @@ import {
   SearchOutlined as SearchIcon, 
   MicOutlined as MicIcon, 
   HistoryOutlined as HistoryIcon, 
-  ClearOutlined as ClearIcon 
+  ClearOutlined as ClearIcon,
+  TuneOutlined as TuneIcon
 } from '@mui/icons-material';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-// getSuggest は使わず、必要な型と履歴系のみインポート
 import { addHistory, getHistory, removeHistory, clearHistory } from '@yunfie/search-js';
 import { API_BASE } from '../config';
 import { useSearchStore } from '../store/useSearchStore';
 import translations from '../translations';
 import FullScreenSearchDialog from './FullScreenSearchDialog';
+import AdvancedSearchDialog from './AdvancedSearchDialog';
 
 const SuggestionItem = memo(({ title, isHistory, onSelect, onRemove }: any) => (
   <ListItem 
@@ -50,6 +51,7 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
   const [suggestions, setSuggestions] = useState<{ title: string; isHistory: boolean }[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [inputValue, setInputValue] = useState(searchParams.get('q') || '');
   const [isFocused, setIsFocused] = useState(false);
 
@@ -79,9 +81,6 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
     }
   }, [searchParams]);
 
-  /**
-   * 【真・フリーズ対策】ライブラリをバイパスして直接APIを叩く
-   */
   const triggerSuggest = useCallback(async (val: string) => {
     setInputValue(val);
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -95,13 +94,11 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
 
     timerRef.current = setTimeout(async () => {
       try {
-        // ライブラリの getSuggest を通さず、標準 fetch で取得することで無限ループを回避
         const url = `${API_BASE}/search?q=${encodeURIComponent(val)}&type=suggest`;
         const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
         
         if (response.ok && val === latestQueryRef.current) {
           const data = await response.json();
-          // APIレスポンスから配列を抽出
           const items = Array.isArray(data) ? data : (data.results || data.items || []);
           
           const formatted = items.slice(0, 8).map((it: any) => ({
@@ -205,6 +202,15 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
             )}
 
             <Divider sx={{ height: 24, m: 1, alignSelf: 'center' }} orientation="vertical" />
+
+            {/* 詳細検索ボタン */}
+            <IconButton 
+              sx={{ p: '10px', color: 'text.secondary' }} 
+              onClick={() => setIsAdvancedOpen(true)}
+              title={language === 'ja' ? '詳細検索' : 'Advanced Search'}
+            >
+              <TuneIcon />
+            </IconButton>
             
             <IconButton 
               sx={{ p: '10px', color: '#4285f4' }} 
@@ -253,6 +259,13 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
         onClose={() => setIsMobileSearchOpen(false)}
         onSearch={handleSearch}
         initialValue={inputRef.current?.value || ''}
+      />
+
+      <AdvancedSearchDialog
+        open={isAdvancedOpen}
+        onClose={() => setIsAdvancedOpen(false)}
+        onSearch={handleSearch}
+        baseQuery={inputValue}
       />
     </Box>
   );
