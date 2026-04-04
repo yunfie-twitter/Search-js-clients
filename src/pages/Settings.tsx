@@ -1,25 +1,18 @@
 import React, { useState } from 'react';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  List, 
-  ListItem, 
-  ListItemText, 
-  ListItemIcon, 
-  Switch, 
-  IconButton, 
-  Divider, 
+import {
+  Box,
+  Container,
+  Typography,
+  List,
+  IconButton,
+  Divider,
   Paper,
-  Select,
   MenuItem,
-  FormControl,
-  Chip,
-  Alert
+  Alert,
 } from '@mui/material';
-import { 
-  ArrowBackOutlined as ArrowBackIcon, 
-  DarkModeOutlined as DarkModeIcon, 
+import {
+  ArrowBackOutlined as ArrowBackIcon,
+  DarkModeOutlined as DarkModeIcon,
   LanguageOutlined as LanguageIcon,
   HistoryOutlined as HistoryIcon,
   AnimationOutlined as AnimationIcon,
@@ -30,68 +23,21 @@ import {
   PublicOutlined as PublicIcon,
   TranslateOutlined as TranslateIcon,
   ScienceOutlined as ScienceIcon,
-  FormatListNumberedOutlined as ListIcon
+  FormatListNumberedOutlined as ListIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
 import translations from '../translations';
 import { triggerHaptic } from '../utils/haptics';
-
-const SectionHeader: React.FC<{ label: string }> = ({ label }) => (
-  <Box sx={{ px: 2, pt: 3, pb: 1 }}>
-    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '11px' }}>
-      {label}
-    </Typography>
-  </Box>
-);
-
-const SelectItem: React.FC<{
-  icon: React.ReactNode;
-  primary: string;
-  secondary?: string;
-  value: string;
-  onChange: (v: any) => void;
-  children: React.ReactNode;
-}> = ({ icon, primary, secondary, value, onChange, children }) => (
-  <ListItem sx={{ py: 1.5 }}>
-    <ListItemIcon>{icon}</ListItemIcon>
-    <ListItemText primary={primary} secondary={secondary} />
-    <FormControl size="small" sx={{ minWidth: 130 }}>
-      <Select value={value} onChange={(e) => { triggerHaptic(); onChange(e.target.value); }} sx={{ borderRadius: '8px' }}>
-        {children}
-      </Select>
-    </FormControl>
-  </ListItem>
-);
-
-const SwitchItem: React.FC<{
-  icon: React.ReactNode;
-  primary: string;
-  secondary?: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-  chip?: string;
-}> = ({ icon, primary, secondary, checked, onChange, disabled, chip }) => (
-  <ListItem sx={{ py: 1.5, opacity: disabled ? 0.5 : 1 }}>
-    <ListItemIcon>{icon}</ListItemIcon>
-    <ListItemText
-      primary={
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {primary}
-          {chip && <Chip label={chip} size="small" color="warning" sx={{ height: 18, fontSize: '10px', fontWeight: 700 }} />}
-        </Box>
-      }
-      secondary={secondary}
-    />
-    <Switch checked={checked} onChange={(e) => { triggerHaptic(); onChange(e.target.checked); }} disabled={disabled} />
-  </ListItem>
-);
+import SectionHeader from '../components/settings/SectionHeader';
+import SelectItem from '../components/settings/SelectItem';
+import SwitchItem from '../components/settings/SwitchItem';
+import { ListItem, ListItemIcon, ListItemText } from '@mui/material';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
-  const { 
-    themeMode, setThemeMode, 
+  const {
+    themeMode, setThemeMode,
     language, setLanguage,
     saveHistory, setSaveHistory,
     enableAnimations, setEnableAnimations,
@@ -119,6 +65,7 @@ const Settings: React.FC = () => {
 
       <Container maxWidth="sm" sx={{ py: 2, pb: 8, flexGrow: 1 }}>
 
+        {/* Display */}
         <SectionHeader label={t.sectionDisplay} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
@@ -132,6 +79,7 @@ const Settings: React.FC = () => {
           </List>
         </Paper>
 
+        {/* Language */}
         <SectionHeader label={t.language} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
@@ -142,6 +90,7 @@ const Settings: React.FC = () => {
           </List>
         </Paper>
 
+        {/* Search */}
         <SectionHeader label={t.sectionSearch} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
@@ -173,6 +122,7 @@ const Settings: React.FC = () => {
           </List>
         </Paper>
 
+        {/* Region */}
         <SectionHeader label={t.sectionRegion} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
@@ -197,6 +147,7 @@ const Settings: React.FC = () => {
           </List>
         </Paper>
 
+        {/* Privacy */}
         <SectionHeader label={t.sectionPrivacy} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
@@ -204,6 +155,7 @@ const Settings: React.FC = () => {
           </List>
         </Paper>
 
+        {/* Experimental */}
         <SectionHeader label={t.sectionExperimental} />
         <Alert severity="warning" sx={{ mx: 0, mb: 1.5, borderRadius: '12px', fontSize: '13px' }}>
           {t.experimentalNote}
@@ -218,6 +170,7 @@ const Settings: React.FC = () => {
           </List>
         </Paper>
 
+        {/* About */}
         <SectionHeader label={t.about} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
