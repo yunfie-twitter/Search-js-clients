@@ -129,15 +129,19 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     });
 
     try {
-      // 毎回新しい pager を作り、目的ページまで直接スキップする
-      // (旧実装は for ループで全ページ分リクエストを投げていた)
+      // SearchOptions の型定義に存在するフィールドのみ渡す
+      // gl / page は SearchOptions にないため除外し、
+      // ページ切り替えは元の for ループ方式を維持
       const pager = createPager(
-        { q, type, lang: searchLang, gl: searchRegion, safe: safeSearch, page: pageNum },
+        { q, type, lang: searchLang, safe: safeSearch },
         resultsPerPage
       );
       set({ pager });
 
-      const result = await pager.next();
+      let result = null;
+      for (let i = 0; i < pageNum; i++) {
+        result = await pager.next();
+      }
 
       const data = result?.data as any;
       const items = Array.isArray(data) ? data : (data?.results || []);

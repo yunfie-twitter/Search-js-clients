@@ -1,33 +1,47 @@
-name: Frogbot Scan Pull Request
+name: npm audit
 
 on:
-  pull_request_target:
-    types: [opened, synchronize]
+  push:
     branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # 毎週月曜日 UTC 06:30 に定期スキャン
+    - cron: '30 6 * * 1'
 
 jobs:
-  scan-pull-request:
-    name: Frogbot Scan PR
+  audit:
+    name: npm audit
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
-      security-events: write
 
     steps:
-      - name: Frogbot Scan Pull Request
-        uses: jfrog/frogbot@v2
-        env:
-          # JFrog Platform 接続情報——Secrets に登録が必要
-          # JF_URL: ${{ secrets.JF_URL }}
-          # JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-          # GitHub 認証トークン（自動設定）
-          JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-          # プロジェクトのパッケージマネージャー設定
-          JF_GIT_PROVIDER: github
-          JF_PACKAGE_MANAGER: npm
+      - name: Install dependencies
+        run: npm ci
 
-          # 脆弱性発見時に PR にコメントを投稿し、SARIF をアップロード
-          JF_FAIL_ON_SECURITY_ISSUES: "false"
+      - name: Run npm audit
+        # high ・ critical の脆弱性があれば CI を失敗させる
+        run: npm audit --audit-level=high
+
+      - name: Generate audit report (JSON)
+        if: always()
+        run: npm audit --json > npm-audit-report.json || true
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: npm-audit-report.json
+          retention-days: 30
