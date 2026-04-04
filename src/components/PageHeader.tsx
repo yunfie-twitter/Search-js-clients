@@ -1,8 +1,3 @@
-/**
- * PageHeader — Settings / History などサブページ共通のスティッキーヘッダー
- * モバイルでは backdrop-blur で「浮かび」スタイル、
- * デスクトップでは通常のヘッダー。
- */
 import React from 'react';
 import { AppBar, Toolbar, IconButton, Typography, Box } from '@mui/material';
 import { ArrowBackOutlined as ArrowBackIcon } from '@mui/icons-material';
@@ -12,7 +7,7 @@ import { triggerHaptic } from '../utils/haptics';
 
 interface PageHeaderProps {
   title: string;
-  action?: React.ReactNode; // 右端に置くアクション
+  action?: React.ReactNode;
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({ title, action }) => {
@@ -37,11 +32,13 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, action }) => {
         paddingTop: 'env(safe-area-inset-top)',
       }}
     >
-      <Toolbar disableGutters sx={{ px: 1, minHeight: { xs: 56, sm: 64 } }}>
-        <IconButton onClick={handleBack} sx={{ mr: 0.5 }}>
+      <Toolbar disableGutters sx={{ px: 1, minHeight: { xs: 56, sm: 64 }, gap: 1 }}>
+        <IconButton onClick={handleBack}>
           <ArrowBackIcon />
         </IconButton>
-        <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
+        {/* 戻るボタンとタイトルの間に余白 */}
+        <Box sx={{ width: 4 }} />
+        <Typography variant="h6" sx={{ fontWeight: 600, flex: 1, fontSize: { xs: '17px', sm: '20px' } }}>
           {title}
         </Typography>
         {action && <Box sx={{ ml: 'auto', pr: 1 }}>{action}</Box>}
