@@ -9,6 +9,9 @@ import {
   Paper,
   MenuItem,
   Alert,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   ArrowBackOutlined as ArrowBackIcon,
@@ -24,6 +27,7 @@ import {
   TranslateOutlined as TranslateIcon,
   ScienceOutlined as ScienceIcon,
   FormatListNumberedOutlined as ListIcon,
+  ImageSearchOutlined as ImageSearchIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
@@ -32,7 +36,6 @@ import { triggerHaptic } from '../utils/haptics';
 import SectionHeader from '../components/settings/SectionHeader';
 import SelectItem from '../components/settings/SelectItem';
 import SwitchItem from '../components/settings/SwitchItem';
-import { ListItem, ListItemIcon, ListItemText } from '@mui/material';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
@@ -47,6 +50,7 @@ const Settings: React.FC = () => {
     cacheTtl, setCacheTtl,
     searchRegion, setSearchRegion,
     searchLang, setSearchLang,
+    expImageSearch, setExpImageSearch,
   } = useSearchStore();
   const t = translations[language];
 
@@ -167,6 +171,16 @@ const Settings: React.FC = () => {
             <SwitchItem icon={<ScienceIcon />} primary={t.experimentalInstantResults} secondary={t.experimentalInstantResultsDesc} checked={expInstantResults} onChange={setExpInstantResults} chip="β" disabled />
             <Divider />
             <SwitchItem icon={<ScienceIcon />} primary={t.experimentalKnowledgePanel} secondary={t.experimentalKnowledgePanelDesc} checked={expKnowledgePanel} onChange={setExpKnowledgePanel} chip="β" disabled />
+            <Divider />
+            {/* CLIP 画像検索：実動作する実験的機能 */}
+            <SwitchItem
+              icon={<ImageSearchIcon />}
+              primary={t.experimentalImageSearch}
+              secondary={t.experimentalImageSearchDesc}
+              checked={expImageSearch}
+              onChange={setExpImageSearch}
+              chip="β"
+            />
           </List>
         </Paper>
 

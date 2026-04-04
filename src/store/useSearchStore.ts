@@ -36,6 +36,9 @@ interface SearchState {
   searchRegion: string;
   searchLang: string;
 
+  // 実験的機能
+  expImageSearch: boolean;
+
   // Actions
   setQuery: (q: string) => void;
   setType: (t: SearchType) => void;
@@ -51,6 +54,7 @@ interface SearchState {
   setCacheTtl: (ttl: 0 | 5 | 30 | 60) => void;
   setSearchRegion: (region: string) => void;
   setSearchLang: (lang: string) => void;
+  setExpImageSearch: (v: boolean) => void;
 
   performSearch: (q: string, type: SearchType, page?: number) => Promise<void>;
   resetSearch: () => void;
@@ -67,8 +71,6 @@ const getSavedSettings = () => {
   }
 };
 
-// モジュールスコープにキャッシュを持つことで、saveSetting のたびに
-// JSON.parse が走るのを防ぐ
 let settingsCache: Record<string, any> = getSavedSettings();
 
 const saveSetting = (key: string, value: any) => {
@@ -100,6 +102,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   searchRegion: saved.searchRegion || 'JP',
   searchLang: saved.searchLang || 'ja',
 
+  expImageSearch: saved.expImageSearch !== undefined ? saved.expImageSearch : false,
+
   setQuery: (q) => set({ query: q }),
   setType: (t) => set({ type: t }),
   setSelectedItem: (item) => set({ selectedItem: item }),
@@ -114,6 +118,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   setCacheTtl: (ttl) => { set({ cacheTtl: ttl }); saveSetting('cacheTtl', ttl); },
   setSearchRegion: (region) => { set({ searchRegion: region }); saveSetting('searchRegion', region); },
   setSearchLang: (lang) => { set({ searchLang: lang }); saveSetting('searchLang', lang); },
+  setExpImageSearch: (v) => { set({ expImageSearch: v }); saveSetting('expImageSearch', v); },
 
   performSearch: async (q, type, pageNum = 1) => {
     if (!q) return;
@@ -129,9 +134,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     });
 
     try {
-      // SearchOptions の型定義に存在するフィールドのみ渡す
-      // gl / page は SearchOptions にないため除外し、
-      // ページ切り替えは元の for ループ方式を維持
       const pager = createPager(
         { q, type, lang: searchLang, safe: safeSearch },
         resultsPerPage

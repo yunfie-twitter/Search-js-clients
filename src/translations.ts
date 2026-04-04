@@ -59,6 +59,8 @@ const translations = {
     experimentalInstantResultsDesc: '入力しながらリアルタイムで検索結果を表示します',
     experimentalKnowledgePanel: 'ナレッジパネル（β）',
     experimentalKnowledgePanelDesc: 'エンティティの詳細情報をサイドパネルに表示します',
+    experimentalImageSearch: 'CLIP画像検索（β）',
+    experimentalImageSearchDesc: 'CLIPモデルを使ったテキスト・画像アップロードによる相山画像検索',
     saveHistory: '検索履歴を保存する',
     enableAnimations: 'アニメーションを有効にする',
     // 詳細検索
@@ -77,7 +79,7 @@ const translations = {
     advancedDateNone: 'なし',
     advancedDate24h: '過去24時間',
     advancedDateWeek: '過去1週間',
-    advancedDateMonth: '過去1ヶ月',
+    advancedDateMonth: '過去1ケ月',
     advancedDateYear: '過去1年',
     advancedGeneratedQuery: '生成されるクエリ：',
     advancedCancel: 'キャンセル',
@@ -85,6 +87,16 @@ const translations = {
     // 検索結果
     searchResultsFor: '検索結果:',
     home: 'ホーム',
+    // CLIP 画像検索
+    imageSearch: 'CLIP画像検索',
+    imageSearchByText: 'テキストで検索',
+    imageSearchByUpload: '画像で検索',
+    imageSearchTextPlaceholder: '画像をテキストで検索...',
+    imageSearchSearch: '検索',
+    imageSearchSelectFile: '画像を選択',
+    imageSearchError: '検索中にエラーが発生しました。しばらくたってから再度お試しください。',
+    imageSearchResultCount: '{n}件の結果が見つかりました',
+    imageSearchEmpty: 'テキストを入力するか画像をアップロードして検索してください',
   },
   en: {
     // Basic
@@ -146,6 +158,8 @@ const translations = {
     experimentalInstantResultsDesc: 'Show search results in real-time as you type',
     experimentalKnowledgePanel: 'Knowledge Panel (β)',
     experimentalKnowledgePanelDesc: 'Show entity details in a side panel',
+    experimentalImageSearch: 'CLIP Image Search (β)',
+    experimentalImageSearchDesc: 'Semantic image search by text or image upload using CLIP model',
     saveHistory: 'Save Search History',
     enableAnimations: 'Enable Animations',
     // Advanced Search
@@ -172,6 +186,16 @@ const translations = {
     // Search Results
     searchResultsFor: 'Search results:',
     home: 'Home',
+    // CLIP Image Search
+    imageSearch: 'CLIP Image Search',
+    imageSearchByText: 'Search by text',
+    imageSearchByUpload: 'Search by image',
+    imageSearchTextPlaceholder: 'Search images by text...',
+    imageSearchSearch: 'Search',
+    imageSearchSelectFile: 'Select image',
+    imageSearchError: 'An error occurred during search. Please try again later.',
+    imageSearchResultCount: '{n} results found',
+    imageSearchEmpty: 'Enter text or upload an image to search',
   }
 };
 
