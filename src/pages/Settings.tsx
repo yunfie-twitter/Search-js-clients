@@ -32,7 +32,7 @@ import {
   FilterListOutlined as FilterIcon,
   TimerOutlined as TimerIcon,
   PublicOutlined as PublicIcon,
-  TranslateOutlined as TranslateOutlined as TranslateIcon,
+  TranslateOutlined as TranslateIcon,
   ScienceOutlined as ScienceIcon,
   FormatListNumberedOutlined as ListIcon,
   ImageSearchOutlined as ImageSearchIcon,
@@ -106,7 +106,7 @@ const Settings: React.FC = () => {
 
   const handleWarningOk = useCallback(() => {
     setShowWarning(false);
-    setExpUnlocked(true); // localStorage に永続化
+    setExpUnlocked(true);
     triggerHaptic();
     navigate('/labs');
   }, [navigate, setExpUnlocked]);
