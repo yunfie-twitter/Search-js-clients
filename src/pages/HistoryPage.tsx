@@ -1,24 +1,30 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  List, 
-  ListItem, 
-  ListItemButton, 
-  ListItemIcon, 
-  ListItemText, 
-  IconButton, 
-  Button, 
+import {
+  Box,
+  Container,
+  Typography,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  IconButton,
+  Button,
   Divider,
   Paper,
-  useTheme
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  useTheme,
 } from '@mui/material';
-import { 
-  History as HistoryIcon, 
-  Delete as DeleteIcon, 
+import {
+  History as HistoryIcon,
+  Delete as DeleteIcon,
   ClearAll as ClearAllIcon,
-  ArrowBack as ArrowBackIcon
+  ArrowBack as ArrowBackIcon,
+  DeleteForeverOutlined as DeleteForeverIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { getHistory, removeHistory, clearHistory, HistoryEntry } from '@yunfie/search-js';
@@ -27,6 +33,7 @@ import translations from '../translations';
 
 const HistoryPage: React.FC = () => {
   const [historyItems, setHistoryItems] = useState<HistoryEntry[]>([]);
+  const [showClearDialog, setShowClearDialog] = useState(false);
   const navigate = useNavigate();
   const language = useSearchStore((s) => s.language);
   const t = useMemo(() => translations[language], [language]);
@@ -45,11 +52,10 @@ const HistoryPage: React.FC = () => {
     refreshHistory();
   };
 
-  const handleClearAll = () => {
-    if (window.confirm(t.historyClearConfirm)) {
-      clearHistory();
-      refreshHistory();
-    }
+  const handleClearConfirmed = () => {
+    clearHistory();
+    refreshHistory();
+    setShowClearDialog(false);
   };
 
   return (
@@ -63,9 +69,9 @@ const HistoryPage: React.FC = () => {
         </Typography>
         <Box sx={{ ml: 'auto' }}>
           {historyItems.length > 0 && (
-            <Button 
-              startIcon={<ClearAllIcon />} 
-              onClick={handleClearAll}
+            <Button
+              startIcon={<ClearAllIcon />}
+              onClick={() => setShowClearDialog(true)}
               color="error"
               sx={{ textTransform: 'none' }}
             >
@@ -82,9 +88,9 @@ const HistoryPage: React.FC = () => {
             <Typography variant="h6" color="text.secondary">
               {t.noHistory}
             </Typography>
-            <Button 
-              variant="contained" 
-              onClick={() => navigate('/')} 
+            <Button
+              variant="contained"
+              onClick={() => navigate('/')}
               sx={{ mt: 3, textTransform: 'none', borderRadius: '24px' }}
             >
               {t.backToHome}
@@ -95,7 +101,7 @@ const HistoryPage: React.FC = () => {
             <List sx={{ py: 0 }}>
               {historyItems.map((item, index) => (
                 <React.Fragment key={`${item.q}-${item.time}-${index}`}>
-                  <ListItem 
+                  <ListItem
                     disablePadding
                     secondaryAction={
                       <IconButton edge="end" onClick={() => handleDeleteItem(item.q, item.type)}>
@@ -107,8 +113,8 @@ const HistoryPage: React.FC = () => {
                       <ListItemIcon>
                         <HistoryIcon color="action" />
                       </ListItemIcon>
-                      <ListItemText 
-                        primary={item.q} 
+                      <ListItemText
+                        primary={item.q}
                         secondary={new Date(item.time).toLocaleString()}
                         primaryTypographyProps={{ fontWeight: 500, color: 'text.primary' }}
                         secondaryTypographyProps={{ color: 'text.secondary' }}
@@ -122,6 +128,39 @@ const HistoryPage: React.FC = () => {
           </Paper>
         )}
       </Container>
+
+      {/* 全削除確認ダイアログ */}
+      <Dialog
+        open={showClearDialog}
+        onClose={() => setShowClearDialog(false)}
+        PaperProps={{ sx: { borderRadius: '16px', mx: 2 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DeleteForeverIcon color="error" />
+          {language === 'ja' ? '履歴を全て削除' : 'Clear All History'}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ fontSize: '14px', lineHeight: 1.7 }}>
+            {t.historyClearConfirm}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            onClick={() => setShowClearDialog(false)}
+            sx={{ textTransform: 'none', borderRadius: '10px', color: 'text.secondary' }}
+          >
+            {language === 'ja' ? 'キャンセル' : 'Cancel'}
+          </Button>
+          <Button
+            onClick={handleClearConfirmed}
+            variant="contained"
+            color="error"
+            sx={{ textTransform: 'none', borderRadius: '10px' }}
+          >
+            {language === 'ja' ? '全て削除する' : 'Clear All'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
