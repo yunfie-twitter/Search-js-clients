@@ -8,17 +8,22 @@ import {
   Tabs,
   Paper,
   CircularProgress,
-  Alert,
   ImageList,
   ImageListItem,
   ImageListItemBar,
   IconButton,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import {
   SearchOutlined as SearchIcon,
   UploadFileOutlined as UploadIcon,
   OpenInNewOutlined as OpenInNewIcon,
+  ErrorOutlineOutlined as ErrorIcon,
 } from '@mui/icons-material';
 import { useSearchStore } from '../store/useSearchStore';
 import translations from '../translations';
@@ -36,23 +41,27 @@ const ImageSearch: React.FC = () => {
   const language = useSearchStore((s) => s.language);
   const t = React.useMemo(() => translations[language], [language]);
 
-  const [tab, setTab] = useState<0 | 1>(0); // 0=text, 1=upload
+  const [tab, setTab] = useState<0 | 1>(0);
   const [textQuery, setTextQuery] = useState('');
   const [results, setResults] = useState<ImageResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  const showError = useCallback((msg: string) => {
+    setErrorMsg(msg);
+  }, []);
+
   const handleTextSearch = useCallback(async () => {
     if (!textQuery.trim()) return;
     setLoading(true);
-    setError(null);
     setResults([]);
     try {
       const res = await fetch(`${FAISS_BASE}/search/text`, {
         method: 'POST',
+        mode: 'cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: textQuery.trim(), top_k: 20 }),
       });
@@ -63,11 +72,11 @@ const ImageSearch: React.FC = () => {
         : (data.results ?? data.items ?? []);
       setResults(items);
     } catch (e: any) {
-      setError(t.imageSearchError);
+      showError(e?.message ? `${t.imageSearchError} (${e.message})` : t.imageSearchError);
     } finally {
       setLoading(false);
     }
-  }, [textQuery, t]);
+  }, [textQuery, t, showError]);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -75,19 +84,18 @@ const ImageSearch: React.FC = () => {
     setSelectedFile(file);
     setPreviewSrc(URL.createObjectURL(file));
     setResults([]);
-    setError(null);
   }, []);
 
   const handleUploadSearch = useCallback(async () => {
     if (!selectedFile) return;
     setLoading(true);
-    setError(null);
     setResults([]);
     try {
       const form = new FormData();
       form.append('file', selectedFile);
       const res = await fetch(`${FAISS_BASE}/search/upload?top_k=20`, {
         method: 'POST',
+        mode: 'cors',
         body: form,
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -97,11 +105,11 @@ const ImageSearch: React.FC = () => {
         : (data.results ?? data.items ?? []);
       setResults(items);
     } catch (e: any) {
-      setError(t.imageSearchError);
+      showError(e?.message ? `${t.imageSearchError} (${e.message})` : t.imageSearchError);
     } finally {
       setLoading(false);
     }
-  }, [selectedFile, t]);
+  }, [selectedFile, t, showError]);
 
   return (
     <Box sx={{ width: '100%', maxWidth: 900, mx: 'auto', mt: 3, px: { xs: 2, md: 0 } }}>
@@ -111,7 +119,7 @@ const ImageSearch: React.FC = () => {
       >
         <Tabs
           value={tab}
-          onChange={(_, v) => { setTab(v); setResults([]); setError(null); }}
+          onChange={(_, v) => { setTab(v); setResults([]); }}
           sx={{ borderBottom: '1px solid', borderColor: 'divider', px: 2 }}
         >
           <Tab label={t.imageSearchByText} icon={<SearchIcon fontSize="small" />} iconPosition="start" sx={{ textTransform: 'none', minHeight: 48 }} />
@@ -176,10 +184,6 @@ const ImageSearch: React.FC = () => {
               )}
             </Box>
           )}
-
-          {error && (
-            <Alert severity="error" sx={{ mt: 2, borderRadius: '10px' }}>{error}</Alert>
-          )}
         </Box>
       </Paper>
 
@@ -225,11 +229,45 @@ const ImageSearch: React.FC = () => {
         </Box>
       )}
 
-      {!loading && results.length === 0 && !error && (
+      {!loading && results.length === 0 && !errorMsg && (
         <Box sx={{ mt: 4, textAlign: 'center' }}>
           <Typography variant="body2" color="text.disabled">{t.imageSearchEmpty}</Typography>
         </Box>
       )}
+
+      {/* エラーモーダル */}
+      <Dialog
+        open={!!errorMsg}
+        onClose={() => setErrorMsg(null)}
+        PaperProps={{ sx: { borderRadius: '16px', mx: 2 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <ErrorIcon color="error" />
+          {language === 'ja' ? 'エラー' : 'Error'}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ fontSize: '14px', lineHeight: 1.7 }}>
+            {errorMsg}
+          </DialogContentText>
+          {errorMsg?.includes('ERR_FAILED') || errorMsg?.includes('Failed to fetch') || errorMsg?.includes('NetworkError') ? (
+            <DialogContentText sx={{ fontSize: '13px', mt: 1, color: 'text.secondary' }}>
+              {language === 'ja'
+                ? 'CORSポリシーまたはネットワークの問題の可能性があります。サーバー側で Access-Control-Allow-Origin ヘッダーの設定を確認してください。'
+                : 'This may be a CORS policy or network issue. Check that the server returns Access-Control-Allow-Origin headers.'}
+            </DialogContentText>
+          ) : null}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setErrorMsg(null)}
+            variant="contained"
+            color="error"
+            sx={{ textTransform: 'none', borderRadius: '10px' }}
+          >
+            {language === 'ja' ? '閉じる' : 'Close'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
