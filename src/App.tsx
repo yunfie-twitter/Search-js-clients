@@ -35,13 +35,6 @@ const AppContent: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
-      {/*
-        PageTransition は Routes（コンテンツ）のみを包む。
-        MobileBottomNav はその外なのでアニメーション対象外。
-        各ページ内の AppBar（PageHeader / HeaderNav）は
-        position="sticky" なので PageTransition 内にあるが、
-        移動量を0px近くに抑えることで実質たった動きを感じさせない。
-      *)}
       <PageTransition>
         <Routes location={location}>
           <Route path="/" element={<Home />} />
