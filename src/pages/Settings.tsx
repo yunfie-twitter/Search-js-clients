@@ -37,6 +37,7 @@ import {
   FormatListNumberedOutlined as ListIcon,
   ImageSearchOutlined as ImageSearchIcon,
   ChevronRightOutlined as ChevronRightIcon,
+  WarningAmberOutlined as WarningIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
@@ -47,7 +48,7 @@ import SelectItem from '../components/settings/SelectItem';
 import SwitchItem from '../components/settings/SwitchItem';
 
 const TAP_REQUIRED = 5;
-const TAP_RESET_MS = 2000; // 2秒以内に連打しないとリセット
+const TAP_RESET_MS = 2000;
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
@@ -70,7 +71,6 @@ const Settings: React.FC = () => {
   const [expInstantResults, setExpInstantResults] = useState(false);
   const [expKnowledgePanel, setExpKnowledgePanel] = useState(false);
 
-  // 実験的機能解除ロジック
   const [tapCount, setTapCount] = useState(0);
   const [expUnlocked, setExpUnlocked] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
@@ -80,7 +80,6 @@ const Settings: React.FC = () => {
   const handleVersionTap = useCallback(() => {
     if (expUnlocked) return;
 
-    // タイムアウトリセット
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setTapCount(0), TAP_RESET_MS);
 
@@ -89,19 +88,20 @@ const Settings: React.FC = () => {
       const remaining = TAP_REQUIRED - next;
 
       if (next >= TAP_REQUIRED) {
-        // 5回達成 → 警告ダイアログを表示
         setShowWarning(true);
         triggerHaptic();
         return 0;
       }
 
-      if (remaining <= 2) {
+      // 2回目以降（next >= 2）からカウントダウンを表示
+      if (next >= 2) {
         setSnackMsg(
           language === 'ja'
             ? `あと ${remaining} 回で実験的機能が解除されます`
-            : `${remaining} more tap${remaining > 1 ? 's' : ''} to unlock experimental features`
+            : `${remaining} more tap${remaining !== 1 ? 's' : ''} to unlock experimental features`
         );
       }
+
       return next;
     });
   }, [expUnlocked, language]);
@@ -110,7 +110,6 @@ const Settings: React.FC = () => {
     setShowWarning(false);
     setExpUnlocked(true);
     triggerHaptic();
-    // 実験的機能セクションへスクロールする
     setTimeout(() => {
       document.getElementById('experimental-section')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
@@ -190,13 +189,13 @@ const Settings: React.FC = () => {
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
             <SelectItem icon={<PublicIcon />} primary={t.searchRegion} value={searchRegion} onChange={setSearchRegion}>
-              <MenuItem value="JP">🇯🇵 Japan (JP)</MenuItem>
-              <MenuItem value="US">🇺🇸 United States (US)</MenuItem>
-              <MenuItem value="GB">🇬🇧 United Kingdom (GB)</MenuItem>
-              <MenuItem value="KR">🇰🇷 Korea (KR)</MenuItem>
-              <MenuItem value="CN">🇨🇳 China (CN)</MenuItem>
-              <MenuItem value="DE">🇩🇪 Germany (DE)</MenuItem>
-              <MenuItem value="FR">🇫🇷 France (FR)</MenuItem>
+              <MenuItem value="JP">Japan (JP)</MenuItem>
+              <MenuItem value="US">United States (US)</MenuItem>
+              <MenuItem value="GB">United Kingdom (GB)</MenuItem>
+              <MenuItem value="KR">Korea (KR)</MenuItem>
+              <MenuItem value="CN">China (CN)</MenuItem>
+              <MenuItem value="DE">Germany (DE)</MenuItem>
+              <MenuItem value="FR">France (FR)</MenuItem>
             </SelectItem>
             <Divider />
             <SelectItem icon={<TranslateIcon />} primary={t.searchLang} value={searchLang} onChange={setSearchLang}>
@@ -281,14 +280,15 @@ const Settings: React.FC = () => {
 
       </Container>
 
-      {/* 警告ダイアログ */}
+      {/* 警告ダイアログ（絵文字なし） */}
       <Dialog
         open={showWarning}
         onClose={() => setShowWarning(false)}
         PaperProps={{ sx: { borderRadius: '16px', mx: 2 } }}
       >
-        <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
-          {language === 'ja' ? '⚠️ 実験的機能' : '⚠️ Experimental Features'}
+        <DialogTitle sx={{ fontWeight: 700, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <WarningIcon color="warning" />
+          {language === 'ja' ? '実験的機能' : 'Experimental Features'}
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ fontSize: '14px', lineHeight: 1.7 }}>
@@ -318,7 +318,7 @@ const Settings: React.FC = () => {
       {/* カウントダウンスナック */}
       <Snackbar
         open={!!snackMsg}
-        autoHideDuration={1200}
+        autoHideDuration={1000}
         onClose={() => setSnackMsg('')}
         message={snackMsg}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
