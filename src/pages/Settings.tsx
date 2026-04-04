@@ -4,11 +4,9 @@ import {
   Container,
   Typography,
   List,
-  IconButton,
   Divider,
   Paper,
   MenuItem,
-  Alert,
   ListItem,
   ListItemIcon,
   ListItemText,
@@ -22,7 +20,6 @@ import {
   Chip,
 } from '@mui/material';
 import {
-  ArrowBackOutlined as ArrowBackIcon,
   DarkModeOutlined as DarkModeIcon,
   LanguageOutlined as LanguageIcon,
   HistoryOutlined as HistoryIcon,
@@ -46,6 +43,8 @@ import { triggerHaptic } from '../utils/haptics';
 import SectionHeader from '../components/settings/SectionHeader';
 import SelectItem from '../components/settings/SelectItem';
 import SwitchItem from '../components/settings/SwitchItem';
+import PageHeader from '../components/PageHeader';
+import { BottomNavSpacer } from '../components/MobileBottomNav';
 
 const TAP_REQUIRED = 5;
 const TAP_RESET_MS = 2000;
@@ -78,28 +77,17 @@ const Settings: React.FC = () => {
       navigate('/labs');
       return;
     }
-
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setTapCount(0), TAP_RESET_MS);
-
     setTapCount((prev) => {
       const next = prev + 1;
       const remaining = TAP_REQUIRED - next;
-
-      if (next >= TAP_REQUIRED) {
-        setShowWarning(true);
-        triggerHaptic();
-        return 0;
-      }
-
+      if (next >= TAP_REQUIRED) { setShowWarning(true); triggerHaptic(); return 0; }
       if (next >= 2) {
-        setSnackMsg(
-          language === 'ja'
-            ? `あと ${remaining} 回で実験的機能が解除されます`
-            : `${remaining} more tap${remaining !== 1 ? 's' : ''} to unlock experimental features`
-        );
+        setSnackMsg(language === 'ja'
+          ? `あと ${remaining} 回で実験的機能が解除されます`
+          : `${remaining} more tap${remaining !== 1 ? 's' : ''} to unlock experimental features`);
       }
-
       return next;
     });
   }, [expUnlocked, language, navigate]);
@@ -111,17 +99,11 @@ const Settings: React.FC = () => {
     navigate('/labs');
   }, [navigate, setExpUnlocked]);
 
-  const handleBack = () => { triggerHaptic(); navigate(-1); };
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'background.default' }}>
-      <Box sx={{ p: 2, pt: 'calc(env(safe-area-inset-top) + 16px)', display: 'flex', alignItems: 'center', backgroundColor: 'background.paper', borderBottom: '1px solid', borderColor: 'divider' }}>
-        <IconButton onClick={handleBack} sx={{ mr: 1 }}><ArrowBackIcon /></IconButton>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>{t.settings}</Typography>
-      </Box>
+      <PageHeader title={t.settings} />
 
-      <Container maxWidth="sm" sx={{ py: 2, pb: 8, flexGrow: 1 }}>
-
+      <Container maxWidth="sm" sx={{ py: 2, flexGrow: 1 }}>
         <SectionHeader label={t.sectionDisplay} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
@@ -218,13 +200,7 @@ const Settings: React.FC = () => {
                   <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     1.2.0
                     {expUnlocked && (
-                      <Chip
-                        label={language === 'ja' ? '実験的機能解除済' : 'Experimental unlocked'}
-                        size="small"
-                        color="warning"
-                        variant="outlined"
-                        sx={{ fontSize: '11px', height: 20 }}
-                      />
+                      <Chip label={language === 'ja' ? '実験的機能解除済' : 'Experimental unlocked'} size="small" color="warning" variant="outlined" sx={{ fontSize: '11px', height: 20 }} />
                     )}
                   </Box>
                 }
@@ -233,8 +209,9 @@ const Settings: React.FC = () => {
             </ListItem>
           </List>
         </Paper>
-
       </Container>
+
+      <BottomNavSpacer />
 
       <Dialog open={showWarning} onClose={() => setShowWarning(false)} PaperProps={{ sx: { borderRadius: '16px', mx: 2 } }}>
         <DialogTitle sx={{ fontWeight: 700, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
