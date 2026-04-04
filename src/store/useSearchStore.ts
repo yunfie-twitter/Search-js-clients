@@ -28,7 +28,6 @@ interface SearchState {
   enableAnimations: boolean;
   page: number;
 
-  // 拡充した設定
   resultsPerPage: 10 | 20 | 50;
   defaultSearchType: DefaultSearchType;
   safeSearch: SafeSearchLevel;
@@ -38,6 +37,7 @@ interface SearchState {
 
   // 実験的機能
   expImageSearch: boolean;
+  expUnlocked: boolean;
 
   // Actions
   setQuery: (q: string) => void;
@@ -55,6 +55,7 @@ interface SearchState {
   setSearchRegion: (region: string) => void;
   setSearchLang: (lang: string) => void;
   setExpImageSearch: (v: boolean) => void;
+  setExpUnlocked: (v: boolean) => void;
 
   performSearch: (q: string, type: SearchType, page?: number) => Promise<void>;
   resetSearch: () => void;
@@ -103,6 +104,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   searchLang: saved.searchLang || 'ja',
 
   expImageSearch: saved.expImageSearch !== undefined ? saved.expImageSearch : false,
+  expUnlocked: saved.expUnlocked !== undefined ? saved.expUnlocked : false,
 
   setQuery: (q) => set({ query: q }),
   setType: (t) => set({ type: t }),
@@ -119,6 +121,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   setSearchRegion: (region) => { set({ searchRegion: region }); saveSetting('searchRegion', region); },
   setSearchLang: (lang) => { set({ searchLang: lang }); saveSetting('searchLang', lang); },
   setExpImageSearch: (v) => { set({ expImageSearch: v }); saveSetting('expImageSearch', v); },
+  setExpUnlocked: (v) => { set({ expUnlocked: v }); saveSetting('expUnlocked', v); },
 
   performSearch: async (q, type, pageNum = 1) => {
     if (!q) return;

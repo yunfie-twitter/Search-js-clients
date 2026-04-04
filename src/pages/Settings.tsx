@@ -32,7 +32,7 @@ import {
   FilterListOutlined as FilterIcon,
   TimerOutlined as TimerIcon,
   PublicOutlined as PublicIcon,
-  TranslateOutlined as TranslateIcon,
+  TranslateOutlined as TranslateOutlined as TranslateIcon,
   ScienceOutlined as ScienceIcon,
   FormatListNumberedOutlined as ListIcon,
   ImageSearchOutlined as ImageSearchIcon,
@@ -63,18 +63,16 @@ const Settings: React.FC = () => {
     cacheTtl, setCacheTtl,
     searchRegion, setSearchRegion,
     searchLang, setSearchLang,
-    expImageSearch, setExpImageSearch,
+    expUnlocked, setExpUnlocked,
   } = useSearchStore();
   const t = translations[language];
 
   const [tapCount, setTapCount] = useState(0);
-  const [expUnlocked, setExpUnlocked] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const [snackMsg, setSnackMsg] = useState('');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleVersionTap = useCallback(() => {
-    // 解除済みなら /labs へ遷移
     if (expUnlocked) {
       triggerHaptic();
       navigate('/labs');
@@ -108,17 +106,15 @@ const Settings: React.FC = () => {
 
   const handleWarningOk = useCallback(() => {
     setShowWarning(false);
-    setExpUnlocked(true);
+    setExpUnlocked(true); // localStorage に永続化
     triggerHaptic();
-    // 解除後は即座に /labs へ遷移
     navigate('/labs');
-  }, [navigate]);
+  }, [navigate, setExpUnlocked]);
 
   const handleBack = () => { triggerHaptic(); navigate(-1); };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'background.default' }}>
-      {/* Header */}
       <Box sx={{ p: 2, pt: 'calc(env(safe-area-inset-top) + 16px)', display: 'flex', alignItems: 'center', backgroundColor: 'background.paper', borderBottom: '1px solid', borderColor: 'divider' }}>
         <IconButton onClick={handleBack} sx={{ mr: 1 }}><ArrowBackIcon /></IconButton>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>{t.settings}</Typography>
@@ -126,7 +122,6 @@ const Settings: React.FC = () => {
 
       <Container maxWidth="sm" sx={{ py: 2, pb: 8, flexGrow: 1 }}>
 
-        {/* Display */}
         <SectionHeader label={t.sectionDisplay} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
@@ -140,7 +135,6 @@ const Settings: React.FC = () => {
           </List>
         </Paper>
 
-        {/* Language */}
         <SectionHeader label={t.language} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
@@ -151,7 +145,6 @@ const Settings: React.FC = () => {
           </List>
         </Paper>
 
-        {/* Search */}
         <SectionHeader label={t.sectionSearch} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
@@ -183,7 +176,6 @@ const Settings: React.FC = () => {
           </List>
         </Paper>
 
-        {/* Region */}
         <SectionHeader label={t.sectionRegion} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
@@ -208,7 +200,6 @@ const Settings: React.FC = () => {
           </List>
         </Paper>
 
-        {/* Privacy */}
         <SectionHeader label={t.sectionPrivacy} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
@@ -216,14 +207,10 @@ const Settings: React.FC = () => {
           </List>
         </Paper>
 
-        {/* About */}
         <SectionHeader label={t.about} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
-            <ListItem
-              sx={{ py: 1.5, cursor: 'pointer', userSelect: 'none' }}
-              onClick={handleVersionTap}
-            >
+            <ListItem sx={{ py: 1.5, cursor: 'pointer', userSelect: 'none' }} onClick={handleVersionTap}>
               <ListItemIcon><InfoIcon /></ListItemIcon>
               <ListItemText
                 primary="Version"
@@ -242,7 +229,6 @@ const Settings: React.FC = () => {
                   </Box>
                 }
               />
-              {/* 解除前後とも chevron を表示し、解除後は /labs 遷移を表現 */}
               <ChevronRightIcon sx={{ color: expUnlocked ? 'warning.main' : 'text.disabled', transition: 'color 0.2s' }} />
             </ListItem>
           </List>
@@ -250,12 +236,7 @@ const Settings: React.FC = () => {
 
       </Container>
 
-      {/* 警告ダイアログ */}
-      <Dialog
-        open={showWarning}
-        onClose={() => setShowWarning(false)}
-        PaperProps={{ sx: { borderRadius: '16px', mx: 2 } }}
-      >
+      <Dialog open={showWarning} onClose={() => setShowWarning(false)} PaperProps={{ sx: { borderRadius: '16px', mx: 2 } }}>
         <DialogTitle sx={{ fontWeight: 700, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
           <WarningIcon color="warning" />
           {language === 'ja' ? '実験的機能' : 'Experimental Features'}
@@ -268,24 +249,15 @@ const Settings: React.FC = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            onClick={() => setShowWarning(false)}
-            sx={{ textTransform: 'none', borderRadius: '10px', color: 'text.secondary' }}
-          >
+          <Button onClick={() => setShowWarning(false)} sx={{ textTransform: 'none', borderRadius: '10px', color: 'text.secondary' }}>
             {language === 'ja' ? 'キャンセル' : 'Cancel'}
           </Button>
-          <Button
-            onClick={handleWarningOk}
-            variant="contained"
-            color="warning"
-            sx={{ textTransform: 'none', borderRadius: '10px' }}
-          >
+          <Button onClick={handleWarningOk} variant="contained" color="warning" sx={{ textTransform: 'none', borderRadius: '10px' }}>
             {language === 'ja' ? '理解した上で解除する' : 'I understand, unlock'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* カウントダウンスナック */}
       <Snackbar
         open={!!snackMsg}
         autoHideDuration={1000}
