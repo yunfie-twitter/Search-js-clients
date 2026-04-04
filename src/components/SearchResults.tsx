@@ -21,6 +21,11 @@ import RelatedSearchesCard from './RelatedSearchesCard';
 import MediaCard from './MediaCard';
 import ItemBreadcrumbURL from './ItemBreadcrumbURL';
 
+// モジュールスコープに定数として置くことで、レンダリングのたびに
+// 新しい配列が生成されるのを防ぐ
+const GRID_SKELETON_KEYS = Array.from({ length: 12 }, (_, i) => i);
+const LIST_SKELETON_KEYS = Array.from({ length: 5 }, (_, i) => i);
+
 const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string }> = ({ item, query, type }) => {
   const setSelectedItem = useSearchStore((state) => state.setSelectedItem);
   
@@ -122,11 +127,21 @@ const PreviewDialog: React.FC<any> = ({ selectedItem, setSelectedItem, t }) => (
 );
 
 const SearchResults: React.FC = () => {
-  const { results, isInitialLoading, query, type, selectedItem, setSelectedItem, language, page } = useSearchStore();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const t = translations[language];
+  // セレクタ関数で必要なフィールドだけ購読し、無関係なフィールドの
+  // 変更による再レンダリングを防ぐ
+  const results        = useSearchStore((s) => s.results);
+  const isInitialLoading = useSearchStore((s) => s.isInitialLoading);
+  const query          = useSearchStore((s) => s.query);
+  const type           = useSearchStore((s) => s.type);
+  const selectedItem   = useSearchStore((s) => s.selectedItem);
+  const setSelectedItem = useSearchStore((s) => s.setSelectedItem);
+  const language       = useSearchStore((s) => s.language);
+  const page           = useSearchStore((s) => s.page);
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const t = React.useMemo(() => translations[language], [language]);
+
+  const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
     setSearchParams({ q: query, t: type, page: value.toString() });
   };
 
@@ -145,7 +160,7 @@ const SearchResults: React.FC = () => {
             gap: { xs: '8px', sm: '16px' }
           }}>
             {isInitialLoading ? (
-              [...Array(12)].map((_, i) => (
+              GRID_SKELETON_KEYS.map((i) => (
                 <Skeleton key={i} variant="rectangular" sx={{ aspectRatio: '16/9', borderRadius: '8px' }} />
               ))
             ) : results.map((item, index) => (
@@ -168,7 +183,7 @@ const SearchResults: React.FC = () => {
           <Box sx={{ display: 'flex', gap: { xs: 0, md: '60px' }, alignItems: 'flex-start' }}>
             <Box sx={{ flex: 1, minWidth: 0, maxWidth: 750 }}>
               {isInitialLoading ? (
-                [...Array(5)].map((_, i) => <LoadingSkeleton key={i} />)
+                LIST_SKELETON_KEYS.map((i) => <LoadingSkeleton key={i} />)
               ) : results.length > 0 ? (
                 <Box>
                   {results.map((item, index) => (

@@ -67,11 +67,16 @@ const getSavedSettings = () => {
   }
 };
 
+// モジュールスコープにキャッシュを持つことで、saveSetting のたびに
+// JSON.parse が走るのを防ぐ
+let settingsCache: Record<string, any> = getSavedSettings();
+
 const saveSetting = (key: string, value: any) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...getSavedSettings(), [key]: value }));
+  settingsCache[key] = value;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settingsCache));
 };
 
-const saved = getSavedSettings();
+const saved = settingsCache;
 
 export const useSearchStore = create<SearchState>((set, get) => ({
   query: '',
@@ -112,7 +117,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
   performSearch: async (q, type, pageNum = 1) => {
     if (!q) return;
-    const { resultsPerPage, safeSearch, searchRegion, searchLang, cacheTtl } = get();
+    const { resultsPerPage, safeSearch, searchRegion, searchLang } = get();
 
     set({ 
       query: q, 
@@ -124,16 +129,15 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     });
 
     try {
+      // 毎回新しい pager を作り、目的ページまで直接スキップする
+      // (旧実装は for ループで全ページ分リクエストを投げていた)
       const pager = createPager(
-        { q, type, lang: searchLang, gl: searchRegion, safe: safeSearch },
+        { q, type, lang: searchLang, gl: searchRegion, safe: safeSearch, page: pageNum },
         resultsPerPage
       );
       set({ pager });
-      
-      let result = null;
-      for (let i = 0; i < pageNum; i++) {
-        result = await pager.next();
-      }
+
+      const result = await pager.next();
 
       const data = result?.data as any;
       const items = Array.isArray(data) ? data : (data?.results || []);

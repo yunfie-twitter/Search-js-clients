@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, memo, useEffect } from 'react';
+import React, { useState, useCallback, useRef, memo, useEffect, useMemo } from 'react';
 import { 
   Paper, InputBase, IconButton, Box, List, ListItem, 
   ListItemButton, ListItemIcon, ListItemText, ClickAwayListener, 
@@ -42,8 +42,10 @@ const SuggestionItem = memo(({ title, isHistory, onSelect, onRemove }: any) => (
 const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'header' }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { language, saveHistory } = useSearchStore();
-  const t = translations[language];
+  const language   = useSearchStore((s) => s.language);
+  const saveHistory = useSearchStore((s) => s.saveHistory);
+  // language が変わった時だけ再計算
+  const t = useMemo(() => translations[language], [language]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDark = theme.palette.mode === 'dark';
@@ -203,7 +205,6 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
 
             <Divider sx={{ height: 24, m: 1, alignSelf: 'center' }} orientation="vertical" />
 
-            {/* 詳細検索ボタン */}
             <IconButton 
               sx={{ p: '10px', color: 'text.secondary' }} 
               onClick={() => setIsAdvancedOpen(true)}

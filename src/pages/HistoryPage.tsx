@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Box, 
   Container, 
@@ -28,8 +28,8 @@ import translations from '../translations';
 const HistoryPage: React.FC = () => {
   const [historyItems, setHistoryItems] = useState<HistoryEntry[]>([]);
   const navigate = useNavigate();
-  const { language } = useSearchStore();
-  const t = translations[language];
+  const language = useSearchStore((s) => s.language);
+  const t = useMemo(() => translations[language], [language]);
   const theme = useTheme();
 
   const refreshHistory = useCallback(() => {
