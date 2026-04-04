@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { useSearchStore } from '../store/useSearchStore';
+import translations from '../translations';
 
 interface Props {
   open: boolean;
@@ -22,7 +23,7 @@ function getDateBefore(days: number): string {
 
 const AdvancedSearchDialog: React.FC<Props> = ({ open, onClose, onSearch, baseQuery }) => {
   const { language } = useSearchStore();
-  const isJa = language === 'ja';
+  const t = translations[language];
 
   const [allWords, setAllWords] = useState(baseQuery);
   const [exactPhrase, setExactPhrase] = useState('');
@@ -31,7 +32,6 @@ const AdvancedSearchDialog: React.FC<Props> = ({ open, onClose, onSearch, baseQu
   const [filetype, setFiletype] = useState('');
   const [dateRange, setDateRange] = useState('');
 
-  // ダイアログが開くたびに baseQuery を反映
   React.useEffect(() => {
     if (open) setAllWords(baseQuery);
   }, [open, baseQuery]);
@@ -68,9 +68,7 @@ const AdvancedSearchDialog: React.FC<Props> = ({ open, onClose, onSearch, baseQu
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" fontWeight={600}>
-          {isJa ? '詳細検索' : 'Advanced Search'}
-        </Typography>
+        <Typography variant="h6" fontWeight={600}>{t.advancedSearch}</Typography>
         <IconButton onClick={handleClose}><CloseIcon /></IconButton>
       </DialogTitle>
 
@@ -78,53 +76,46 @@ const AdvancedSearchDialog: React.FC<Props> = ({ open, onClose, onSearch, baseQu
         <Grid container spacing={2} sx={{ mt: 0.5 }}>
           <Grid item xs={12}>
             <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              {isJa ? 'キーワード' : 'Keywords'}
+              {t.advancedKeywords}
             </Typography>
           </Grid>
 
           <Grid item xs={12}>
-            <TextField
-              fullWidth size="small"
-              label={isJa ? 'すべてのワード' : 'All these words'}
-              value={allWords}
-              onChange={e => setAllWords(e.target.value)}
-            />
+            <TextField fullWidth size="small" label={t.advancedAllWords} value={allWords} onChange={e => setAllWords(e.target.value)} />
           </Grid>
 
           <Grid item xs={12}>
             <TextField
               fullWidth size="small"
-              label={isJa ? '完全一致フレーズ' : 'Exact phrase'}
+              label={t.advancedExactPhrase}
               value={exactPhrase}
               onChange={e => setExactPhrase(e.target.value)}
-              helperText={isJa ? '自動的に " " で囲まれます' : 'Wrapped in quotes automatically'}
+              helperText={t.advancedExactPhraseHelp}
             />
           </Grid>
 
           <Grid item xs={12}>
             <TextField
               fullWidth size="small"
-              label={isJa ? '除外ワード（スペース区切り）' : 'Exclude words (space separated)'}
+              label={t.advancedExclude}
               value={excludeWords}
               onChange={e => setExcludeWords(e.target.value)}
-              helperText={isJa ? '自動的に - が付きます' : 'Prefixed with - automatically'}
+              helperText={t.advancedExcludeHelp}
             />
           </Grid>
 
-          <Grid item xs={12}>
-            <Divider />
-          </Grid>
+          <Grid item xs={12}><Divider /></Grid>
 
           <Grid item xs={12}>
             <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              {isJa ? '絞り込み' : 'Filters'}
+              {t.advancedFilters}
             </Typography>
           </Grid>
 
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth size="small"
-              label={isJa ? 'サイト指定 (site:)' : 'Specific site (site:)'}
+              label={t.advancedSite}
               placeholder="e.g. github.com"
               value={site}
               onChange={e => setSite(e.target.value)}
@@ -133,13 +124,9 @@ const AdvancedSearchDialog: React.FC<Props> = ({ open, onClose, onSearch, baseQu
 
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth size="small">
-              <InputLabel>{isJa ? 'ファイルタイプ' : 'File type'}</InputLabel>
-              <Select
-                value={filetype}
-                onChange={e => setFiletype(e.target.value)}
-                label={isJa ? 'ファイルタイプ' : 'File type'}
-              >
-                <MenuItem value="">{isJa ? 'なし' : 'None'}</MenuItem>
+              <InputLabel>{t.advancedFiletype}</InputLabel>
+              <Select value={filetype} onChange={e => setFiletype(e.target.value)} label={t.advancedFiletype}>
+                <MenuItem value="">{t.advancedFiletypeNone}</MenuItem>
                 <MenuItem value="pdf">PDF</MenuItem>
                 <MenuItem value="doc">DOC</MenuItem>
                 <MenuItem value="xls">XLS</MenuItem>
@@ -152,17 +139,13 @@ const AdvancedSearchDialog: React.FC<Props> = ({ open, onClose, onSearch, baseQu
 
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth size="small">
-              <InputLabel>{isJa ? '期間' : 'Date range'}</InputLabel>
-              <Select
-                value={dateRange}
-                onChange={e => setDateRange(e.target.value)}
-                label={isJa ? '期間' : 'Date range'}
-              >
-                <MenuItem value="">{isJa ? 'なし' : 'None'}</MenuItem>
-                <MenuItem value={getDateBefore(1)}>{isJa ? '過去24時間' : 'Past 24 hours'}</MenuItem>
-                <MenuItem value={getDateBefore(7)}>{isJa ? '過去1週間' : 'Past week'}</MenuItem>
-                <MenuItem value={getDateBefore(30)}>{isJa ? '過去1ヶ月' : 'Past month'}</MenuItem>
-                <MenuItem value={getDateBefore(365)}>{isJa ? '過去1年' : 'Past year'}</MenuItem>
+              <InputLabel>{t.advancedDateRange}</InputLabel>
+              <Select value={dateRange} onChange={e => setDateRange(e.target.value)} label={t.advancedDateRange}>
+                <MenuItem value="">{t.advancedDateNone}</MenuItem>
+                <MenuItem value={getDateBefore(1)}>{t.advancedDate24h}</MenuItem>
+                <MenuItem value={getDateBefore(7)}>{t.advancedDateWeek}</MenuItem>
+                <MenuItem value={getDateBefore(30)}>{t.advancedDateMonth}</MenuItem>
+                <MenuItem value={getDateBefore(365)}>{t.advancedDateYear}</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -170,9 +153,7 @@ const AdvancedSearchDialog: React.FC<Props> = ({ open, onClose, onSearch, baseQu
           {buildQuery() && (
             <Grid item xs={12}>
               <Divider sx={{ mb: 1 }} />
-              <Typography variant="caption" color="text.secondary">
-                {isJa ? '生成されるクエリ：' : 'Generated query: '}
-              </Typography>
+              <Typography variant="caption" color="text.secondary">{t.advancedGeneratedQuery}</Typography>
               <Box sx={{
                 fontFamily: 'monospace', mt: 0.5, p: 1.5,
                 backgroundColor: 'action.hover',
@@ -188,12 +169,8 @@ const AdvancedSearchDialog: React.FC<Props> = ({ open, onClose, onSearch, baseQu
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={handleClose} color="inherit">
-          {isJa ? 'キャンセル' : 'Cancel'}
-        </Button>
-        <Button variant="contained" onClick={handleSearch} disabled={!buildQuery().trim()}>
-          {isJa ? '検索する' : 'Search'}
-        </Button>
+        <Button onClick={handleClose} color="inherit">{t.advancedCancel}</Button>
+        <Button variant="contained" onClick={handleSearch} disabled={!buildQuery().trim()}>{t.advancedSubmit}</Button>
       </DialogActions>
     </Dialog>
   );

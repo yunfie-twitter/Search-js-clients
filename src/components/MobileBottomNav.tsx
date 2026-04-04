@@ -8,6 +8,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
+import translations from '../translations';
 
 const NavContainer = styled(Paper)(({ theme }) => ({
   position: 'fixed', 
@@ -67,16 +68,17 @@ const NavLabel = styled(Typography, {
 const MobileBottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { query } = useSearchStore();
+  const { query, language } = useSearchStore();
+  const t = translations[language];
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
   const navItems = useMemo(() => [
-    { label: 'Home', path: '/', icon: <HomeIcon />, color: isDark ? '#bb86fc' : '#6200ee', bgColor: isDark ? 'rgba(187, 134, 252, 0.15)' : '#f3e5f5' },
-    { label: 'Search', path: '/search', icon: <SearchIcon />, color: isDark ? '#ff79c6' : '#e91e63', bgColor: isDark ? 'rgba(255, 121, 198, 0.15)' : '#fce4ec' },
-    { label: 'History', path: '/history', icon: <HistoryIcon />, color: isDark ? '#03dac6' : '#009688', bgColor: isDark ? 'rgba(3, 218, 198, 0.15)' : '#e0f2f1' },
-    { label: 'Settings', path: '/settings', icon: <SettingsIcon />, color: isDark ? '#ffb86c' : '#ff9800', bgColor: isDark ? 'rgba(255, 184, 108, 0.15)' : '#fff3e0' },
-  ], [isDark]);
+    { label: t.navHome, path: '/', icon: <HomeIcon />, color: isDark ? '#bb86fc' : '#6200ee', bgColor: isDark ? 'rgba(187, 134, 252, 0.15)' : '#f3e5f5' },
+    { label: t.navSearch, path: '/search', icon: <SearchIcon />, color: isDark ? '#ff79c6' : '#e91e63', bgColor: isDark ? 'rgba(255, 121, 198, 0.15)' : '#fce4ec' },
+    { label: t.navHistory, path: '/history', icon: <HistoryIcon />, color: isDark ? '#03dac6' : '#009688', bgColor: isDark ? 'rgba(3, 218, 198, 0.15)' : '#e0f2f1' },
+    { label: t.navSettings, path: '/settings', icon: <SettingsIcon />, color: isDark ? '#ffb86c' : '#ff9800', bgColor: isDark ? 'rgba(255, 184, 108, 0.15)' : '#fff3e0' },
+  ], [isDark, t]);
 
   const currentPath = location.pathname;
 

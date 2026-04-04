@@ -13,7 +13,7 @@ import {
   Breadcrumbs
 } from '@mui/material';
 import { Close as CloseIcon, NavigateNext as NavigateNextIcon } from '@mui/icons-material';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
 import { ResultMeta, fetchDetail } from '@yunfie/search-js';
 import translations from '../translations';
@@ -25,7 +25,6 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string }> = 
   const setSelectedItem = useSearchStore((state) => state.setSelectedItem);
   
   const handleOpenPreview = async (e: React.MouseEvent) => {
-    // web検索のときはモーダルを開かず普通にリンクを開く
     if (type === 'web') return;
     e.preventDefault();
     const detail = await fetchDetail({ q: query }, item._idx);
@@ -161,9 +160,9 @@ const SearchResults: React.FC = () => {
             sx={{ mb: 2, '& .MuiBreadcrumbs-li': { fontSize: '14px' } }}
           >
             <MuiLink component={Link} to="/" color="inherit" sx={{ textDecoration: 'none' }}>
-              Home
+              {t.home}
             </MuiLink>
-            <Typography color="text.primary">検索結果: "{query}"</Typography>
+            <Typography color="text.primary">{t.searchResultsFor} "{query}"</Typography>
           </Breadcrumbs>
 
           <Box sx={{ display: 'flex', gap: { xs: 0, md: '60px' }, alignItems: 'flex-start' }}>

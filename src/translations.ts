@@ -1,5 +1,6 @@
 const translations = {
   ja: {
+    // 基本
     search: '検索',
     all: 'すべて',
     images: '画像',
@@ -27,6 +28,11 @@ const translations = {
     advertising: '広告',
     business: 'ビジネス',
     japan: '日本',
+    // ナビゲーション
+    navHome: 'ホーム',
+    navSearch: '検索',
+    navHistory: '履歴',
+    navSettings: '設定',
     // 設定拡充
     resultsPerPage: '1ページあたりの件数',
     defaultSearchType: 'デフォルト検索タイプ',
@@ -53,8 +59,35 @@ const translations = {
     experimentalInstantResultsDesc: '入力しながらリアルタイムで検索結果を表示します',
     experimentalKnowledgePanel: 'ナレッジパネル（β）',
     experimentalKnowledgePanelDesc: 'エンティティの詳細情報をサイドパネルに表示します',
+    saveHistory: '検索履歴を保存する',
+    enableAnimations: 'アニメーションを有効にする',
+    // 詳細検索
+    advancedSearch: '詳細検索',
+    advancedKeywords: 'キーワード',
+    advancedAllWords: 'すべてのワード',
+    advancedExactPhrase: '完全一致フレーズ',
+    advancedExactPhraseHelp: '自動的に " " で囲まれます',
+    advancedExclude: '除外ワード（スペース区切り）',
+    advancedExcludeHelp: '自動的に - が付きます',
+    advancedFilters: '絞り込み',
+    advancedSite: 'サイト指定 (site:)',
+    advancedFiletype: 'ファイルタイプ',
+    advancedFiletypeNone: 'なし',
+    advancedDateRange: '期間',
+    advancedDateNone: 'なし',
+    advancedDate24h: '過去24時間',
+    advancedDateWeek: '過去1週間',
+    advancedDateMonth: '過去1ヶ月',
+    advancedDateYear: '過去1年',
+    advancedGeneratedQuery: '生成されるクエリ：',
+    advancedCancel: 'キャンセル',
+    advancedSubmit: '検索する',
+    // 検索結果
+    searchResultsFor: '検索結果:',
+    home: 'ホーム',
   },
   en: {
+    // Basic
     search: 'Search',
     all: 'All',
     images: 'Images',
@@ -82,6 +115,11 @@ const translations = {
     advertising: 'Advertising',
     business: 'Business',
     japan: 'Japan',
+    // Navigation
+    navHome: 'Home',
+    navSearch: 'Search',
+    navHistory: 'History',
+    navSettings: 'Settings',
     // Settings expansion
     resultsPerPage: 'Results per page',
     defaultSearchType: 'Default search type',
@@ -108,7 +146,36 @@ const translations = {
     experimentalInstantResultsDesc: 'Show search results in real-time as you type',
     experimentalKnowledgePanel: 'Knowledge Panel (β)',
     experimentalKnowledgePanelDesc: 'Show entity details in a side panel',
+    saveHistory: 'Save Search History',
+    enableAnimations: 'Enable Animations',
+    // Advanced Search
+    advancedSearch: 'Advanced Search',
+    advancedKeywords: 'Keywords',
+    advancedAllWords: 'All these words',
+    advancedExactPhrase: 'Exact phrase',
+    advancedExactPhraseHelp: 'Wrapped in quotes automatically',
+    advancedExclude: 'Exclude words (space separated)',
+    advancedExcludeHelp: 'Prefixed with - automatically',
+    advancedFilters: 'Filters',
+    advancedSite: 'Specific site (site:)',
+    advancedFiletype: 'File type',
+    advancedFiletypeNone: 'None',
+    advancedDateRange: 'Date range',
+    advancedDateNone: 'None',
+    advancedDate24h: 'Past 24 hours',
+    advancedDateWeek: 'Past week',
+    advancedDateMonth: 'Past month',
+    advancedDateYear: 'Past year',
+    advancedGeneratedQuery: 'Generated query: ',
+    advancedCancel: 'Cancel',
+    advancedSubmit: 'Search',
+    // Search Results
+    searchResultsFor: 'Search results:',
+    home: 'Home',
   }
 };
+
+export type TranslationKey = keyof typeof translations.ja;
+export type Translations = typeof translations.ja;
 
 export default translations;
