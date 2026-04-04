@@ -67,10 +67,6 @@ const Settings: React.FC = () => {
   } = useSearchStore();
   const t = translations[language];
 
-  const [expAiSummary, setExpAiSummary] = useState(false);
-  const [expInstantResults, setExpInstantResults] = useState(false);
-  const [expKnowledgePanel, setExpKnowledgePanel] = useState(false);
-
   const [tapCount, setTapCount] = useState(0);
   const [expUnlocked, setExpUnlocked] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
@@ -78,7 +74,12 @@ const Settings: React.FC = () => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleVersionTap = useCallback(() => {
-    if (expUnlocked) return;
+    // 解除済みなら /labs へ遷移
+    if (expUnlocked) {
+      triggerHaptic();
+      navigate('/labs');
+      return;
+    }
 
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setTapCount(0), TAP_RESET_MS);
@@ -93,7 +94,6 @@ const Settings: React.FC = () => {
         return 0;
       }
 
-      // 2回目以降（next >= 2）からカウントダウンを表示
       if (next >= 2) {
         setSnackMsg(
           language === 'ja'
@@ -104,16 +104,15 @@ const Settings: React.FC = () => {
 
       return next;
     });
-  }, [expUnlocked, language]);
+  }, [expUnlocked, language, navigate]);
 
   const handleWarningOk = useCallback(() => {
     setShowWarning(false);
     setExpUnlocked(true);
     triggerHaptic();
-    setTimeout(() => {
-      document.getElementById('experimental-section')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  }, []);
+    // 解除後は即座に /labs へ遷移
+    navigate('/labs');
+  }, [navigate]);
 
   const handleBack = () => { triggerHaptic(); navigate(-1); };
 
@@ -217,12 +216,12 @@ const Settings: React.FC = () => {
           </List>
         </Paper>
 
-        {/* About — バージョンを 5 回タップで実験的機能解除 */}
+        {/* About */}
         <SectionHeader label={t.about} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
             <ListItem
-              sx={{ py: 1.5, cursor: expUnlocked ? 'default' : 'pointer', userSelect: 'none' }}
+              sx={{ py: 1.5, cursor: 'pointer', userSelect: 'none' }}
               onClick={handleVersionTap}
             >
               <ListItemIcon><InfoIcon /></ListItemIcon>
@@ -243,44 +242,15 @@ const Settings: React.FC = () => {
                   </Box>
                 }
               />
-              {expUnlocked && (
-                <ChevronRightIcon sx={{ color: 'text.disabled' }} />
-              )}
+              {/* 解除前後とも chevron を表示し、解除後は /labs 遷移を表現 */}
+              <ChevronRightIcon sx={{ color: expUnlocked ? 'warning.main' : 'text.disabled', transition: 'color 0.2s' }} />
             </ListItem>
           </List>
         </Paper>
 
-        {/* 実験的機能セクション：解除後のみ表示 */}
-        {expUnlocked && (
-          <Box id="experimental-section">
-            <SectionHeader label={t.sectionExperimental} />
-            <Alert severity="warning" sx={{ mx: 0, mb: 1.5, borderRadius: '12px', fontSize: '13px' }}>
-              {t.experimentalNote}
-            </Alert>
-            <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-              <List sx={{ py: 0 }}>
-                <SwitchItem icon={<ScienceIcon />} primary={t.experimentalAiSummary} secondary={t.experimentalAiSummaryDesc} checked={expAiSummary} onChange={setExpAiSummary} chip="β" disabled />
-                <Divider />
-                <SwitchItem icon={<ScienceIcon />} primary={t.experimentalInstantResults} secondary={t.experimentalInstantResultsDesc} checked={expInstantResults} onChange={setExpInstantResults} chip="β" disabled />
-                <Divider />
-                <SwitchItem icon={<ScienceIcon />} primary={t.experimentalKnowledgePanel} secondary={t.experimentalKnowledgePanelDesc} checked={expKnowledgePanel} onChange={setExpKnowledgePanel} chip="β" disabled />
-                <Divider />
-                <SwitchItem
-                  icon={<ImageSearchIcon />}
-                  primary={t.experimentalImageSearch}
-                  secondary={t.experimentalImageSearchDesc}
-                  checked={expImageSearch}
-                  onChange={setExpImageSearch}
-                  chip="β"
-                />
-              </List>
-            </Paper>
-          </Box>
-        )}
-
       </Container>
 
-      {/* 警告ダイアログ（絵文字なし） */}
+      {/* 警告ダイアログ */}
       <Dialog
         open={showWarning}
         onClose={() => setShowWarning(false)}

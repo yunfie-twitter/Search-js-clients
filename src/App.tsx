@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import SearchPage from './pages/SearchPage';
 import HistoryPage from './pages/HistoryPage';
 import Settings from './pages/Settings';
+import Labs from './pages/Labs';
 import MobileBottomNav from './components/MobileBottomNav';
 import GlobalAppStyles from './components/GlobalAppStyles';
 
@@ -41,6 +42,7 @@ const AppContent: React.FC = () => {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/labs" element={<Labs />} />
       </Routes>
       <MobileBottomNav />
     </Box>
