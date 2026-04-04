@@ -10,6 +10,9 @@ import {
   removeHistory
 } from '@yunfie/search-js';
 
+export type SafeSearchLevel = 'off' | 'moderate' | 'strict';
+export type DefaultSearchType = 'web' | 'image' | 'video' | 'news';
+
 interface SearchState {
   query: string;
   type: SearchType;
@@ -24,7 +27,15 @@ interface SearchState {
   saveHistory: boolean;
   enableAnimations: boolean;
   page: number;
-  
+
+  // 拡充した設定
+  resultsPerPage: 10 | 20 | 50;
+  defaultSearchType: DefaultSearchType;
+  safeSearch: SafeSearchLevel;
+  cacheTtl: 0 | 5 | 30 | 60;
+  searchRegion: string;
+  searchLang: string;
+
   // Actions
   setQuery: (q: string) => void;
   setType: (t: SearchType) => void;
@@ -34,7 +45,13 @@ interface SearchState {
   setSaveHistory: (save: boolean) => void;
   setEnableAnimations: (enable: boolean) => void;
   setPage: (p: number) => void;
-  
+  setResultsPerPage: (n: 10 | 20 | 50) => void;
+  setDefaultSearchType: (t: DefaultSearchType) => void;
+  setSafeSearch: (level: SafeSearchLevel) => void;
+  setCacheTtl: (ttl: 0 | 5 | 30 | 60) => void;
+  setSearchRegion: (region: string) => void;
+  setSearchLang: (lang: string) => void;
+
   performSearch: (q: string, type: SearchType, page?: number) => Promise<void>;
   resetSearch: () => void;
 }
@@ -48,6 +65,10 @@ const getSavedSettings = () => {
   } catch {
     return {};
   }
+};
+
+const saveSetting = (key: string, value: any) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...getSavedSettings(), [key]: value }));
 };
 
 const saved = getSavedSettings();
@@ -67,30 +88,32 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   enableAnimations: saved.enableAnimations !== undefined ? saved.enableAnimations : true,
   page: 1,
 
+  resultsPerPage: saved.resultsPerPage || 20,
+  defaultSearchType: saved.defaultSearchType || 'web',
+  safeSearch: saved.safeSearch || 'moderate',
+  cacheTtl: saved.cacheTtl !== undefined ? saved.cacheTtl : 5,
+  searchRegion: saved.searchRegion || 'JP',
+  searchLang: saved.searchLang || 'ja',
+
   setQuery: (q) => set({ query: q }),
   setType: (t) => set({ type: t }),
   setSelectedItem: (item) => set({ selectedItem: item }),
-  setLanguage: (lang) => {
-    set({ language: lang });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...getSavedSettings(), language: lang }));
-  },
-  setThemeMode: (mode) => {
-    set({ themeMode: mode });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...getSavedSettings(), themeMode: mode }));
-  },
-  setSaveHistory: (save) => {
-    set({ saveHistory: save });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...getSavedSettings(), saveHistory: save }));
-  },
-  setEnableAnimations: (enable) => {
-    set({ enableAnimations: enable });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...getSavedSettings(), enableAnimations: enable }));
-  },
+  setLanguage: (lang) => { set({ language: lang }); saveSetting('language', lang); },
+  setThemeMode: (mode) => { set({ themeMode: mode }); saveSetting('themeMode', mode); },
+  setSaveHistory: (save) => { set({ saveHistory: save }); saveSetting('saveHistory', save); },
+  setEnableAnimations: (enable) => { set({ enableAnimations: enable }); saveSetting('enableAnimations', enable); },
   setPage: (p) => set({ page: p }),
+  setResultsPerPage: (n) => { set({ resultsPerPage: n }); saveSetting('resultsPerPage', n); },
+  setDefaultSearchType: (t) => { set({ defaultSearchType: t }); saveSetting('defaultSearchType', t); },
+  setSafeSearch: (level) => { set({ safeSearch: level }); saveSetting('safeSearch', level); },
+  setCacheTtl: (ttl) => { set({ cacheTtl: ttl }); saveSetting('cacheTtl', ttl); },
+  setSearchRegion: (region) => { set({ searchRegion: region }); saveSetting('searchRegion', region); },
+  setSearchLang: (lang) => { set({ searchLang: lang }); saveSetting('searchLang', lang); },
 
   performSearch: async (q, type, pageNum = 1) => {
     if (!q) return;
-    
+    const { resultsPerPage, safeSearch, searchRegion, searchLang, cacheTtl } = get();
+
     set({ 
       query: q, 
       type: type, 
@@ -101,7 +124,10 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     });
 
     try {
-      const pager = createPager({ q, type, lang: get().language }, 20);
+      const pager = createPager(
+        { q, type, lang: searchLang, gl: searchRegion, safe: safeSearch },
+        resultsPerPage
+      );
       set({ pager });
       
       let result = null;
@@ -113,16 +139,9 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       const items = Array.isArray(data) ? data : (data?.results || []);
 
       if (result && result.ok && items.length > 0) {
-        set({ 
-          results: items, 
-          isInitialLoading: false 
-        });
+        set({ results: items, isInitialLoading: false });
       } else {
-        set({ 
-          results: [],
-          error: result?.error || 'Search failed', 
-          isInitialLoading: false 
-        });
+        set({ results: [], error: result?.error || 'Search failed', isInitialLoading: false });
       }
     } catch (e) {
       set({ results: [], error: 'An unexpected error occurred', isInitialLoading: false });
@@ -130,12 +149,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   },
 
   resetSearch: () => {
-    set({ 
-      results: [], 
-      pager: null, 
-      error: null, 
-      isInitialLoading: false, 
-      isLoading: false 
-    });
+    set({ results: [], pager: null, error: null, isInitialLoading: false, isLoading: false });
   }
 }));
