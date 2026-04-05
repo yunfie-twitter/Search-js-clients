@@ -2,11 +2,8 @@ import React, { useState, useCallback, useRef } from 'react';
 import {
   Box,
   Container,
-  Typography,
   List,
-  Divider,
   Paper,
-  MenuItem,
   ListItem,
   ListItemIcon,
   ListItemText,
@@ -20,19 +17,8 @@ import {
   Chip,
 } from '@mui/material';
 import {
-  DarkModeOutlined as DarkModeIcon,
-  LanguageOutlined as LanguageIcon,
   HistoryOutlined as HistoryIcon,
-  AnimationOutlined as AnimationIcon,
   InfoOutlined as InfoIcon,
-  SearchOutlined as SearchIcon,
-  FilterListOutlined as FilterIcon,
-  TimerOutlined as TimerIcon,
-  PublicOutlined as PublicIcon,
-  TranslateOutlined as TranslateIcon,
-  ScienceOutlined as ScienceIcon,
-  FormatListNumberedOutlined as ListIcon,
-  ImageSearchOutlined as ImageSearchIcon,
   ChevronRightOutlined as ChevronRightIcon,
   WarningAmberOutlined as WarningIcon,
 } from '@mui/icons-material';
@@ -41,10 +27,12 @@ import { useSearchStore } from '../store/useSearchStore';
 import translations from '../translations';
 import { triggerHaptic } from '../utils/haptics';
 import SectionHeader from '../components/settings/SectionHeader';
-import SelectItem from '../components/settings/SelectItem';
 import SwitchItem from '../components/settings/SwitchItem';
 import PageHeader from '../components/PageHeader';
 import { BottomNavSpacer } from '../components/MobileBottomNav';
+import SettingsDisplaySection from '../components/settings/SettingsDisplaySection';
+import SettingsSearchSection from '../components/settings/SettingsSearchSection';
+import SettingsRegionSection from '../components/settings/SettingsRegionSection';
 
 const TAP_REQUIRED = 5;
 const TAP_RESET_MS = 2000;
@@ -72,11 +60,7 @@ const Settings: React.FC = () => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleVersionTap = useCallback(() => {
-    if (expUnlocked) {
-      triggerHaptic();
-      navigate('/labs');
-      return;
-    }
+    if (expUnlocked) { triggerHaptic(); navigate('/labs'); return; }
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setTapCount(0), TAP_RESET_MS);
     setTapCount((prev) => {
@@ -104,83 +88,27 @@ const Settings: React.FC = () => {
       <PageHeader title={t.settings} />
 
       <Container maxWidth="sm" sx={{ py: 2, flexGrow: 1 }}>
-        <SectionHeader label={t.sectionDisplay} />
-        <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-          <List sx={{ py: 0 }}>
-            <SelectItem icon={<DarkModeIcon />} primary={t.appearance} secondary={themeMode.charAt(0).toUpperCase() + themeMode.slice(1)} value={themeMode} onChange={setThemeMode}>
-              <MenuItem value="light">Light</MenuItem>
-              <MenuItem value="dark">Dark</MenuItem>
-              <MenuItem value="system">System</MenuItem>
-            </SelectItem>
-            <Divider />
-            <SwitchItem icon={<AnimationIcon />} primary={t.enableAnimations} checked={enableAnimations} onChange={setEnableAnimations} />
-          </List>
-        </Paper>
 
-        <SectionHeader label={t.language} />
-        <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-          <List sx={{ py: 0 }}>
-            <SelectItem icon={<LanguageIcon />} primary={t.language} secondary={language === 'ja' ? '日本語' : 'English'} value={language} onChange={setLanguage}>
-              <MenuItem value="ja">日本語</MenuItem>
-              <MenuItem value="en">English</MenuItem>
-            </SelectItem>
-          </List>
-        </Paper>
+        <SettingsDisplaySection
+          t={t}
+          themeMode={themeMode} setThemeMode={setThemeMode}
+          enableAnimations={enableAnimations} setEnableAnimations={setEnableAnimations}
+          language={language} setLanguage={setLanguage}
+        />
 
-        <SectionHeader label={t.sectionSearch} />
-        <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-          <List sx={{ py: 0 }}>
-            <SelectItem icon={<ListIcon />} primary={t.resultsPerPage} value={String(resultsPerPage)} onChange={(v) => setResultsPerPage(Number(v) as any)}>
-              <MenuItem value="10">10</MenuItem>
-              <MenuItem value="20">20</MenuItem>
-              <MenuItem value="50">50</MenuItem>
-            </SelectItem>
-            <Divider />
-            <SelectItem icon={<SearchIcon />} primary={t.defaultSearchType} value={defaultSearchType} onChange={setDefaultSearchType}>
-              <MenuItem value="web">{t.all}</MenuItem>
-              <MenuItem value="image">{t.images}</MenuItem>
-              <MenuItem value="video">{t.videos}</MenuItem>
-              <MenuItem value="news">{t.news}</MenuItem>
-            </SelectItem>
-            <Divider />
-            <SelectItem icon={<FilterIcon />} primary={t.safeSearch} value={safeSearch} onChange={setSafeSearch}>
-              <MenuItem value="off">{t.safeSearchOff}</MenuItem>
-              <MenuItem value="moderate">{t.safeSearchModerate}</MenuItem>
-              <MenuItem value="strict">{t.safeSearchStrict}</MenuItem>
-            </SelectItem>
-            <Divider />
-            <SelectItem icon={<TimerIcon />} primary={t.cacheTtl} value={String(cacheTtl)} onChange={(v) => setCacheTtl(Number(v) as any)}>
-              <MenuItem value="0">{t.cacheTtlNone}</MenuItem>
-              <MenuItem value="5">{t.cacheTtl5}</MenuItem>
-              <MenuItem value="30">{t.cacheTtl30}</MenuItem>
-              <MenuItem value="60">{t.cacheTtl60}</MenuItem>
-            </SelectItem>
-          </List>
-        </Paper>
+        <SettingsSearchSection
+          t={t}
+          resultsPerPage={resultsPerPage} setResultsPerPage={setResultsPerPage}
+          defaultSearchType={defaultSearchType} setDefaultSearchType={setDefaultSearchType}
+          safeSearch={safeSearch} setSafeSearch={setSafeSearch}
+          cacheTtl={cacheTtl} setCacheTtl={setCacheTtl}
+        />
 
-        <SectionHeader label={t.sectionRegion} />
-        <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-          <List sx={{ py: 0 }}>
-            <SelectItem icon={<PublicIcon />} primary={t.searchRegion} value={searchRegion} onChange={setSearchRegion}>
-              <MenuItem value="JP">Japan (JP)</MenuItem>
-              <MenuItem value="US">United States (US)</MenuItem>
-              <MenuItem value="GB">United Kingdom (GB)</MenuItem>
-              <MenuItem value="KR">Korea (KR)</MenuItem>
-              <MenuItem value="CN">China (CN)</MenuItem>
-              <MenuItem value="DE">Germany (DE)</MenuItem>
-              <MenuItem value="FR">France (FR)</MenuItem>
-            </SelectItem>
-            <Divider />
-            <SelectItem icon={<TranslateIcon />} primary={t.searchLang} value={searchLang} onChange={setSearchLang}>
-              <MenuItem value="ja">日本語 (ja)</MenuItem>
-              <MenuItem value="en">English (en)</MenuItem>
-              <MenuItem value="ko">한국어 (ko)</MenuItem>
-              <MenuItem value="zh-CN">中文 (zh-CN)</MenuItem>
-              <MenuItem value="de">Deutsch (de)</MenuItem>
-              <MenuItem value="fr">Français (fr)</MenuItem>
-            </SelectItem>
-          </List>
-        </Paper>
+        <SettingsRegionSection
+          t={t}
+          searchRegion={searchRegion} setSearchRegion={setSearchRegion}
+          searchLang={searchLang} setSearchLang={setSearchLang}
+        />
 
         <SectionHeader label={t.sectionPrivacy} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
@@ -200,7 +128,11 @@ const Settings: React.FC = () => {
                   <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     1.2.0
                     {expUnlocked && (
-                      <Chip label={language === 'ja' ? '実験的機能解除済' : 'Experimental unlocked'} size="small" color="warning" variant="outlined" sx={{ fontSize: '11px', height: 20 }} />
+                      <Chip
+                        label={language === 'ja' ? '実験的機能解除済' : 'Experimental unlocked'}
+                        size="small" color="warning" variant="outlined"
+                        sx={{ fontSize: '11px', height: 20 }}
+                      />
                     )}
                   </Box>
                 }
@@ -209,6 +141,7 @@ const Settings: React.FC = () => {
             </ListItem>
           </List>
         </Paper>
+
       </Container>
 
       <BottomNavSpacer />
