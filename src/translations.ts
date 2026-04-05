@@ -59,8 +59,8 @@ const translations = {
     experimentalInstantResultsDesc: '入力しながらリアルタイムで検索結果を表示します',
     experimentalKnowledgePanel: 'ナレッジパネル（β）',
     experimentalKnowledgePanelDesc: 'エンティティの詳細情報をサイドパネルに表示します',
-    experimentalImageSearch: 'CLIP画像検索（β）',
-    experimentalImageSearchDesc: 'CLIPモデルを使ったテキスト・画像アップロードによる相山画像検索',
+    experimentalImageSearch: '画像検索（β）',
+    experimentalImageSearchDesc: 'faiss.wholphin.net を使った画像アップロードによる類似画像検索',
     saveHistory: '検索履歴を保存する',
     enableAnimations: 'アニメーションを有効にする',
     // 詳細検索
@@ -87,8 +87,8 @@ const translations = {
     // 検索結果
     searchResultsFor: '検索結果:',
     home: 'ホーム',
-    // CLIP 画像検索
-    imageSearch: 'CLIP画像検索',
+    // 画像検索
+    imageSearch: '画像検索',
     imageSearchByText: 'テキストで検索',
     imageSearchByUpload: '画像で検索',
     imageSearchTextPlaceholder: '画像をテキストで検索...',
@@ -96,7 +96,7 @@ const translations = {
     imageSearchSelectFile: '画像を選択',
     imageSearchError: '検索中にエラーが発生しました。しばらくたってから再度お試しください。',
     imageSearchResultCount: '{n}件の結果が見つかりました',
-    imageSearchEmpty: 'テキストを入力するか画像をアップロードして検索してください',
+    imageSearchEmpty: '画像をアップロードして類似画像を検索してください',
   },
   en: {
     // Basic
@@ -158,8 +158,8 @@ const translations = {
     experimentalInstantResultsDesc: 'Show search results in real-time as you type',
     experimentalKnowledgePanel: 'Knowledge Panel (β)',
     experimentalKnowledgePanelDesc: 'Show entity details in a side panel',
-    experimentalImageSearch: 'CLIP Image Search (β)',
-    experimentalImageSearchDesc: 'Semantic image search by text or image upload using CLIP model',
+    experimentalImageSearch: 'Image Search (β)',
+    experimentalImageSearchDesc: 'Find similar images via upload using faiss.wholphin.net',
     saveHistory: 'Save Search History',
     enableAnimations: 'Enable Animations',
     // Advanced Search
@@ -186,8 +186,8 @@ const translations = {
     // Search Results
     searchResultsFor: 'Search results:',
     home: 'Home',
-    // CLIP Image Search
-    imageSearch: 'CLIP Image Search',
+    // Image Search
+    imageSearch: 'Image Search',
     imageSearchByText: 'Search by text',
     imageSearchByUpload: 'Search by image',
     imageSearchTextPlaceholder: 'Search images by text...',
@@ -195,7 +195,7 @@ const translations = {
     imageSearchSelectFile: 'Select image',
     imageSearchError: 'An error occurred during search. Please try again later.',
     imageSearchResultCount: '{n} results found',
-    imageSearchEmpty: 'Enter text or upload an image to search',
+    imageSearchEmpty: 'Upload an image to find similar results',
   }
 };
 

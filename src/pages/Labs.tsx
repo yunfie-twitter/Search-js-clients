@@ -1,18 +1,13 @@
 import React, { useState } from 'react';
 import {
-  Box,
-  Container,
-  Typography,
-  List,
-  IconButton,
-  Divider,
-  Paper,
-  Alert,
+  Box, Container, Typography, List,
+  IconButton, Divider, Paper, Alert,
 } from '@mui/material';
 import {
   ArrowBackOutlined as ArrowBackIcon,
-  ScienceOutlined as ScienceIcon,
+  ScienceOutlined  as ScienceIcon,
   ImageSearchOutlined as ImageSearchIcon,
+  SpeedOutlined    as LenisIcon,
   WarningAmberOutlined as WarningIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -24,14 +19,16 @@ import SwitchItem from '../components/settings/SwitchItem';
 
 const Labs: React.FC = () => {
   const navigate = useNavigate();
-  const language      = useSearchStore((s) => s.language);
+  const language       = useSearchStore((s) => s.language);
   const expImageSearch = useSearchStore((s) => s.expImageSearch);
   const setExpImageSearch = useSearchStore((s) => s.setExpImageSearch);
+  const expLenis       = useSearchStore((s) => s.expLenis);
+  const setExpLenis    = useSearchStore((s) => s.setExpLenis);
   const t = React.useMemo(() => translations[language], [language]);
 
-  const [expAiSummary, setExpAiSummary] = useState(false);
-  const [expInstantResults, setExpInstantResults] = useState(false);
-  const [expKnowledgePanel, setExpKnowledgePanel] = useState(false);
+  const [expAiSummary,       setExpAiSummary]       = useState(false);
+  const [expInstantResults,  setExpInstantResults]  = useState(false);
+  const [expKnowledgePanel,  setExpKnowledgePanel]  = useState(false);
 
   const handleBack = () => { triggerHaptic(); navigate(-1); };
 
@@ -41,11 +38,9 @@ const Labs: React.FC = () => {
       <Box sx={{
         p: 2,
         pt: 'calc(env(safe-area-inset-top) + 16px)',
-        display: 'flex',
-        alignItems: 'center',
+        display: 'flex', alignItems: 'center',
         backgroundColor: 'background.paper',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
+        borderBottom: '1px solid', borderColor: 'divider',
       }}>
         <IconButton onClick={handleBack} sx={{ mr: 1 }}><ArrowBackIcon /></IconButton>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -57,47 +52,32 @@ const Labs: React.FC = () => {
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2, pb: 8, flexGrow: 1 }}>
-
-        <Alert
-          severity="warning"
-          icon={<WarningIcon />}
-          sx={{ mb: 2, borderRadius: '12px', fontSize: '13px' }}
-        >
+        <Alert severity="warning" icon={<WarningIcon />}
+          sx={{ mb: 2, borderRadius: '12px', fontSize: '13px' }}>
           {t.experimentalNote}
         </Alert>
 
-        <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+        {/* ─ スクロール ─ */}
+        <SectionHeader title={language === 'ja' ? 'スクロール' : 'Scroll'} />
+        <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider', mb: 2 }}>
           <List sx={{ py: 0 }}>
             <SwitchItem
-              icon={<ScienceIcon />}
-              primary={t.experimentalAiSummary}
-              secondary={t.experimentalAiSummaryDesc}
-              checked={expAiSummary}
-              onChange={setExpAiSummary}
+              icon={<LenisIcon />}
+              primary={language === 'ja' ? 'Lenis 慣性スクロール（β）' : 'Lenis Inertia Scroll (β)'}
+              secondary={language === 'ja'
+                ? 'lenis.js による滑らかな慣性スクロール。要 npm install lenis。'
+                : 'Smooth inertia scrolling powered by lenis.js. Requires npm install lenis.'}
+              checked={expLenis}
+              onChange={setExpLenis}
               chip="β"
-              disabled
             />
-            <Divider />
-            <SwitchItem
-              icon={<ScienceIcon />}
-              primary={t.experimentalInstantResults}
-              secondary={t.experimentalInstantResultsDesc}
-              checked={expInstantResults}
-              onChange={setExpInstantResults}
-              chip="β"
-              disabled
-            />
-            <Divider />
-            <SwitchItem
-              icon={<ScienceIcon />}
-              primary={t.experimentalKnowledgePanel}
-              secondary={t.experimentalKnowledgePanelDesc}
-              checked={expKnowledgePanel}
-              onChange={setExpKnowledgePanel}
-              chip="β"
-              disabled
-            />
-            <Divider />
+          </List>
+        </Paper>
+
+        {/* ─ 検索 ─ */}
+        <SectionHeader title={language === 'ja' ? '検索機能' : 'Search'} />
+        <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider', mb: 2 }}>
+          <List sx={{ py: 0 }}>
             <SwitchItem
               icon={<ImageSearchIcon />}
               primary={t.experimentalImageSearch}
@@ -109,6 +89,38 @@ const Labs: React.FC = () => {
           </List>
         </Paper>
 
+        {/* ─ 開発中（無効）─ */}
+        <SectionHeader title={language === 'ja' ? '開発中' : 'Coming Soon'} />
+        <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+          <List sx={{ py: 0 }}>
+            <SwitchItem
+              icon={<ScienceIcon />}
+              primary={t.experimentalAiSummary}
+              secondary={t.experimentalAiSummaryDesc}
+              checked={expAiSummary}
+              onChange={setExpAiSummary}
+              chip="β" disabled
+            />
+            <Divider />
+            <SwitchItem
+              icon={<ScienceIcon />}
+              primary={t.experimentalInstantResults}
+              secondary={t.experimentalInstantResultsDesc}
+              checked={expInstantResults}
+              onChange={setExpInstantResults}
+              chip="β" disabled
+            />
+            <Divider />
+            <SwitchItem
+              icon={<ScienceIcon />}
+              primary={t.experimentalKnowledgePanel}
+              secondary={t.experimentalKnowledgePanelDesc}
+              checked={expKnowledgePanel}
+              onChange={setExpKnowledgePanel}
+              chip="β" disabled
+            />
+          </List>
+        </Paper>
       </Container>
     </Box>
   );

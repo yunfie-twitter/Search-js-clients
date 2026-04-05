@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import { 
-  SearchType, 
-  ResultMeta, 
-  ResultDetail, 
-  Pager, 
+import {
+  SearchType,
+  ResultMeta,
+  ResultDetail,
+  Pager,
   createPager,
   getHistory,
   clearHistory,
@@ -37,6 +37,7 @@ interface SearchState {
 
   // 実験的機能
   expImageSearch: boolean;
+  expLenis: boolean;        // Lenis 慣性スクロール
   expUnlocked: boolean;
 
   // Actions
@@ -55,6 +56,7 @@ interface SearchState {
   setSearchRegion: (region: string) => void;
   setSearchLang: (lang: string) => void;
   setExpImageSearch: (v: boolean) => void;
+  setExpLenis: (v: boolean) => void;
   setExpUnlocked: (v: boolean) => void;
 
   performSearch: (q: string, type: SearchType, page?: number) => Promise<void>;
@@ -104,7 +106,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   searchLang: saved.searchLang || 'ja',
 
   expImageSearch: saved.expImageSearch !== undefined ? saved.expImageSearch : false,
-  expUnlocked: saved.expUnlocked !== undefined ? saved.expUnlocked : false,
+  expLenis:       saved.expLenis       !== undefined ? saved.expLenis       : false,
+  expUnlocked:    saved.expUnlocked    !== undefined ? saved.expUnlocked    : false,
 
   setQuery: (q) => set({ query: q }),
   setType: (t) => set({ type: t }),
@@ -121,19 +124,20 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   setSearchRegion: (region) => { set({ searchRegion: region }); saveSetting('searchRegion', region); },
   setSearchLang: (lang) => { set({ searchLang: lang }); saveSetting('searchLang', lang); },
   setExpImageSearch: (v) => { set({ expImageSearch: v }); saveSetting('expImageSearch', v); },
+  setExpLenis: (v) => { set({ expLenis: v }); saveSetting('expLenis', v); },
   setExpUnlocked: (v) => { set({ expUnlocked: v }); saveSetting('expUnlocked', v); },
 
   performSearch: async (q, type, pageNum = 1) => {
     if (!q) return;
     const { resultsPerPage, safeSearch, searchRegion, searchLang } = get();
 
-    set({ 
-      query: q, 
-      type: type, 
+    set({
+      query: q,
+      type: type,
       page: pageNum,
-      isInitialLoading: true, 
-      results: [], 
-      error: null 
+      isInitialLoading: true,
+      results: [],
+      error: null
     });
 
     try {
@@ -148,7 +152,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         result = await pager.next();
       }
 
-      const data = result?.data as any;
+      const data  = result?.data as any;
       const items = Array.isArray(data) ? data : (data?.results || []);
 
       if (result && result.ok && items.length > 0) {

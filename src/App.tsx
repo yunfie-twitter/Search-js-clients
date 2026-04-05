@@ -6,6 +6,14 @@ import { API_BASE } from './config';
 import { useAppTheme } from './theme';
 import GlobalAppStyles from './components/GlobalAppStyles';
 import AppRoutes from './AppRoutes';
+import { useSearchStore } from './store/useSearchStore';
+import { useLenis } from './hooks/useLenis';
+
+const AppInner: React.FC = () => {
+  const expLenis = useSearchStore((s) => s.expLenis);
+  useLenis(expLenis);
+  return <AppRoutes />;
+};
 
 const App: React.FC = () => {
   const theme = useAppTheme();
@@ -19,7 +27,7 @@ const App: React.FC = () => {
       <CssBaseline />
       <GlobalAppStyles />
       <BrowserRouter>
-        <AppRoutes />
+        <AppInner />
       </BrowserRouter>
     </ThemeProvider>
   );

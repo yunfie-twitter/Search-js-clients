@@ -37,7 +37,6 @@ export const useAppTheme = () => {
       },
       divider: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)',
     },
-
     typography: {
       fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
       h1: { fontWeight: 700, letterSpacing: '-0.022em', lineHeight: 1.1 },
@@ -53,9 +52,7 @@ export const useAppTheme = () => {
       subtitle1: { fontWeight: 500, letterSpacing: '-0.005em' },
       subtitle2: { fontWeight: 500, letterSpacing: '0em' },
     },
-
     shape: { borderRadius: 12 },
-
     components: {
       MuiCssBaseline: {
         styleOverrides: {
@@ -65,17 +62,32 @@ export const useAppTheme = () => {
             colorScheme: isDark ? 'dark' : 'light',
             margin: 0, padding: 0,
             width: '100%', height: '100%',
+            // オーバースクロールでヘッダーが動かないように
             overscrollBehavior: 'none',
             overflow: 'hidden',
           },
           '#root': {
             width: '100%', height: '100%',
             display: 'flex', flexDirection: 'column',
+            // ここだけスクロール可能にする（bodyはoverflowHidden）
             overflowY: 'auto',
+            overflowX: 'hidden',
             WebkitOverflowScrolling: 'touch',
-            scrollBehavior: 'smooth',
+            // オーバースクロールをrootで吸収
+            overscrollBehaviorY: 'contain',
           },
           '& a': { color: isDark ? '#0a84ff' : '#007aff' },
+        },
+      },
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            // position:sticky が overscrollで動かないよう top:0 固定
+            top: 0,
+            // transform を無効化してオーバースクロール追従を防ぐ
+            transform: 'none !important',
+            willChange: 'auto',
+          },
         },
       },
       MuiButton: {

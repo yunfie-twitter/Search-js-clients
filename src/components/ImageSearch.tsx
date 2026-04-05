@@ -1,33 +1,21 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, memo } from 'react';
 import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Tab,
-  Tabs,
-  Paper,
-  CircularProgress,
-  ImageList,
-  ImageListItem,
-  ImageListItemBar,
-  IconButton,
-  Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
+  Box, Typography, Button, Paper,
+  CircularProgress, ImageList, ImageListItem,
+  ImageListItemBar, IconButton, Tooltip,
+  Dialog, DialogTitle, DialogContent,
+  DialogContentText, DialogActions, useTheme,
 } from '@mui/material';
 import {
-  SearchOutlined as SearchIcon,
   UploadFileOutlined as UploadIcon,
-  OpenInNewOutlined as OpenInNewIcon,
+  OpenInNewOutlined  as OpenInNewIcon,
   ErrorOutlineOutlined as ErrorIcon,
+  SearchOutlined as SearchIcon,
 } from '@mui/icons-material';
 import { useSearchStore } from '../store/useSearchStore';
 import translations from '../translations';
 
+// ホスト固定
 const FAISS_BASE = 'https://faiss.wholphin.net';
 
 interface ImageResult {
@@ -40,47 +28,31 @@ interface ImageResult {
 const ImageSearch: React.FC = () => {
   const language = useSearchStore((s) => s.language);
   const t = React.useMemo(() => translations[language], [language]);
+  const theme  = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
-  const [tab, setTab] = useState<0 | 1>(0);
-  const [textQuery, setTextQuery] = useState('');
-  const [results, setResults] = useState<ImageResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [results,      setResults]      = useState<ImageResult[]>([]);
+  const [loading,      setLoading]      = useState(false);
+  const [errorMsg,     setErrorMsg]     = useState<string | null>(null);
+  const [previewSrc,   setPreviewSrc]   = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const showError = useCallback((msg: string) => {
-    setErrorMsg(msg);
-  }, []);
-
-  const handleTextSearch = useCallback(async () => {
-    if (!textQuery.trim()) return;
-    setLoading(true);
-    setResults([]);
-    try {
-      const res = await fetch(`${FAISS_BASE}/search/text`, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: textQuery.trim(), top_k: 20 }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const items: ImageResult[] = Array.isArray(data)
-        ? data
-        : (data.results ?? data.items ?? []);
-      setResults(items);
-    } catch (e: any) {
-      showError(e?.message ? `${t.imageSearchError} (${e.message})` : t.imageSearchError);
-    } finally {
-      setLoading(false);
-    }
-  }, [textQuery, t, showError]);
+  const showError = useCallback((msg: string) => setErrorMsg(msg), []);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setSelectedFile(file);
+    setPreviewSrc(URL.createObjectURL(file));
+    setResults([]);
+  }, []);
+
+  // ドラッグ&ドロップ対応
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
     setSelectedFile(file);
     setPreviewSrc(URL.createObjectURL(file));
     setResults([]);
@@ -94,15 +66,12 @@ const ImageSearch: React.FC = () => {
       const form = new FormData();
       form.append('file', selectedFile);
       const res = await fetch(`${FAISS_BASE}/search/upload?top_k=20`, {
-        method: 'POST',
-        mode: 'cors',
-        body: form,
+        method: 'POST', mode: 'cors', body: form,
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const data  = await res.json();
       const items: ImageResult[] = Array.isArray(data)
-        ? data
-        : (data.results ?? data.items ?? []);
+        ? data : (data.results ?? data.items ?? []);
       setResults(items);
     } catch (e: any) {
       showError(e?.message ? `${t.imageSearchError} (${e.message})` : t.imageSearchError);
@@ -111,82 +80,99 @@ const ImageSearch: React.FC = () => {
     }
   }, [selectedFile, t, showError]);
 
+  const dropBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
+  const dropBg     = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
+
   return (
     <Box sx={{ width: '100%', maxWidth: 900, mx: 'auto', mt: 3, px: { xs: 2, md: 0 } }}>
+
+      {/* ── アップロードエリア ── */}
       <Paper
         elevation={0}
-        sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
+        sx={{
+          borderRadius: '20px',
+          border: `2px dashed ${dropBorder}`,
+          backgroundColor: dropBg,
+          p: 4,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', gap: 2,
+          cursor: 'pointer',
+          transition: 'border-color 200ms, background-color 200ms',
+          '&:hover': {
+            borderColor: isDark ? 'rgba(10,132,255,0.5)' : 'rgba(0,122,255,0.4)',
+            backgroundColor: isDark ? 'rgba(10,132,255,0.05)' : 'rgba(0,122,255,0.03)',
+          },
+        }}
+        onClick={() => !selectedFile && fileInputRef.current?.click()}
       >
-        <Tabs
-          value={tab}
-          onChange={(_, v) => { setTab(v); setResults([]); }}
-          sx={{ borderBottom: '1px solid', borderColor: 'divider', px: 2 }}
-        >
-          <Tab label={t.imageSearchByText} icon={<SearchIcon fontSize="small" />} iconPosition="start" sx={{ textTransform: 'none', minHeight: 48 }} />
-          <Tab label={t.imageSearchByUpload} icon={<UploadIcon fontSize="small" />} iconPosition="start" sx={{ textTransform: 'none', minHeight: 48 }} />
-        </Tabs>
+        <input
+          ref={fileInputRef}
+          type="file" accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
 
-        <Box sx={{ p: 3 }}>
-          {tab === 0 ? (
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder={t.imageSearchTextPlaceholder}
-                value={textQuery}
-                onChange={(e) => setTextQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleTextSearch()}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-              />
+        {previewSrc ? (
+          // プレビュー表示
+          <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <Box
+              component="img" src={previewSrc} alt="preview"
+              sx={{ maxHeight: 240, maxWidth: '100%', borderRadius: '12px', objectFit: 'contain', boxShadow: '0 4px 24px rgba(0,0,0,0.12)' }}
+            />
+            <Box sx={{ display: 'flex', gap: 1.5 }}>
               <Button
-                variant="contained"
-                onClick={handleTextSearch}
-                disabled={loading || !textQuery.trim()}
-                sx={{ borderRadius: '10px', minWidth: 100, textTransform: 'none' }}
-              >
-                {loading ? <CircularProgress size={18} color="inherit" /> : t.imageSearchSearch}
-              </Button>
-            </Box>
-          ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
-              />
-              <Button
-                variant="outlined"
-                startIcon={<UploadIcon />}
-                onClick={() => fileInputRef.current?.click()}
-                sx={{ borderRadius: '10px', textTransform: 'none' }}
+                variant="outlined" size="small"
+                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                sx={{ borderRadius: '10px', textTransform: 'none', fontSize: '13px' }}
               >
                 {t.imageSearchSelectFile}
               </Button>
-              {previewSrc && (
-                <Box
-                  component="img"
-                  src={previewSrc}
-                  alt="preview"
-                  sx={{ maxHeight: 200, maxWidth: '100%', borderRadius: '8px', objectFit: 'contain' }}
-                />
-              )}
-              {selectedFile && (
-                <Button
-                  variant="contained"
-                  onClick={handleUploadSearch}
-                  disabled={loading}
-                  sx={{ borderRadius: '10px', minWidth: 160, textTransform: 'none' }}
-                >
-                  {loading ? <CircularProgress size={18} color="inherit" /> : t.imageSearchSearch}
-                </Button>
-              )}
+              <Button
+                variant="contained" size="small"
+                startIcon={loading ? <CircularProgress size={14} color="inherit" /> : <SearchIcon />}
+                onClick={(e) => { e.stopPropagation(); handleUploadSearch(); }}
+                disabled={loading}
+                sx={{ borderRadius: '10px', textTransform: 'none', fontSize: '13px', minWidth: 100 }}
+              >
+                {loading ? '検索中...' : t.imageSearchSearch}
+              </Button>
             </Box>
-          )}
-        </Box>
+          </Box>
+        ) : (
+          // 初期状態
+          <>
+            <Box
+              sx={{
+                width: 64, height: 64, borderRadius: '18px',
+                backgroundColor: isDark ? 'rgba(10,132,255,0.18)' : 'rgba(0,122,255,0.10)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <UploadIcon sx={{ fontSize: 32, color: isDark ? '#0a84ff' : '#007aff' }} />
+            </Box>
+            <Typography sx={{ fontWeight: 600, fontSize: '16px', letterSpacing: '-0.01em' }}>
+              {language === 'ja' ? '画像をドロップまたは選択' : 'Drop or select an image'}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', fontSize: '13px' }}>
+              {language === 'ja'
+                ? 'faiss.wholphin.net のインデックスから類似画像を検索します'
+                : 'Finds similar images from the faiss.wholphin.net index'}
+            </Typography>
+            <Button
+              variant="outlined" size="small"
+              startIcon={<UploadIcon />}
+              onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+              sx={{ borderRadius: '10px', textTransform: 'none', mt: 1 }}
+            >
+              {t.imageSearchSelectFile}
+            </Button>
+          </>
+        )}
       </Paper>
 
+      {/* ── 結果グリッド ── */}
       {results.length > 0 && (
         <Box sx={{ mt: 3 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
@@ -196,9 +182,7 @@ const ImageSearch: React.FC = () => {
             {results.map((item, i) => (
               <ImageListItem key={item.id ?? i}>
                 <img
-                  src={item.url}
-                  alt={item.title ?? ''}
-                  loading="lazy"
+                  src={item.url} alt={item.title ?? ''} loading="lazy"
                   style={{ borderRadius: 8, width: '100%', display: 'block' }}
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
@@ -208,14 +192,9 @@ const ImageSearch: React.FC = () => {
                   actionIcon={
                     item.url ? (
                       <Tooltip title={t.visitWebsite}>
-                        <IconButton
-                          size="small"
-                          component="a"
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener"
-                          sx={{ color: 'rgba(255,255,255,0.8)' }}
-                        >
+                        <IconButton size="small" component="a" href={item.url}
+                          target="_blank" rel="noopener"
+                          sx={{ color: 'rgba(255,255,255,0.8)' }}>
                           <OpenInNewIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -231,14 +210,15 @@ const ImageSearch: React.FC = () => {
 
       {!loading && results.length === 0 && !errorMsg && (
         <Box sx={{ mt: 4, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.disabled">{t.imageSearchEmpty}</Typography>
+          <Typography variant="body2" color="text.disabled">
+            {t.imageSearchEmpty}
+          </Typography>
         </Box>
       )}
 
-      {/* エラーモーダル */}
+      {/* ── エラー ── */}
       <Dialog
-        open={!!errorMsg}
-        onClose={() => setErrorMsg(null)}
+        open={!!errorMsg} onClose={() => setErrorMsg(null)}
         PaperProps={{ sx: { borderRadius: '16px', mx: 2 } }}
       >
         <DialogTitle sx={{ fontWeight: 700, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -246,24 +226,18 @@ const ImageSearch: React.FC = () => {
           {language === 'ja' ? 'エラー' : 'Error'}
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ fontSize: '14px', lineHeight: 1.7 }}>
-            {errorMsg}
-          </DialogContentText>
-          {errorMsg?.includes('ERR_FAILED') || errorMsg?.includes('Failed to fetch') || errorMsg?.includes('NetworkError') ? (
+          <DialogContentText sx={{ fontSize: '14px', lineHeight: 1.7 }}>{errorMsg}</DialogContentText>
+          {(errorMsg?.includes('Failed to fetch') || errorMsg?.includes('NetworkError')) && (
             <DialogContentText sx={{ fontSize: '13px', mt: 1, color: 'text.secondary' }}>
               {language === 'ja'
-                ? 'CORSポリシーまたはネットワークの問題の可能性があります。サーバー側で Access-Control-Allow-Origin ヘッダーの設定を確認してください。'
-                : 'This may be a CORS policy or network issue. Check that the server returns Access-Control-Allow-Origin headers.'}
+                ? 'CORS またはネットワークの問題の可能性があります。faiss.wholphin.net の Access-Control-Allow-Origin 設定を確認してください。'
+                : 'Possible CORS or network issue. Check Access-Control-Allow-Origin on faiss.wholphin.net.'}
             </DialogContentText>
-          ) : null}
+          )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setErrorMsg(null)}
-            variant="contained"
-            color="error"
-            sx={{ textTransform: 'none', borderRadius: '10px' }}
-          >
+          <Button onClick={() => setErrorMsg(null)} variant="contained" color="error"
+            sx={{ textTransform: 'none', borderRadius: '10px' }}>
             {language === 'ja' ? '閉じる' : 'Close'}
           </Button>
         </DialogActions>
@@ -272,4 +246,4 @@ const ImageSearch: React.FC = () => {
   );
 };
 
-export default ImageSearch;
+export default memo(ImageSearch);
