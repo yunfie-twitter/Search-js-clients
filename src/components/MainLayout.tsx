@@ -12,24 +12,27 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, isGridLayout }) => {
     <Box
       component="main"
       className="scrollable-list"
-      sx={{ 
-        flexGrow: 1, 
-        pt: { xs: 2, md: 4 }, 
-        pb: { 
-          xs: 'calc(80px + env(safe-area-inset-bottom))', 
-          md: 8 
+      sx={{
+        flexGrow: 1,
+        pt: { xs: 2, md: 4 },
+        pb: {
+          xs: 'calc(80px + env(safe-area-inset-bottom))',
+          md: 8,
         },
-        px: VERTICAL_GUIDE_LINE, 
+        // グリッド時は小さい固定px、リスト時は通常ガイドライン
+        px: isGridLayout ? { xs: '8px', sm: '12px', md: '16px' } : VERTICAL_GUIDE_LINE,
         width: '100%',
         maxWidth: isGridLayout ? '100%' : '1400px',
         margin: isGridLayout ? 0 : '0 auto',
+        // はみ出しを封じる
+        overflowX: 'hidden',
+        boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
-        boxSizing: 'border-box',
       }}
     >
-      <Box sx={{ width: '100%', minWidth: 0 }}>
+      <Box sx={{ width: '100%', minWidth: 0, overflowX: 'hidden' }}>
         {children}
       </Box>
     </Box>
