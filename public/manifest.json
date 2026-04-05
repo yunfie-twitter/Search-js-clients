@@ -1,6 +1,6 @@
 {
-  "name": "Search",
-  "short_name": "Search",
+  "name": "Wholphin Search",
+  "short_name": "Wholphin",
   "description": "Fast, private search engine client",
   "start_url": "/",
   "display": "standalone",
