@@ -1,32 +1,39 @@
 import React, { useMemo } from 'react';
-import { Box, Container, Button, Tabs, Tab } from '@mui/material';
+import { Box, Container, Button, Tabs, Tab, IconButton, Tooltip } from '@mui/material';
 import {
-  SearchOutlined as SearchIcon,
+  SearchOutlined      as SearchIcon,
   ImageSearchOutlined as ImageSearchIcon,
+  SettingsOutlined    as SettingsIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import SearchBox from '../components/SearchBox';
 import ImageSearch from '../components/ImageSearch';
 import Footer from '../components/Footer';
+import { BottomNavSpacer } from '../components/MobileBottomNav';
 import { useSearchStore } from '../store/useSearchStore';
 import translations from '../translations';
+import { triggerHaptic } from '../utils/haptics';
 
 const Home: React.FC = () => {
   const language       = useSearchStore((s) => s.language);
   const setLanguage    = useSearchStore((s) => s.setLanguage);
   const expImageSearch = useSearchStore((s) => s.expImageSearch);
   const t = useMemo(() => translations[language], [language]);
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = React.useState(0);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* Header */}
+      {/* 右上ヘッダー: 言語切替 + 設定ボタン */}
       <Box sx={{
         p: 2,
         pt: 'calc(env(safe-area-inset-top) + 12px)',
         display: 'flex',
         justifyContent: 'flex-end',
+        alignItems: 'center',
+        gap: 0.5,
       }}>
         <Button
           variant="text"
@@ -35,6 +42,20 @@ const Home: React.FC = () => {
         >
           {language === 'ja' ? 'English' : '日本語'}
         </Button>
+        <Tooltip title={t.settings}>
+          <IconButton
+            size="small"
+            onClick={() => { triggerHaptic(); navigate('/settings'); }}
+            sx={{
+              borderRadius: '10px',
+              color: 'text.secondary',
+              transition: 'transform 120ms ease-out',
+              '&:active': { transform: 'scale(0.88)' },
+            }}
+          >
+            <SettingsIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       <Container
@@ -45,7 +66,6 @@ const Home: React.FC = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          // ボトムナビ分だけ上にシフト
           mt: { xs: -6, md: -14 },
           px: { xs: 2, md: 3 },
           pb: { xs: '80px', md: 0 },
@@ -81,6 +101,7 @@ const Home: React.FC = () => {
       </Container>
 
       <Footer />
+      <BottomNavSpacer />
     </Box>
   );
 };

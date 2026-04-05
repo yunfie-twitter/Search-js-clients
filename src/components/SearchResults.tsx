@@ -98,7 +98,6 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
       <Box
         className="pm-result-card pm-fade-up"
         sx={{
-          // カード間距 14px、padding 16px
           mb: { xs: '14px', md: '16px' },
           p:  { xs: '14px 16px', md: '16px 18px' },
           borderRadius: '16px',
@@ -107,17 +106,13 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
           boxShadow: isDark
             ? '0 1px 4px rgba(0,0,0,0.4)'
             : '0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.03)',
-          // タップ時: scale(0.985) 120ms ease-out
           transition: `box-shadow ${DUR_NORMAL}ms ${EASE_SPRING}, transform 120ms ease-out`,
           '@media (hover: hover)': {
             '&:hover': {
-              boxShadow: isDark
-                ? '0 4px 20px rgba(0,0,0,0.6)'
-                : '0 4px 20px rgba(0,0,0,0.09)',
+              boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.6)' : '0 4px 20px rgba(0,0,0,0.09)',
               transform: 'translateY(-1px)',
             },
           },
-          // タップアニメ (mobile / pointer:coarse)
           '@media (pointer: coarse)': {
             '&:active': { transform: 'scale(0.985)', transition: 'transform 120ms ease-out' },
           },
@@ -128,54 +123,40 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
           WebkitTapHighlightColor: 'transparent',
         }}
       >
-        {/* 上段: favicon + URL + アクションメニュー */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <ItemBreadcrumbURL url={item.url || ''} favicon={(item as any).favicon} />
           <ResultActionMenu item={item} onToast={onToast} />
         </Box>
-
-        {/* タイトル — line-height 1.45, fontWeight 650 */}
         <MuiLink
-          href={item.url}
-          target="_blank"
-          rel="noopener"
-          className="selectable"
-          color="primary"
+          href={item.url} target="_blank" rel="noopener"
+          className="selectable" color="primary"
           sx={{
             textDecoration: 'none',
             fontSize: { xs: '16px', md: '18px' },
             fontWeight: 650,
             letterSpacing: '-0.01em',
             display: '-webkit-box',
-            mt: '6px',
-            mb: '6px',
+            mt: '6px', mb: '6px',
             wordBreak: 'break-word',
             '&:hover': { textDecoration: 'underline', opacity: 0.85 },
             transition: `opacity ${DUR_NORMAL}ms ${EASE_SPRING}`,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            // 行間改善
+            overflow: 'hidden', textOverflow: 'ellipsis',
+            WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
             lineHeight: 1.45,
           }}
           onClick={handleOpenPreview}
         >
           {item.title}
         </MuiLink>
-
-        {/* スニペット (2行) */}
         <Typography
           variant="body2"
           sx={{
             lineHeight: 1.55,
             fontSize: { xs: '13px', md: '14px' },
             color: 'text.secondary',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            overflow: 'hidden', textOverflow: 'ellipsis',
             display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
+            WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
             wordBreak: 'break-word',
           }}
         >
@@ -190,9 +171,7 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
 const LoadingSkeleton = memo(({ index, isDark }: { index: number; isDark: boolean }) => (
   <Box
     sx={{
-      mb: '14px',
-      p: '16px 18px',
-      borderRadius: '16px',
+      mb: '14px', p: '16px 18px', borderRadius: '16px',
       backgroundColor: isDark ? '#14141A' : '#ffffff',
       border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
       animationDelay: staggerDelay(index, 60),
@@ -209,7 +188,7 @@ const LoadingSkeleton = memo(({ index, isDark }: { index: number; isDark: boolea
   </Box>
 ));
 
-// ─── Cinematic PreviewDialog ───────────────────────────────────────────────────
+// ─── PreviewDialog ──────────────────────────────────────────────────────────────────
 const PreviewDialog: React.FC<any> = ({ selectedItem, setSelectedItem, t }) => {
   const theme    = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -217,8 +196,7 @@ const PreviewDialog: React.FC<any> = ({ selectedItem, setSelectedItem, t }) => {
 
   return (
     <Dialog
-      open={!!selectedItem}
-      onClose={() => setSelectedItem(null)}
+      open={!!selectedItem} onClose={() => setSelectedItem(null)}
       maxWidth="md" fullWidth fullScreen={isMobile}
       TransitionProps={{ timeout: { enter: 360, exit: 200 } }}
       PaperProps={{
@@ -267,6 +245,39 @@ const PreviewDialog: React.FC<any> = ({ selectedItem, setSelectedItem, t }) => {
   );
 };
 
+// ─── Responsive Grid ────────────────────────────────────────────────────────────────
+// xs:2列 / sm:3列 / md:4列 / lg:5列
+const GRID_COLS = {
+  xs: 'repeat(2, 1fr)',
+  sm: 'repeat(3, 1fr)',
+  md: 'repeat(4, 1fr)',
+  lg: 'repeat(5, 1fr)',
+};
+
+const MediaGrid: React.FC<{ isLoading: boolean; results: ResultMeta[]; onSelect: (item: ResultMeta) => void }> = memo(
+  ({ isLoading, results, onSelect }) => (
+    <Box sx={{ mt: 2 }}>
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: GRID_COLS,
+        gap: { xs: '8px', sm: '10px', md: '12px' },
+      }}>
+        {isLoading
+          ? GRID_SKELETON_KEYS.map((i) => (
+              <Skeleton key={i} variant="rectangular"
+                sx={{ aspectRatio: '16/9', borderRadius: '12px', width: '100%' }} />
+            ))
+          : results.map((item, i) => (
+              <Box key={i} className="pm-card pm-fade-up" sx={{ animationDelay: staggerDelay(i, 20) }}>
+                <MediaCard item={item} onClick={onSelect} />
+              </Box>
+            ))
+        }
+      </Box>
+    </Box>
+  )
+);
+
 // ─── Main ────────────────────────────────────────────────────────────────────────────────
 const SearchResults: React.FC = () => {
   const results          = useSearchStore((s) => s.results);
@@ -295,18 +306,11 @@ const SearchResults: React.FC = () => {
   return (
     <Box sx={{ width: '100%' }}>
       {isGridLayout ? (
-        <Box sx={{ mt: 2 }}>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', sm: 'repeat(auto-fill, minmax(200px,1fr))' }, gap: { xs: '8px', sm: '16px' } }}>
-            {isInitialLoading
-              ? GRID_SKELETON_KEYS.map((i) => <Skeleton key={i} variant="rectangular" sx={{ aspectRatio: '16/9', borderRadius: '12px' }} />)
-              : results.map((item, i) => (
-                  <Box key={i} className="pm-card pm-fade-up" sx={{ animationDelay: staggerDelay(i, 20) }}>
-                    <MediaCard item={item} onClick={(it) => setSelectedItem(it as any)} />
-                  </Box>
-                ))
-            }
-          </Box>
-        </Box>
+        <MediaGrid
+          isLoading={isInitialLoading}
+          results={results}
+          onSelect={setSelectedItem}
+        />
       ) : (
         <Box>
           <Box sx={{ display: 'flex', gap: { xs: 0, md: '60px' }, alignItems: 'flex-start' }}>
