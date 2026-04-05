@@ -1,13 +1,13 @@
 /**
- * PageTransition — Premium Apple-style.
- * 各ページの「コンテンツ部分」のみを包む。AppBar / HeaderNav は対象外。
+ * PageTransition — Apple spring.
+ * タブ切り替え（t=パラメータ変化のみ）はアニメーションをスキップしパフォーマンスを改善する。
  */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { EASE_SPRING, EASE_IN, DUR_PAGE } from '../utils/motion';
 
-const OUT_MS = 100;
+const OUT_MS = 90;
 const IN_MS  = DUR_PAGE;
 
 const VARIANTS = {
@@ -29,26 +29,23 @@ const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const location = useLocation();
   const navType  = useNavigationType();
 
-  const prevKey      = useRef(location.key);
+  const prevKey    = useRef(location.key);
+  const prevSearch = useRef(location.search);
   const [vkey, setVkey]   = useState<VKey>('idle');
   const [trans, setTrans] = useState('');
-  const animating    = useRef(false);
+  const animating  = useRef(false);
 
   const animate = useCallback(() => {
     if (animating.current) return;
     animating.current = true;
     const isBack = navType === 'POP';
 
-    // 1. Out
     setTrans(`transform ${OUT_MS}ms ${EASE_IN}, opacity ${OUT_MS}ms ${EASE_IN}`);
     setVkey(isBack ? 'backOut' : 'forwardOut');
 
     setTimeout(() => {
-      // 2. Snap to in-start
       setTrans('none');
       setVkey(isBack ? 'backIn' : 'forwardIn');
-
-      // 3. Spring in
       requestAnimationFrame(() => requestAnimationFrame(() => {
         setTrans(`transform ${IN_MS}ms ${EASE_SPRING}, opacity ${IN_MS}ms ${EASE_SPRING}`);
         setVkey('idle');
@@ -60,6 +57,16 @@ const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) =
   useEffect(() => {
     if (location.key === prevKey.current) return;
     prevKey.current = location.key;
+
+    // t=パラメータ変化（タブ切り替え）はアニメーションスキップ
+    const prevT = new URLSearchParams(prevSearch.current).get('t');
+    const newT  = new URLSearchParams(location.search).get('t');
+    const prevQ = new URLSearchParams(prevSearch.current).get('q');
+    const newQ  = new URLSearchParams(location.search).get('q');
+    prevSearch.current = location.search;
+
+    if (location.pathname === '/search' && prevQ === newQ && prevT !== newT) return;
+
     animate();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.key]);

@@ -1,10 +1,10 @@
 import React, { memo } from 'react';
-import { Box, AppBar, Toolbar } from '@mui/material';
+import { Box, AppBar, Toolbar, useTheme } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '@mui/material/styles';
 import Logo from './Logo';
 import SearchBox from './SearchBox';
 import Tabs from './Tabs';
+import { glass } from '../utils/glass';
 import { EASE_SPRING, DUR_NORMAL } from '../utils/motion';
 
 export const VERTICAL_GUIDE_LINE = { xs: 2, sm: 3, md: 6, lg: '180px' };
@@ -13,6 +13,7 @@ const HeaderNav: React.FC = () => {
   const navigate = useNavigate();
   const theme    = useTheme();
   const isDark   = theme.palette.mode === 'dark';
+  const g        = glass(isDark, 'light');
 
   return (
     <AppBar
@@ -20,16 +21,13 @@ const HeaderNav: React.FC = () => {
       color="inherit"
       elevation={0}
       sx={{
-        backgroundColor: isDark ? 'rgba(18,18,18,0.88)' : 'rgba(255,255,255,0.88)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
+        ...g,
         zIndex: 1100,
-        borderBottom: '1px solid',
-        borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
-        width: '100%',
         top: 0,
+        width: '100%',
         paddingTop: 'env(safe-area-inset-top)',
-        transition: `background-color ${DUR_NORMAL}ms ${EASE_SPRING}, border-color ${DUR_NORMAL}ms ${EASE_SPRING}`,
+        borderBottom: '1px solid',
+        transition: `background-color ${DUR_NORMAL}ms ${EASE_SPRING}`,
       }}
     >
       <Toolbar
@@ -43,8 +41,8 @@ const HeaderNav: React.FC = () => {
             cursor: 'pointer',
             flexShrink: 0,
             transition: `opacity ${DUR_NORMAL}ms ${EASE_SPRING}, transform ${DUR_NORMAL}ms ${EASE_SPRING}`,
-            '&:hover': { opacity: 0.75, transform: 'scale(0.97)' },
-            '&:active': { opacity: 0.6,  transform: 'scale(0.93)' },
+            '&:hover':  { opacity: 0.72, transform: 'scale(0.97)' },
+            '&:active': { opacity: 0.55, transform: 'scale(0.93)' },
           }}
           onClick={() => navigate('/')}
         >
