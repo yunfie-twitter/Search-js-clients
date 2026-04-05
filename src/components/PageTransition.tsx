@@ -1,6 +1,7 @@
 /**
  * PageTransition — Apple spring.
  * タブ切り替え（t=パラメータ変化のみ）はアニメーションをスキップしパフォーマンスを改善する。
+ * 画像/動画グリッドレイアウトの切り替えもスキップ（多数のimg要素のアニメーションが重いため）。
  */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
@@ -9,6 +10,8 @@ import { EASE_SPRING, EASE_IN, DUR_PAGE } from '../utils/motion';
 
 const OUT_MS = 90;
 const IN_MS  = DUR_PAGE;
+
+const GRID_TYPES = new Set(['image', 'video']);
 
 const VARIANTS = {
   forwardOut: { x: '-10px', opacity: 0, scale: 0.99 },
@@ -58,14 +61,23 @@ const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) =
     if (location.key === prevKey.current) return;
     prevKey.current = location.key;
 
-    // t=パラメータ変化（タブ切り替え）はアニメーションスキップ
-    const prevT = new URLSearchParams(prevSearch.current).get('t');
-    const newT  = new URLSearchParams(location.search).get('t');
-    const prevQ = new URLSearchParams(prevSearch.current).get('q');
-    const newQ  = new URLSearchParams(location.search).get('q');
+    const prevParams = new URLSearchParams(prevSearch.current);
+    const newParams  = new URLSearchParams(location.search);
+    const prevT = prevParams.get('t') ?? 'web';
+    const newT  = newParams.get('t')  ?? 'web';
+    const prevQ = prevParams.get('q');
+    const newQ  = newParams.get('q');
     prevSearch.current = location.search;
 
+    // タブ切り替え（q共通、tのみ変化）はスキップ
     if (location.pathname === '/search' && prevQ === newQ && prevT !== newT) return;
+
+    // グリッド↔リスト 切り替え（画像/動画 ↔ その他）はスキップ
+    if (
+      location.pathname === '/search' &&
+      prevQ === newQ &&
+      GRID_TYPES.has(prevT) !== GRID_TYPES.has(newT)
+    ) return;
 
     animate();
   // eslint-disable-next-line react-hooks/exhaustive-deps

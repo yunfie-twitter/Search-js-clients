@@ -9,6 +9,11 @@ import { EASE_SPRING, DUR_NORMAL } from '../utils/motion';
 
 export const VERTICAL_GUIDE_LINE = { xs: 2, sm: 3, md: 6, lg: '180px' };
 
+// body へのオーバースクロール抑制（ヘッダーが引っ張られないように）
+if (typeof document !== 'undefined') {
+  document.documentElement.style.overscrollBehaviorY = 'none';
+}
+
 const HeaderNav: React.FC = () => {
   const navigate = useNavigate();
   const theme    = useTheme();
@@ -25,8 +30,12 @@ const HeaderNav: React.FC = () => {
         zIndex: 1100,
         top: 0,
         width: '100%',
+        overscrollBehavior: 'none',
         paddingTop: 'env(safe-area-inset-top)',
-        borderBottom: '1px solid',
+        // 白線を小さめに：透明度を下げる
+        borderBottom: `1px solid ${
+          isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'
+        }`,
         transition: `background-color ${DUR_NORMAL}ms ${EASE_SPRING}`,
       }}
     >

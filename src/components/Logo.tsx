@@ -24,10 +24,10 @@ const Logo: React.FC<{ size?: 'small' | 'large' }> = ({ size = 'small' }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // モバイル時のサイズ縮小ロジック
   const getFontSize = () => {
     if (size === 'large') {
-      return isMobile ? '3.5rem' : '92px';
+      // モバイル: 3.5rem → 2.6rem、PC: 92px → 72px
+      return isMobile ? '2.6rem' : '72px';
     }
     return isMobile ? '1.5rem' : '24px';
   };
@@ -41,10 +41,10 @@ const Logo: React.FC<{ size?: 'small' | 'large' }> = ({ size = 'small' }) => {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer', maxWidth: '100%' }}>
-      <StyledLogo 
-        sx={{ 
+      <StyledLogo
+        sx={{
           fontSize: getFontSize(),
-          letterSpacing: getLetterSpacing()
+          letterSpacing: getLetterSpacing(),
         }}
       >
         wholphin
