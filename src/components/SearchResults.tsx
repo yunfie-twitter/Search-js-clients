@@ -242,42 +242,38 @@ const PreviewDialog: React.FC<any> = ({ selectedItem, setSelectedItem, t }) => {
   );
 };
 
-// ─── MediaGrid — useMediaQuery で列数を正確に決定 ────────────────────────────────
+// ─── MediaGrid ────────────────────────────────────────────────────────────────────
 const MediaGrid: React.FC<{
   isLoading: boolean;
   results: ResultMeta[];
   onSelect: (item: ResultMeta) => void;
 }> = memo(({ isLoading, results, onSelect }) => {
-  const theme  = useTheme();
-  // 各ブレークポイントを個別に取得
-  const isXs = useMediaQuery(theme.breakpoints.only('xs'));  // 0-600
-  const isSm = useMediaQuery(theme.breakpoints.only('sm'));  // 600-900
-  const isMd = useMediaQuery(theme.breakpoints.only('md'));  // 900-1200
-  // lg+ は上記以外
+  const theme = useTheme();
+  const isXs  = useMediaQuery(theme.breakpoints.only('xs'));
+  const isSm  = useMediaQuery(theme.breakpoints.only('sm'));
+  const isMd  = useMediaQuery(theme.breakpoints.only('md'));
 
   const cols = isXs ? 2 : isSm ? 3 : isMd ? 4 : 5;
-  const gap  = isXs ? '8px' : isSm ? '10px' : '12px';
-  const gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  const gap  = isXs ? '6px' : isSm ? '8px' : '10px';
 
   return (
-    <Box sx={{ mt: 2 }}>
+    <Box sx={{ mt: 1, width: '100%', overflowX: 'hidden' }}>
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns,
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
           gap,
+          width: '100%',
         }}
       >
         {isLoading
           ? GRID_SKELETON_KEYS.map((i) => (
-              <Skeleton
-                key={i}
-                variant="rectangular"
-                sx={{ aspectRatio: '16/9', borderRadius: '12px', width: '100%' }}
-              />
+              <Box key={i} sx={{ width: '100%', aspectRatio: '4/3' }}>
+                <Skeleton variant="rectangular" width="100%" height="100%" sx={{ borderRadius: '8px' }} />
+              </Box>
             ))
           : results.map((item, i) => (
-              <Box key={i} className="pm-card pm-fade-up" sx={{ animationDelay: staggerDelay(i, 20) }}>
+              <Box key={i} className="pm-fade-up" sx={{ animationDelay: staggerDelay(i, 20), minWidth: 0 }}>
                 <MediaCard item={item} onClick={onSelect} />
               </Box>
             ))
@@ -313,7 +309,7 @@ const SearchResults: React.FC = () => {
   const isGridLayout = type === 'image' || type === 'video';
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', overflowX: 'hidden' }}>
       {isGridLayout ? (
         <MediaGrid isLoading={isInitialLoading} results={results} onSelect={setSelectedItem} />
       ) : (

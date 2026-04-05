@@ -23,30 +23,35 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onClick }) => {
     <Box
       onClick={() => onClick(item)}
       sx={{
-        // グリッドセル内で必ず 100% 幅に収まる
         width: '100%',
         minWidth: 0,
+        maxWidth: '100%',
         cursor: 'pointer',
-        borderRadius: '10px',
+        borderRadius: '8px',
         overflow: 'hidden',
         border: '1px solid',
         borderColor: 'divider',
         backgroundColor: 'background.paper',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'transform 200ms cubic-bezier(0.22,1,0.36,1), box-shadow 200ms',
+        transition: 'transform 180ms cubic-bezier(0.22,1,0.36,1)',
         WebkitTapHighlightColor: 'transparent',
+        boxSizing: 'border-box',
         '@media (hover: hover)': {
-          '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-          },
+          '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
         },
         '&:active': { transform: 'scale(0.97)' },
       }}
     >
-      {/* サムネイル — 16:9 固定アスペクト比 */}
-      <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', backgroundColor: 'action.hover', overflow: 'hidden', flexShrink: 0 }}>
+      {/* サムネイル: 4:3 に変更して縦幅を小さく */}
+      <Box sx={{
+        position: 'relative',
+        width: '100%',
+        aspectRatio: '4 / 3',
+        backgroundColor: 'action.hover',
+        overflow: 'hidden',
+        flexShrink: 0,
+      }}>
         {imgSrc ? (
           <Box
             component="img"
@@ -60,12 +65,12 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onClick }) => {
         )}
         {isVideo && (item as any).duration && (
           <Box sx={{
-            position: 'absolute', bottom: 6, right: 6,
+            position: 'absolute', bottom: 4, right: 4,
             backgroundColor: 'rgba(0,0,0,0.75)',
             color: '#fff',
-            px: '5px', py: '1px',
-            borderRadius: '4px',
-            fontSize: '11px',
+            px: '4px', py: '1px',
+            borderRadius: '3px',
+            fontSize: '10px',
             fontWeight: 600,
             lineHeight: 1.4,
           }}>
@@ -74,15 +79,15 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onClick }) => {
         )}
       </Box>
 
-      {/* テキストエリア */}
-      <Box sx={{ p: '8px 10px 10px', flexGrow: 1, minWidth: 0 }}>
+      {/* テキスト: コンパクトに */}
+      <Box sx={{ p: '6px 8px 8px', minWidth: 0 }}>
         <Typography
           variant="body2"
           sx={{
             fontWeight: 500,
-            fontSize: { xs: '12px', sm: '13px' },
-            lineHeight: 1.4,
-            mb: '3px',
+            fontSize: { xs: '11px', sm: '12px' },
+            lineHeight: 1.35,
+            mb: '2px',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
@@ -97,7 +102,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onClick }) => {
           color="text.secondary"
           sx={{
             display: 'block',
-            fontSize: { xs: '10px', sm: '11px' },
+            fontSize: { xs: '9px', sm: '10px' },
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
