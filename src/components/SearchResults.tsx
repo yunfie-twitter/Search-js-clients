@@ -40,7 +40,7 @@ const ResultActionMenu: React.FC<ActionMenuProps> = memo(({ item, onToast }) => 
   };
   const handleOpenNew = () => { window.open(item.url, '_blank', 'noopener'); setAnchor(null); };
   const handleSave    = () => { onToast('保存しました（未実装）'); setAnchor(null); };
-  const handleAI      = () => { onToast('AI要約（未実装）');         setAnchor(null); };
+  const handleAI      = () => { onToast('AI要約（未実装）'); setAnchor(null); };
 
   return (
     <>
@@ -118,8 +118,7 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
           },
           '&:active': { transform: 'scale(0.985)' },
           animationDelay: staggerDelay(index, 25),
-          width: '100%',
-          cursor: 'pointer',
+          width: '100%', cursor: 'pointer',
           WebkitTapHighlightColor: 'transparent',
         }}
       >
@@ -133,8 +132,7 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
           sx={{
             textDecoration: 'none',
             fontSize: { xs: '16px', md: '18px' },
-            fontWeight: 650,
-            letterSpacing: '-0.01em',
+            fontWeight: 650, letterSpacing: '-0.01em',
             display: '-webkit-box',
             mt: '6px', mb: '6px',
             wordBreak: 'break-word',
@@ -151,8 +149,7 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
         <Typography
           variant="body2"
           sx={{
-            lineHeight: 1.55,
-            fontSize: { xs: '13px', md: '14px' },
+            lineHeight: 1.55, fontSize: { xs: '13px', md: '14px' },
             color: 'text.secondary',
             overflow: 'hidden', textOverflow: 'ellipsis',
             display: '-webkit-box',
@@ -188,7 +185,7 @@ const LoadingSkeleton = memo(({ index, isDark }: { index: number; isDark: boolea
   </Box>
 ));
 
-// ─── PreviewDialog ──────────────────────────────────────────────────────────────────
+// ─── PreviewDialog ─────────────────────────────────────────────────────────────────
 const PreviewDialog: React.FC<any> = ({ selectedItem, setSelectedItem, t }) => {
   const theme    = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -245,27 +242,39 @@ const PreviewDialog: React.FC<any> = ({ selectedItem, setSelectedItem, t }) => {
   );
 };
 
-// ─── Responsive Grid ────────────────────────────────────────────────────────────────
-// xs:2列 / sm:3列 / md:4列 / lg:5列
-const GRID_COLS = {
-  xs: 'repeat(2, 1fr)',
-  sm: 'repeat(3, 1fr)',
-  md: 'repeat(4, 1fr)',
-  lg: 'repeat(5, 1fr)',
-};
+// ─── MediaGrid — useMediaQuery で列数を正確に決定 ────────────────────────────────
+const MediaGrid: React.FC<{
+  isLoading: boolean;
+  results: ResultMeta[];
+  onSelect: (item: ResultMeta) => void;
+}> = memo(({ isLoading, results, onSelect }) => {
+  const theme  = useTheme();
+  // 各ブレークポイントを個別に取得
+  const isXs = useMediaQuery(theme.breakpoints.only('xs'));  // 0-600
+  const isSm = useMediaQuery(theme.breakpoints.only('sm'));  // 600-900
+  const isMd = useMediaQuery(theme.breakpoints.only('md'));  // 900-1200
+  // lg+ は上記以外
 
-const MediaGrid: React.FC<{ isLoading: boolean; results: ResultMeta[]; onSelect: (item: ResultMeta) => void }> = memo(
-  ({ isLoading, results, onSelect }) => (
+  const cols = isXs ? 2 : isSm ? 3 : isMd ? 4 : 5;
+  const gap  = isXs ? '8px' : isSm ? '10px' : '12px';
+  const gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+  return (
     <Box sx={{ mt: 2 }}>
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: GRID_COLS,
-        gap: { xs: '8px', sm: '10px', md: '12px' },
-      }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns,
+          gap,
+        }}
+      >
         {isLoading
           ? GRID_SKELETON_KEYS.map((i) => (
-              <Skeleton key={i} variant="rectangular"
-                sx={{ aspectRatio: '16/9', borderRadius: '12px', width: '100%' }} />
+              <Skeleton
+                key={i}
+                variant="rectangular"
+                sx={{ aspectRatio: '16/9', borderRadius: '12px', width: '100%' }}
+              />
             ))
           : results.map((item, i) => (
               <Box key={i} className="pm-card pm-fade-up" sx={{ animationDelay: staggerDelay(i, 20) }}>
@@ -275,8 +284,8 @@ const MediaGrid: React.FC<{ isLoading: boolean; results: ResultMeta[]; onSelect:
         }
       </Box>
     </Box>
-  )
-);
+  );
+});
 
 // ─── Main ────────────────────────────────────────────────────────────────────────────────
 const SearchResults: React.FC = () => {
@@ -306,11 +315,7 @@ const SearchResults: React.FC = () => {
   return (
     <Box sx={{ width: '100%' }}>
       {isGridLayout ? (
-        <MediaGrid
-          isLoading={isInitialLoading}
-          results={results}
-          onSelect={setSelectedItem}
-        />
+        <MediaGrid isLoading={isInitialLoading} results={results} onSelect={setSelectedItem} />
       ) : (
         <Box>
           <Box sx={{ display: 'flex', gap: { xs: 0, md: '60px' }, alignItems: 'flex-start' }}>

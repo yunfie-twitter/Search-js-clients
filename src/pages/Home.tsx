@@ -26,15 +26,19 @@ const Home: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* 右上ヘッダー: 言語切替 + 設定ボタン */}
-      <Box sx={{
-        p: 2,
-        pt: 'calc(env(safe-area-inset-top) + 12px)',
-        display: 'flex',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        gap: 0.5,
-      }}>
+
+      {/* 右上: 言語切替 + 設定ボタン */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 'calc(env(safe-area-inset-top) + 8px)',
+          right: 8,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.5,
+          zIndex: 10,
+        }}
+      >
         <Button
           variant="text"
           onClick={() => setLanguage(language === 'ja' ? 'en' : 'ja')}
@@ -42,14 +46,15 @@ const Home: React.FC = () => {
         >
           {language === 'ja' ? 'English' : '日本語'}
         </Button>
-        <Tooltip title={t.settings}>
+        <Tooltip title={t.settings} placement="bottom-end">
           <IconButton
             size="small"
             onClick={() => { triggerHaptic(); navigate('/settings'); }}
             sx={{
               borderRadius: '10px',
               color: 'text.secondary',
-              transition: 'transform 120ms ease-out',
+              transition: 'transform 120ms ease-out, opacity 120ms ease-out',
+              '&:hover':  { opacity: 0.75 },
               '&:active': { transform: 'scale(0.88)' },
             }}
           >
@@ -58,6 +63,7 @@ const Home: React.FC = () => {
         </Tooltip>
       </Box>
 
+      {/* メインコンテンツ */}
       <Container
         maxWidth="md"
         sx={{
