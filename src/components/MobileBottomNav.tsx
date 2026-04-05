@@ -26,11 +26,19 @@ const NavContainer = styled(Box, { shouldForwardProp: (p) => p !== 'isDark' })<{
   justifyContent: 'space-around',
   alignItems: 'center',
   height: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom))`,
-  paddingBottom: 'env(safe-area-inset-bottom)',
+  // safe-area を内側余白に変換（10px 分浮かせる）
+  paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)',
+  paddingTop: '10px',
   paddingLeft: 8, paddingRight: 8,
-  backgroundColor: isDark ? 'rgba(11,11,15,0.88)' : 'rgba(255,255,255,0.88)',
-  backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-  borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+  // ガラス風背景（少し濃いメールコート感）
+  backgroundColor: isDark ? 'rgba(11,11,15,0.82)' : 'rgba(255,255,255,0.82)',
+  backdropFilter: 'saturate(180%) blur(24px)',
+  WebkitBackdropFilter: 'saturate(180%) blur(24px)',
+  // 上側のみ薄い境界線
+  borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
+  boxShadow: isDark
+    ? '0 -4px 24px rgba(0,0,0,0.32)'
+    : '0 -4px 24px rgba(0,0,0,0.06)',
   contain: 'paint',
 }));
 
@@ -56,32 +64,27 @@ const MobileBottomNav: React.FC = () => {
   const isDark = theme.palette.mode === 'dark';
 
   const SIDE_ITEMS = useMemo(() => [
-    { label: t.navHome,     path: '/',        Icon: HomeIcon,     alwaysOn: true  },
-    { label: t.navHistory,  path: '/history', Icon: HistoryIcon,  alwaysOn: true  },
-    { label: t.navSettings, path: '/settings',Icon: SettingsIcon, alwaysOn: true  },
+    { label: t.navHome,     path: '/',        Icon: HomeIcon    },
+    { label: t.navHistory,  path: '/history', Icon: HistoryIcon },
+    { label: t.navSettings, path: '/settings',Icon: SettingsIcon },
   ], [t]);
 
-  const handleNav = (path: string) => {
-    triggerHaptic();
-    navigate(path);
-  };
-
+  const handleNav = (path: string) => { triggerHaptic(); navigate(path); };
   const handleFab = () => {
     triggerHaptic();
     if (query) navigate(`/search?q=${encodeURIComponent(query)}&t=web`);
   };
 
-  const activeColor  = isDark ? '#0a84ff' : '#007aff';
+  const activeColor   = isDark ? '#0a84ff' : '#007aff';
   const inactiveColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)';
 
-  // 4アイテム: 左2 + 中央FAB + 右1
   const left  = SIDE_ITEMS.slice(0, 2);
   const right = SIDE_ITEMS.slice(2);
 
   return (
     <Box sx={{ display: { xs: 'block', md: 'none' } }}>
       <NavContainer isDark={isDark}>
-        {/* 左2アイテム */}
+        {/* 左 2 アイテム */}
         {left.map(({ label, path, Icon }) => {
           const isActive = location.pathname === path;
           return (
@@ -104,8 +107,8 @@ const MobileBottomNav: React.FC = () => {
           );
         })}
 
-        {/* 中央 FAB */}
-        <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+        {/* 中央 FAB — シャドウをソフトに絞った */}
+        <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Fab
             size="medium"
             onClick={handleFab}
@@ -113,11 +116,11 @@ const MobileBottomNav: React.FC = () => {
             sx={{
               backgroundColor: isDark ? '#0a84ff' : '#007aff',
               color: '#ffffff',
+              // ソフトシャドウ + わずかな拡散光
               boxShadow: isDark
-                ? '0 4px 16px rgba(10,132,255,0.45), 0 1px 4px rgba(0,0,0,0.4)'
-                : '0 4px 16px rgba(0,122,255,0.35), 0 1px 4px rgba(0,0,0,0.12)',
+                ? '0 6px 20px rgba(59,130,246,0.28), 0 2px 6px rgba(0,0,0,0.3)'
+                : '0 6px 20px rgba(59,130,246,0.20), 0 2px 6px rgba(0,0,0,0.08)',
               width: 52, height: 52,
-              // 少し浮かせる
               mb: `calc(${BOTTOM_NAV_HEIGHT * 0.18}px)`,
               transition: [
                 `background-color ${DUR_FAST}ms ${EASE_SPRING}`,
@@ -127,18 +130,21 @@ const MobileBottomNav: React.FC = () => {
               '&:hover': {
                 backgroundColor: isDark ? '#409cff' : '#3395ff',
                 boxShadow: isDark
-                  ? '0 6px 24px rgba(10,132,255,0.55)'
-                  : '0 6px 24px rgba(0,122,255,0.45)',
+                  ? '0 8px 28px rgba(59,130,246,0.36)'
+                  : '0 8px 28px rgba(59,130,246,0.26)',
               },
               '&:active':   { transform: 'scale(0.91)' },
-              '&:disabled': { backgroundColor: isDark ? '#3a3a3c' : '#c7c7cc', boxShadow: 'none' },
+              '&:disabled': {
+                backgroundColor: isDark ? '#3a3a3c' : '#c7c7cc',
+                boxShadow: 'none',
+              },
             }}
           >
             <SearchIcon sx={{ fontSize: 22 }} />
           </Fab>
         </Box>
 
-        {/* 右1アイテム */}
+        {/* 右 1 アイテム */}
         {right.map(({ label, path, Icon }) => {
           const isActive = location.pathname === path;
           return (

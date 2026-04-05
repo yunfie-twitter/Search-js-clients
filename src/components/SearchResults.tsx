@@ -26,34 +26,21 @@ import { EASE_SPRING, DUR_NORMAL, DUR_MODAL, staggerDelay } from '../utils/motio
 const GRID_SKELETON_KEYS = Array.from({ length: 12 }, (_, i) => i);
 const LIST_SKELETON_KEYS = Array.from({ length: 5  }, (_, i) => i);
 
-// ─── Result Action Menu ───────────────────────────────────────────────────────
-interface ActionMenuProps {
-  item: ResultMeta;
-  onToast: (msg: string) => void;
-}
+// ─── Result Action Menu ──────────────────────────────────────────────────────
+interface ActionMenuProps { item: ResultMeta; onToast: (msg: string) => void; }
 const ResultActionMenu: React.FC<ActionMenuProps> = memo(({ item, onToast }) => {
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
   const open = Boolean(anchor);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(item.url || '').then(() => onToast('URLをコピーしました'));
+  const handleCopy    = () => { navigator.clipboard.writeText(item.url || '').then(() => onToast('URLをコピーしました')); setAnchor(null); };
+  const handleShare   = async () => {
+    if (navigator.share) { await navigator.share({ title: item.title || '', url: item.url || '' }); }
+    else { navigator.clipboard.writeText(item.url || ''); onToast('URLをコピーしました'); }
     setAnchor(null);
   };
-  const handleShare = async () => {
-    if (navigator.share) {
-      await navigator.share({ title: item.title || '', url: item.url || '' });
-    } else {
-      navigator.clipboard.writeText(item.url || '');
-      onToast('URLをコピーしました');
-    }
-    setAnchor(null);
-  };
-  const handleOpenNew = () => {
-    window.open(item.url, '_blank', 'noopener');
-    setAnchor(null);
-  };
-  const handleSave = () => { onToast('保存しました（未実装）'); setAnchor(null); };
-  const handleAI   = () => { onToast('AI要約（未実装）');         setAnchor(null); };
+  const handleOpenNew = () => { window.open(item.url, '_blank', 'noopener'); setAnchor(null); };
+  const handleSave    = () => { onToast('保存しました（未実装）'); setAnchor(null); };
+  const handleAI      = () => { onToast('AI要約（未実装）');         setAnchor(null); };
 
   return (
     <>
@@ -65,26 +52,14 @@ const ResultActionMenu: React.FC<ActionMenuProps> = memo(({ item, onToast }) => 
           '.pm-result-card:hover &': { opacity: 1 },
           transition: `opacity ${DUR_NORMAL}ms ${EASE_SPRING}, transform 120ms ${EASE_SPRING}`,
           '&:active': { transform: 'scale(0.88)' },
-          color: 'text.secondary',
-          p: '4px',
-          ml: 'auto',
-          flexShrink: 0,
+          color: 'text.secondary', p: '4px', ml: 'auto', flexShrink: 0,
         }}
       >
         <MoreVertIcon sx={{ fontSize: 16 }} />
       </IconButton>
       <Menu
-        anchorEl={anchor}
-        open={open}
-        onClose={() => setAnchor(null)}
-        PaperProps={{
-          sx: {
-            borderRadius: '14px',
-            minWidth: 180,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.16)',
-            overflow: 'hidden',
-          },
-        }}
+        anchorEl={anchor} open={open} onClose={() => setAnchor(null)}
+        PaperProps={{ sx: { borderRadius: '14px', minWidth: 180, boxShadow: '0 8px 32px rgba(0,0,0,0.16)', overflow: 'hidden' } }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
@@ -105,7 +80,7 @@ const ResultActionMenu: React.FC<ActionMenuProps> = memo(({ item, onToast }) => 
   );
 });
 
-// ─── Result Card ─────────────────────────────────────────────────────────────
+// ─── Result Card ──────────────────────────────────────────────────────────────
 const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; index: number; onToast: (m: string) => void }> = memo(
   ({ item, query, type, index, onToast }) => {
     const setSelectedItem = useSearchStore((s) => s.setSelectedItem);
@@ -123,16 +98,17 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
       <Box
         className="pm-result-card pm-fade-up"
         sx={{
-          // カード本体
-          mb: { xs: '10px', md: '10px' },
-          p: { xs: '12px 14px', md: '14px 16px' },
+          // カード間距 14px、padding 16px
+          mb: { xs: '14px', md: '16px' },
+          p:  { xs: '14px 16px', md: '16px 18px' },
           borderRadius: '16px',
           backgroundColor: isDark ? '#14141A' : '#ffffff',
           border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
           boxShadow: isDark
             ? '0 1px 4px rgba(0,0,0,0.4)'
             : '0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.03)',
-          transition: `box-shadow ${DUR_NORMAL}ms ${EASE_SPRING}, transform ${DUR_NORMAL}ms ${EASE_SPRING}`,
+          // タップ時: scale(0.985) 120ms ease-out
+          transition: `box-shadow ${DUR_NORMAL}ms ${EASE_SPRING}, transform 120ms ease-out`,
           '@media (hover: hover)': {
             '&:hover': {
               boxShadow: isDark
@@ -141,9 +117,15 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
               transform: 'translateY(-1px)',
             },
           },
-          '&:active': { transform: 'scale(0.99)' },
+          // タップアニメ (mobile / pointer:coarse)
+          '@media (pointer: coarse)': {
+            '&:active': { transform: 'scale(0.985)', transition: 'transform 120ms ease-out' },
+          },
+          '&:active': { transform: 'scale(0.985)' },
           animationDelay: staggerDelay(index, 25),
           width: '100%',
+          cursor: 'pointer',
+          WebkitTapHighlightColor: 'transparent',
         }}
       >
         {/* 上段: favicon + URL + アクションメニュー */}
@@ -152,7 +134,7 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
           <ResultActionMenu item={item} onToast={onToast} />
         </Box>
 
-        {/* タイトル */}
+        {/* タイトル — line-height 1.45, fontWeight 650 */}
         <MuiLink
           href={item.url}
           target="_blank"
@@ -162,11 +144,11 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
           sx={{
             textDecoration: 'none',
             fontSize: { xs: '16px', md: '18px' },
-            fontWeight: 600,
+            fontWeight: 650,
             letterSpacing: '-0.01em',
             display: '-webkit-box',
-            mt: '4px',
-            mb: '5px',
+            mt: '6px',
+            mb: '6px',
             wordBreak: 'break-word',
             '&:hover': { textDecoration: 'underline', opacity: 0.85 },
             transition: `opacity ${DUR_NORMAL}ms ${EASE_SPRING}`,
@@ -174,7 +156,8 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
             textOverflow: 'ellipsis',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
-            lineHeight: 1.35,
+            // 行間改善
+            lineHeight: 1.45,
           }}
           onClick={handleOpenPreview}
         >
@@ -203,12 +186,12 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
   }
 );
 
-// ─── Shimmer skeleton ────────────────────────────────────────────────────────
+// ─── Shimmer skeleton ──────────────────────────────────────────────────────────
 const LoadingSkeleton = memo(({ index, isDark }: { index: number; isDark: boolean }) => (
   <Box
     sx={{
-      mb: '10px',
-      p: '14px 16px',
+      mb: '14px',
+      p: '16px 18px',
       borderRadius: '16px',
       backgroundColor: isDark ? '#14141A' : '#ffffff',
       border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
@@ -226,7 +209,7 @@ const LoadingSkeleton = memo(({ index, isDark }: { index: number; isDark: boolea
   </Box>
 ));
 
-// ─── Cinematic PreviewDialog ─────────────────────────────────────────────────
+// ─── Cinematic PreviewDialog ───────────────────────────────────────────────────
 const PreviewDialog: React.FC<any> = ({ selectedItem, setSelectedItem, t }) => {
   const theme    = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -256,9 +239,7 @@ const PreviewDialog: React.FC<any> = ({ selectedItem, setSelectedItem, t }) => {
     >
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5 }}>
         <Typography noWrap sx={{ fontSize: '15px', fontWeight: 600, flex: 1, mr: 1 }}>{selectedItem?.title}</Typography>
-        <IconButton onClick={() => setSelectedItem(null)} size="small">
-          <CloseIcon />
-        </IconButton>
+        <IconButton onClick={() => setSelectedItem(null)} size="small"><CloseIcon /></IconButton>
       </DialogTitle>
       <DialogContent sx={{ p: 0 }}>
         {selectedItem && (
@@ -286,7 +267,7 @@ const PreviewDialog: React.FC<any> = ({ selectedItem, setSelectedItem, t }) => {
   );
 };
 
-// ─── Main ────────────────────────────────────────────────────────────────────
+// ─── Main ────────────────────────────────────────────────────────────────────────────────
 const SearchResults: React.FC = () => {
   const results          = useSearchStore((s) => s.results);
   const isInitialLoading = useSearchStore((s) => s.isInitialLoading);
@@ -329,7 +310,6 @@ const SearchResults: React.FC = () => {
       ) : (
         <Box>
           <Box sx={{ display: 'flex', gap: { xs: 0, md: '60px' }, alignItems: 'flex-start' }}>
-            {/* 検索結果リスト */}
             <Box sx={{ flex: 1, minWidth: 0, maxWidth: 750 }}>
               {isInitialLoading
                 ? LIST_SKELETON_KEYS.map((i) => <LoadingSkeleton key={i} index={i} isDark={isDark} />)
@@ -345,7 +325,6 @@ const SearchResults: React.FC = () => {
                       </Box>
                     )
               }
-
               {!isInitialLoading && results.length > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 4 }}>
                   <Pagination
@@ -362,8 +341,6 @@ const SearchResults: React.FC = () => {
                 </Box>
               )}
             </Box>
-
-            {/* サイドバー */}
             <Box sx={{ width: 350, display: { xs: 'none', md: 'block' }, flexShrink: 0 }}>
               <Box sx={{ position: 'sticky', top: 160 }}>
                 <RelatedSearchesCard query={query} />
@@ -375,7 +352,6 @@ const SearchResults: React.FC = () => {
 
       <PreviewDialog selectedItem={selectedItem} setSelectedItem={setSelectedItem} t={t} />
 
-      {/* アクション Toast */}
       <Snackbar
         open={!!toast} autoHideDuration={2200}
         onClose={() => setToast(null)}
