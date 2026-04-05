@@ -1,67 +1,71 @@
 import React, { useState, useCallback, useRef, memo } from 'react';
 import {
   Box, Typography, Button, Paper,
-  CircularProgress, ImageList, ImageListItem,
-  ImageListItemBar, IconButton, Tooltip,
-  Dialog, DialogTitle, DialogContent,
-  DialogContentText, DialogActions, useTheme,
+  CircularProgress, useTheme,
 } from '@mui/material';
 import {
   UploadFileOutlined as UploadIcon,
-  OpenInNewOutlined  as OpenInNewIcon,
-  ErrorOutlineOutlined as ErrorIcon,
   SearchOutlined as SearchIcon,
+  ErrorOutlineOutlined as ErrorIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
 import translations from '../translations';
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 
-// ホスト固定
 const FAISS_BASE = 'https://faiss.wholphin.net';
 
-interface ImageResult {
+export interface FaissImageResult {
   id: string | number;
   url: string;
   title?: string;
   score?: number;
 }
 
+/** APIが返す url のホスト部分を必ず faiss.wholphin.net に置換 */
+export const normalizeFaissUrl = (url: string): string => {
+  try {
+    const u = new URL(url);
+    u.protocol = 'https:';
+    u.host     = 'faiss.wholphin.net';
+    return u.toString();
+  } catch {
+    // 相対パスなどパース不可な場合は FAISS_BASE を先頭に
+    return `${FAISS_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+  }
+};
+
 const ImageSearch: React.FC = () => {
   const language = useSearchStore((s) => s.language);
   const t = React.useMemo(() => translations[language], [language]);
   const theme  = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const navigate = useNavigate();
 
-  const [results,      setResults]      = useState<ImageResult[]>([]);
   const [loading,      setLoading]      = useState(false);
   const [errorMsg,     setErrorMsg]     = useState<string | null>(null);
   const [previewSrc,   setPreviewSrc]   = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const showError = useCallback((msg: string) => setErrorMsg(msg), []);
-
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setSelectedFile(file);
     setPreviewSrc(URL.createObjectURL(file));
-    setResults([]);
   }, []);
 
-  // ドラッグ&ドロップ対応
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (!file || !file.type.startsWith('image/')) return;
     setSelectedFile(file);
     setPreviewSrc(URL.createObjectURL(file));
-    setResults([]);
   }, []);
 
   const handleUploadSearch = useCallback(async () => {
     if (!selectedFile) return;
     setLoading(true);
-    setResults([]);
     try {
       const form = new FormData();
       form.append('file', selectedFile);
@@ -70,23 +74,26 @@ const ImageSearch: React.FC = () => {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data  = await res.json();
-      const items: ImageResult[] = Array.isArray(data)
-        ? data : (data.results ?? data.items ?? []);
-      setResults(items);
+      const items: FaissImageResult[] = (Array.isArray(data)
+        ? data : (data.results ?? data.items ?? []))
+        .map((item: FaissImageResult) => ({
+          ...item,
+          url: normalizeFaissUrl(item.url),
+        }));
+      // 別画面に結果を渡して遷移
+      navigate('/image-search', { state: { results: items, previewSrc } });
     } catch (e: any) {
-      showError(e?.message ? `${t.imageSearchError} (${e.message})` : t.imageSearchError);
+      setErrorMsg(e?.message ? `${t.imageSearchError} (${e.message})` : t.imageSearchError);
     } finally {
       setLoading(false);
     }
-  }, [selectedFile, t, showError]);
+  }, [selectedFile, previewSrc, navigate, t]);
 
   const dropBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
   const dropBg     = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
 
   return (
     <Box sx={{ width: '100%', maxWidth: 900, mx: 'auto', mt: 3, px: { xs: 2, md: 0 } }}>
-
-      {/* ── アップロードエリア ── */}
       <Paper
         elevation={0}
         onDrop={handleDrop}
@@ -108,14 +115,12 @@ const ImageSearch: React.FC = () => {
         onClick={() => !selectedFile && fileInputRef.current?.click()}
       >
         <input
-          ref={fileInputRef}
-          type="file" accept="image/*"
+          ref={fileInputRef} type="file" accept="image/*"
           style={{ display: 'none' }}
           onChange={handleFileChange}
         />
 
         {previewSrc ? (
-          // プレビュー表示
           <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
             <Box
               component="img" src={previewSrc} alt="preview"
@@ -141,15 +146,12 @@ const ImageSearch: React.FC = () => {
             </Box>
           </Box>
         ) : (
-          // 初期状態
           <>
-            <Box
-              sx={{
-                width: 64, height: 64, borderRadius: '18px',
-                backgroundColor: isDark ? 'rgba(10,132,255,0.18)' : 'rgba(0,122,255,0.10)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
+            <Box sx={{
+              width: 64, height: 64, borderRadius: '18px',
+              backgroundColor: isDark ? 'rgba(10,132,255,0.18)' : 'rgba(0,122,255,0.10)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
               <UploadIcon sx={{ fontSize: 32, color: isDark ? '#0a84ff' : '#007aff' }} />
             </Box>
             <Typography sx={{ fontWeight: 600, fontSize: '16px', letterSpacing: '-0.01em' }}>
@@ -161,8 +163,7 @@ const ImageSearch: React.FC = () => {
                 : 'Finds similar images from the faiss.wholphin.net index'}
             </Typography>
             <Button
-              variant="outlined" size="small"
-              startIcon={<UploadIcon />}
+              variant="outlined" size="small" startIcon={<UploadIcon />}
               onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
               sx={{ borderRadius: '10px', textTransform: 'none', mt: 1 }}
             >
@@ -172,68 +173,14 @@ const ImageSearch: React.FC = () => {
         )}
       </Paper>
 
-      {/* ── 結果グリッド ── */}
-      {results.length > 0 && (
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-            {t.imageSearchResultCount.replace('{n}', String(results.length))}
-          </Typography>
-          <ImageList variant="masonry" cols={3} gap={8} sx={{ mt: 0 }}>
-            {results.map((item, i) => (
-              <ImageListItem key={item.id ?? i}>
-                <img
-                  src={item.url} alt={item.title ?? ''} loading="lazy"
-                  style={{ borderRadius: 8, width: '100%', display: 'block' }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-                <ImageListItemBar
-                  title={item.title}
-                  subtitle={item.score != null ? `score: ${item.score.toFixed(3)}` : undefined}
-                  actionIcon={
-                    item.url ? (
-                      <Tooltip title={t.visitWebsite}>
-                        <IconButton size="small" component="a" href={item.url}
-                          target="_blank" rel="noopener"
-                          sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                          <OpenInNewIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    ) : undefined
-                  }
-                  sx={{ borderRadius: '0 0 8px 8px' }}
-                />
-              </ImageListItem>
-            ))}
-          </ImageList>
-        </Box>
-      )}
-
-      {!loading && results.length === 0 && !errorMsg && (
-        <Box sx={{ mt: 4, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.disabled">
-            {t.imageSearchEmpty}
-          </Typography>
-        </Box>
-      )}
-
-      {/* ── エラー ── */}
-      <Dialog
-        open={!!errorMsg} onClose={() => setErrorMsg(null)}
-        PaperProps={{ sx: { borderRadius: '16px', mx: 2 } }}
-      >
+      <Dialog open={!!errorMsg} onClose={() => setErrorMsg(null)}
+        PaperProps={{ sx: { borderRadius: '16px', mx: 2 } }}>
         <DialogTitle sx={{ fontWeight: 700, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
           <ErrorIcon color="error" />
           {language === 'ja' ? 'エラー' : 'Error'}
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ fontSize: '14px', lineHeight: 1.7 }}>{errorMsg}</DialogContentText>
-          {(errorMsg?.includes('Failed to fetch') || errorMsg?.includes('NetworkError')) && (
-            <DialogContentText sx={{ fontSize: '13px', mt: 1, color: 'text.secondary' }}>
-              {language === 'ja'
-                ? 'CORS またはネットワークの問題の可能性があります。faiss.wholphin.net の Access-Control-Allow-Origin 設定を確認してください。'
-                : 'Possible CORS or network issue. Check Access-Control-Allow-Origin on faiss.wholphin.net.'}
-            </DialogContentText>
-          )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setErrorMsg(null)} variant="contained" color="error"
