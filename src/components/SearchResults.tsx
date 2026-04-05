@@ -16,7 +16,7 @@ import {
 } from '@mui/icons-material';
 import { useSearchParams } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
-import { ResultMeta, fetchDetail } from '@yunfie/search-js';
+import { ResultMeta, ResultDetail, fetchDetail } from '@yunfie/search-js';
 import translations from '../translations';
 import RelatedSearchesCard from './RelatedSearchesCard';
 import MediaCard from './MediaCard';
@@ -26,7 +26,7 @@ import { EASE_SPRING, DUR_NORMAL, DUR_MODAL, staggerDelay } from '../utils/motio
 const GRID_SKELETON_KEYS = Array.from({ length: 12 }, (_, i) => i);
 const LIST_SKELETON_KEYS = Array.from({ length: 5  }, (_, i) => i);
 
-// ─── Result Action Menu ──────────────────────────────────────────────────────
+// ─── Result Action Menu ────────────────────────────────────────────
 interface ActionMenuProps { item: ResultMeta; onToast: (msg: string) => void; }
 const ResultActionMenu: React.FC<ActionMenuProps> = memo(({ item, onToast }) => {
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
@@ -80,7 +80,7 @@ const ResultActionMenu: React.FC<ActionMenuProps> = memo(({ item, onToast }) => 
   );
 });
 
-// ─── Result Card ──────────────────────────────────────────────────────────────
+// ─── Result Card ────────────────────────────────────────────────
 const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; index: number; onToast: (m: string) => void }> = memo(
   ({ item, query, type, index, onToast }) => {
     const setSelectedItem = useSearchStore((s) => s.setSelectedItem);
@@ -164,7 +164,7 @@ const ResultItem: React.FC<{ item: ResultMeta; query: string; type: string; inde
   }
 );
 
-// ─── Shimmer skeleton ──────────────────────────────────────────────────────────
+// ─── Shimmer skeleton ──────────────────────────────────────────────
 const LoadingSkeleton = memo(({ index, isDark }: { index: number; isDark: boolean }) => (
   <Box
     sx={{
@@ -185,7 +185,7 @@ const LoadingSkeleton = memo(({ index, isDark }: { index: number; isDark: boolea
   </Box>
 ));
 
-// ─── PreviewDialog ─────────────────────────────────────────────────────────────────
+// ─── PreviewDialog ───────────────────────────────────────────────────────
 const PreviewDialog: React.FC<any> = ({ selectedItem, setSelectedItem, t }) => {
   const theme    = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -242,11 +242,11 @@ const PreviewDialog: React.FC<any> = ({ selectedItem, setSelectedItem, t }) => {
   );
 };
 
-// ─── MediaGrid ────────────────────────────────────────────────────────────────────
+// ─── MediaGrid ──────────────────────────────────────────────────────────
 const MediaGrid: React.FC<{
   isLoading: boolean;
   results: ResultMeta[];
-  onSelect: (item: ResultMeta) => void;
+  onSelect: (item: ResultDetail | null) => void;
 }> = memo(({ isLoading, results, onSelect }) => {
   const theme = useTheme();
   const isXs  = useMediaQuery(theme.breakpoints.only('xs'));
@@ -274,7 +274,7 @@ const MediaGrid: React.FC<{
             ))
           : results.map((item, i) => (
               <Box key={i} className="pm-fade-up" sx={{ animationDelay: staggerDelay(i, 20), minWidth: 0 }}>
-                <MediaCard item={item} onClick={onSelect} />
+                <MediaCard item={item} onClick={(it) => onSelect(it as unknown as ResultDetail | null)} />
               </Box>
             ))
         }
@@ -283,7 +283,7 @@ const MediaGrid: React.FC<{
   );
 });
 
-// ─── Main ────────────────────────────────────────────────────────────────────────────────
+// ─── Main ──────────────────────────────────────────────────────────────────────────
 const SearchResults: React.FC = () => {
   const results          = useSearchStore((s) => s.results);
   const isInitialLoading = useSearchStore((s) => s.isInitialLoading);

@@ -35,12 +35,10 @@ interface SearchState {
   searchRegion: string;
   searchLang: string;
 
-  // 実験的機能
   expImageSearch: boolean;
-  expLenis: boolean;        // Lenis 慣性スクロール
+  expLenis: boolean;
   expUnlocked: boolean;
 
-  // Actions
   setQuery: (q: string) => void;
   setType: (t: SearchType) => void;
   setSelectedItem: (item: ResultDetail | null) => void;
@@ -129,7 +127,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
   performSearch: async (q, type, pageNum = 1) => {
     if (!q) return;
-    const { resultsPerPage, safeSearch, searchRegion, searchLang } = get();
+    const { resultsPerPage, searchLang } = get();
 
     set({
       query: q,
@@ -142,7 +140,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
     try {
       const pager = createPager(
-        { q, type, lang: searchLang, safe: safeSearch },
+        { q, type, lang: searchLang },
         resultsPerPage
       );
       set({ pager });

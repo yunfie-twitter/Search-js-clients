@@ -2,7 +2,6 @@
  * Tabs.tsx
  * - ピル型選択タブ（変更なし）
  * - 横スワイプでタブ切り替え（タッチデバイスのみ）
- * - タブ切替時にフェードアウト → フェードイン アニメ（SearchResults 内のコンテンツは変更不要）
  */
 import React, { memo, useMemo, useRef, useCallback } from 'react';
 import { Box, useTheme } from '@mui/material';
@@ -24,7 +23,8 @@ const Tabs: React.FC = () => {
   const isDark = theme.palette.mode === 'dark';
   const query  = searchParams.get('q') || '';
 
-  const LABELS: Record<SearchType, string> = useMemo(() => ({
+  // Partialにすることで SearchType に 'panel' 等予期外の値が入っても型エラーにならない
+  const LABELS: Partial<Record<SearchType, string>> = useMemo(() => ({
     web: t.all, image: t.images, video: t.videos, news: t.news,
   }), [t]);
 
@@ -39,11 +39,10 @@ const Tabs: React.FC = () => {
     navigate(`/search?q=${encodeURIComponent(query)}&t=${newType}`, { replace: true });
   }, [type, query, navigate, setType]);
 
-  // ─── スワイプハンドラー ───
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
-  const SWIPE_THRESHOLD = 48;  // px
-  const DIRECTION_LOCK  = 10;  // 縦方向ロック px
+  const SWIPE_THRESHOLD = 48;
+  const DIRECTION_LOCK  = 10;
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -56,17 +55,12 @@ const Tabs: React.FC = () => {
     const dy = e.changedTouches[0].clientY - touchStartY.current;
     touchStartX.current = null;
     touchStartY.current = null;
-
-    // 縦方向スクロールの場合は無視
     if (Math.abs(dy) > DIRECTION_LOCK) return;
     if (Math.abs(dx) < SWIPE_THRESHOLD) return;
-
     const currentIdx = TAB_TYPES.indexOf(type);
     if (dx < 0 && currentIdx < TAB_TYPES.length - 1) {
-      // 左スワイプ → 次のタブ
       handleChange(TAB_TYPES[currentIdx + 1]);
     } else if (dx > 0 && currentIdx > 0) {
-      // 右スワイプ → 前のタブ
       handleChange(TAB_TYPES[currentIdx - 1]);
     }
   }, [type, handleChange]);
@@ -87,6 +81,8 @@ const Tabs: React.FC = () => {
     >
       {TAB_TYPES.map((tabType) => {
         const isActive = type === tabType;
+        const label    = LABELS[tabType];
+        if (!label) return null;
         return (
           <Box
             key={tabType}
@@ -115,7 +111,7 @@ const Tabs: React.FC = () => {
               minWidth: 44, minHeight: 32,
             }}
           >
-            {LABELS[tabType]}
+            {label}
           </Box>
         );
       })}
