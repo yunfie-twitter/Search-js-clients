@@ -116,6 +116,13 @@
       "type": "image/jpeg",
       "form_factor": "narrow",
       "label": "Settings"
+    },
+    {
+    "src": "/screenshot/6.png",
+    "sizes": "1920x1080",
+    "type": "image/jpeg",
+    "form_factor": "wide",
+    "label": "Settings on Desktop"
     }
   ]
 }
