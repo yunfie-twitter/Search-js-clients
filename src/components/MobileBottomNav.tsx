@@ -4,7 +4,6 @@ import {
   HomeOutlined     as HomeIcon,
   SearchOutlined   as SearchIcon,
   HistoryOutlined  as HistoryIcon,
-  SettingsOutlined as SettingsIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
@@ -26,15 +25,12 @@ const NavContainer = styled(Box, { shouldForwardProp: (p) => p !== 'isDark' })<{
   justifyContent: 'space-around',
   alignItems: 'center',
   height: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom))`,
-  // safe-area を内側余白に変換（10px 分浮かせる）
   paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)',
   paddingTop: '10px',
   paddingLeft: 8, paddingRight: 8,
-  // ガラス風背景（少し濃いメールコート感）
   backgroundColor: isDark ? 'rgba(11,11,15,0.82)' : 'rgba(255,255,255,0.82)',
   backdropFilter: 'saturate(180%) blur(24px)',
   WebkitBackdropFilter: 'saturate(180%) blur(24px)',
-  // 上側のみ薄い境界線
   borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
   boxShadow: isDark
     ? '0 -4px 24px rgba(0,0,0,0.32)'
@@ -49,24 +45,23 @@ const NavItem = styled(Box)({
   cursor: 'pointer',
   WebkitTapHighlightColor: 'transparent',
   userSelect: 'none',
-  py: '8px',
   minWidth: 44, minHeight: 44,
   transition: `transform ${DUR_FAST}ms ${EASE_SPRING}`,
   '&:active': { transform: 'scale(0.88)' },
 });
 
 const MobileBottomNav: React.FC = () => {
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate   = useNavigate();
+  const location   = useLocation();
   const { query, language } = useSearchStore();
-  const t     = translations[language];
-  const theme = useTheme();
+  const t      = translations[language];
+  const theme  = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  // 設定を削除—左：Home、中央：FAB(検索)、右：履歴
   const SIDE_ITEMS = useMemo(() => [
-    { label: t.navHome,     path: '/',        Icon: HomeIcon    },
-    { label: t.navHistory,  path: '/history', Icon: HistoryIcon },
-    { label: t.navSettings, path: '/settings',Icon: SettingsIcon },
+    { label: t.navHome,    path: '/',        Icon: HomeIcon    },
+    { label: t.navHistory, path: '/history', Icon: HistoryIcon },
   ], [t]);
 
   const handleNav = (path: string) => { triggerHaptic(); navigate(path); };
@@ -78,13 +73,13 @@ const MobileBottomNav: React.FC = () => {
   const activeColor   = isDark ? '#0a84ff' : '#007aff';
   const inactiveColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)';
 
-  const left  = SIDE_ITEMS.slice(0, 2);
-  const right = SIDE_ITEMS.slice(2);
+  const left  = SIDE_ITEMS.slice(0, 1); // Home
+  const right = SIDE_ITEMS.slice(1);    // 履歴
 
   return (
     <Box sx={{ display: { xs: 'block', md: 'none' } }}>
       <NavContainer isDark={isDark}>
-        {/* 左 2 アイテム */}
+        {/* 左: Home */}
         {left.map(({ label, path, Icon }) => {
           const isActive = location.pathname === path;
           return (
@@ -107,7 +102,7 @@ const MobileBottomNav: React.FC = () => {
           );
         })}
 
-        {/* 中央 FAB — シャドウをソフトに絞った */}
+        {/* 中央 FAB */}
         <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Fab
             size="medium"
@@ -116,7 +111,6 @@ const MobileBottomNav: React.FC = () => {
             sx={{
               backgroundColor: isDark ? '#0a84ff' : '#007aff',
               color: '#ffffff',
-              // ソフトシャドウ + わずかな拡散光
               boxShadow: isDark
                 ? '0 6px 20px rgba(59,130,246,0.28), 0 2px 6px rgba(0,0,0,0.3)'
                 : '0 6px 20px rgba(59,130,246,0.20), 0 2px 6px rgba(0,0,0,0.08)',
@@ -134,17 +128,14 @@ const MobileBottomNav: React.FC = () => {
                   : '0 8px 28px rgba(59,130,246,0.26)',
               },
               '&:active':   { transform: 'scale(0.91)' },
-              '&:disabled': {
-                backgroundColor: isDark ? '#3a3a3c' : '#c7c7cc',
-                boxShadow: 'none',
-              },
+              '&:disabled': { backgroundColor: isDark ? '#3a3a3c' : '#c7c7cc', boxShadow: 'none' },
             }}
           >
             <SearchIcon sx={{ fontSize: 22 }} />
           </Fab>
         </Box>
 
-        {/* 右 1 アイテム */}
+        {/* 右: 履歴 */}
         {right.map(({ label, path, Icon }) => {
           const isActive = location.pathname === path;
           return (

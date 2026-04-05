@@ -1,15 +1,27 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 
-const SectionHeader: React.FC<{ label: string }> = ({ label }) => (
-  <Box sx={{ px: 2, pt: 3, pb: 1 }}>
+interface Props {
+  label?: string;   // 旧プロパティ名（下位互換）
+  title?: string;   // Labs.tsx が使っている別名
+  action?: React.ReactNode; // 右端に配置するウィジェット
+}
+
+const SectionHeader: React.FC<Props> = ({ label, title, action }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 1, pt: 2.5, pb: 0.5 }}>
     <Typography
       variant="caption"
-      color="text.secondary"
-      sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '11px' }}
+      sx={{
+        fontWeight: 600,
+        fontSize: '12px',
+        color: 'text.secondary',
+        letterSpacing: '0.04em',
+        textTransform: 'uppercase',
+      }}
     >
-      {label}
+      {label ?? title}
     </Typography>
+    {action && <Box>{action}</Box>}
   </Box>
 );
 
