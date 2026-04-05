@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardMedia, CardContent, Typography, Box, Skeleton } from '@mui/material';
+import { Box, Typography, Skeleton } from '@mui/material';
 import { ResultMeta } from '@yunfie/search-js';
 
 interface MediaCardProps {
@@ -9,107 +9,104 @@ interface MediaCardProps {
 
 const MediaCard: React.FC<MediaCardProps> = ({ item, onClick }) => {
   const originalThumbnail = (item as any).thumbnail;
-  const proxyUrl = originalThumbnail ? `https://proxy.wholphin.net/image.webp?url=${encodeURIComponent(originalThumbnail)}` : null;
+  const proxyUrl = originalThumbnail
+    ? `https://proxy.wholphin.net/image.webp?url=${encodeURIComponent(originalThumbnail)}`
+    : null;
   const [imgSrc, setImgSrc] = React.useState<string | null>(proxyUrl);
   const isVideo = 'duration' in item;
 
   const handleImageError = () => {
-    // プロキシでエラーが起きたらオリジナルのURLにフォールバック
-    if (imgSrc === proxyUrl && originalThumbnail) {
-      setImgSrc(originalThumbnail);
-    }
+    if (imgSrc === proxyUrl && originalThumbnail) setImgSrc(originalThumbnail);
   };
 
   return (
-    <Card 
+    <Box
       onClick={() => onClick(item)}
-      className="clickable"
-      sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        height: '100%', 
+      sx={{
+        // グリッドセル内で必ず 100% 幅に収まる
+        width: '100%',
+        minWidth: 0,
         cursor: 'pointer',
-        boxShadow: 'none',
+        borderRadius: '10px',
+        overflow: 'hidden',
         border: '1px solid',
         borderColor: 'divider',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        transition: 'all 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
         backgroundColor: 'background.paper',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-        },
-        '&:active': {
-          transform: 'scale(0.97)',
-        },
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'transform 200ms cubic-bezier(0.22,1,0.36,1), box-shadow 200ms',
         WebkitTapHighlightColor: 'transparent',
+        '@media (hover: hover)': {
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+          },
+        },
+        '&:active': { transform: 'scale(0.97)' },
       }}
     >
-      <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', backgroundColor: '#f0f0f0', overflow: 'hidden' }}>
+      {/* サムネイル — 16:9 固定アスペクト比 */}
+      <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', backgroundColor: 'action.hover', overflow: 'hidden', flexShrink: 0 }}>
         {imgSrc ? (
-          <CardMedia
+          <Box
             component="img"
-            image={imgSrc}
-            alt={item.title}
+            src={imgSrc}
+            alt={item.title || ''}
             onError={handleImageError}
-            sx={{ 
-              width: '100%', 
-              height: '100%', 
-              objectFit: 'cover'
-            }}
+            sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           />
         ) : (
-          <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Skeleton variant="rectangular" width="100%" height="100%" animation={false} />
-          </Box>
+          <Skeleton variant="rectangular" width="100%" height="100%" animation="wave" />
         )}
         {isVideo && (item as any).duration && (
-          <Box sx={{ 
-            position: 'absolute', 
-            bottom: 8, 
-            right: 8, 
-            backgroundColor: 'rgba(0,0,0,0.8)', 
-            color: 'white', 
-            px: 0.5, 
+          <Box sx={{
+            position: 'absolute', bottom: 6, right: 6,
+            backgroundColor: 'rgba(0,0,0,0.75)',
+            color: '#fff',
+            px: '5px', py: '1px',
             borderRadius: '4px',
-            fontSize: '0.75rem'
+            fontSize: '11px',
+            fontWeight: 600,
+            lineHeight: 1.4,
           }}>
             {(item as any).duration}
           </Box>
         )}
       </Box>
-      <CardContent sx={{ p: 1.5, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        <Typography 
-          variant="body2" 
-          sx={{ 
-            fontWeight: 500, 
+
+      {/* テキストエリア */}
+      <Box sx={{ p: '8px 10px 10px', flexGrow: 1, minWidth: 0 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 500,
+            fontSize: { xs: '12px', sm: '13px' },
             lineHeight: 1.4,
-            mb: 0.5,
+            mb: '3px',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            height: '2.8em' // Fixed height for 2 lines
+            wordBreak: 'break-word',
           }}
         >
           {item.title}
         </Typography>
-        <Typography 
-          variant="caption" 
+        <Typography
+          variant="caption"
           color="text.secondary"
-          sx={{ 
-            display: 'block', 
-            whiteSpace: 'nowrap', 
-            overflow: 'hidden', 
-            textOverflow: 'ellipsis' 
+          sx={{
+            display: 'block',
+            fontSize: { xs: '10px', sm: '11px' },
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           }}
         >
           {(item as any).domain || item.url}
         </Typography>
-      </CardContent>
-    </Card>
+      </Box>
+    </Box>
   );
 };
 
