@@ -1,4 +1,4 @@
-const CACHE     = 'search-v1';
+const CACHE     = 'search-v2';
 const STATIC    = [
   '/',
   '/index.html',
