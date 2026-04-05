@@ -7,6 +7,7 @@ import MainLayout from '../components/MainLayout';
 import SearchResults from '../components/SearchResults';
 import Footer from '../components/Footer';
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
+import PageTransition from '../components/PageTransition';
 import { useSearchStore } from '../store/useSearchStore';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { useSwipePageNav } from '../hooks/useSwipePageNav';
@@ -26,14 +27,12 @@ const SearchPage: React.FC = () => {
     }
   }, [query, currentType, page, performSearch]);
 
-  // Pull-to-Refresh: 同じクエリを再検索
   const handleRefresh = useCallback(() => {
     if (query) performSearch(query, currentType, page);
   }, [query, currentType, page, performSearch]);
 
   const { setIndicator } = usePullToRefresh({ onRefresh: handleRefresh });
 
-  // 左右スワイプでページ送り
   const goNext = useCallback(() => {
     setSearchParams({ q: query, t: currentType, page: String(page + 1) });
     window.scrollTo({ top: 0 });
@@ -52,11 +51,17 @@ const SearchPage: React.FC = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
       <PullToRefreshIndicator ref={setIndicator} />
+
+      {/* HeaderNav は PageTransition の外—アニメーション対象外 */}
       <HeaderNav />
-      <MainLayout isGridLayout={isGridLayout}>
-        <SearchResults />
-      </MainLayout>
-      <Footer />
+
+      {/* コンテンツのみ PageTransition で包む */}
+      <PageTransition>
+        <MainLayout isGridLayout={isGridLayout}>
+          <SearchResults />
+        </MainLayout>
+        <Footer />
+      </PageTransition>
     </Box>
   );
 };

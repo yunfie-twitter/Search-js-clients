@@ -29,10 +29,11 @@ import { getHistory, removeHistory, clearHistory, HistoryEntry } from '@yunfie/s
 import { useSearchStore } from '../store/useSearchStore';
 import translations from '../translations';
 import PageHeader from '../components/PageHeader';
+import PageTransition from '../components/PageTransition';
 import { BottomNavSpacer } from '../components/MobileBottomNav';
 
 const HistoryPage: React.FC = () => {
-  const [historyItems, setHistoryItems]   = useState<HistoryEntry[]>([]);
+  const [historyItems, setHistoryItems]       = useState<HistoryEntry[]>([]);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const navigate  = useNavigate();
   const language  = useSearchStore((s) => s.language);
@@ -41,7 +42,7 @@ const HistoryPage: React.FC = () => {
   const refreshHistory = useCallback(() => setHistoryItems(getHistory()), []);
   useEffect(() => { refreshHistory(); }, [refreshHistory]);
 
-  const handleDeleteItem    = (q: string, type: string) => { removeHistory(q, type); refreshHistory(); };
+  const handleDeleteItem     = (q: string, type: string) => { removeHistory(q, type); refreshHistory(); };
   const handleClearConfirmed = () => { clearHistory(); refreshHistory(); setShowClearDialog(false); };
 
   const clearAction = historyItems.length > 0 ? (
@@ -52,49 +53,51 @@ const HistoryPage: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'background.default' }}>
+      {/* PageHeader はアニメ外 */}
       <PageHeader title={t.history} action={clearAction} />
 
-      <Container maxWidth="sm" sx={{ py: 3, flexGrow: 1 }}>
-        {historyItems.length === 0 ? (
-          <Box sx={{ textAlign: 'center', mt: 10 }}>
-            <HistoryIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">{t.noHistory}</Typography>
-            <Button variant="contained" onClick={() => navigate('/')} sx={{ mt: 3, textTransform: 'none', borderRadius: '24px' }}>
-              {t.backToHome}
-            </Button>
-          </Box>
-        ) : (
-          <Paper elevation={0} sx={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-            <List sx={{ py: 0 }}>
-              {historyItems.map((item, index) => (
-                <React.Fragment key={`${item.q}-${item.time}-${index}`}>
-                  <ListItem
-                    disablePadding
-                    secondaryAction={
-                      <IconButton edge="end" onClick={() => handleDeleteItem(item.q, item.type)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    }
-                  >
-                    <ListItemButton onClick={() => navigate(`/search?q=${encodeURIComponent(item.q)}&t=${item.type}`)}>
-                      <ListItemIcon><HistoryIcon color="action" /></ListItemIcon>
-                      <ListItemText
-                        primary={item.q}
-                        secondary={new Date(item.time).toLocaleString()}
-                        primaryTypographyProps={{ fontWeight: 500 }}
-                        secondaryTypographyProps={{ color: 'text.secondary' }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                  {index < historyItems.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </List>
-          </Paper>
-        )}
-      </Container>
-
-      <BottomNavSpacer />
+      <PageTransition>
+        <Container maxWidth="sm" sx={{ py: 3, flexGrow: 1 }}>
+          {historyItems.length === 0 ? (
+            <Box sx={{ textAlign: 'center', mt: 10 }}>
+              <HistoryIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary">{t.noHistory}</Typography>
+              <Button variant="contained" onClick={() => navigate('/')} sx={{ mt: 3, textTransform: 'none', borderRadius: '24px' }}>
+                {t.backToHome}
+              </Button>
+            </Box>
+          ) : (
+            <Paper elevation={0} sx={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+              <List sx={{ py: 0 }}>
+                {historyItems.map((item, index) => (
+                  <React.Fragment key={`${item.q}-${item.time}-${index}`}>
+                    <ListItem
+                      disablePadding
+                      secondaryAction={
+                        <IconButton edge="end" onClick={() => handleDeleteItem(item.q, item.type)}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      }
+                    >
+                      <ListItemButton onClick={() => navigate(`/search?q=${encodeURIComponent(item.q)}&t=${item.type}`)}>
+                        <ListItemIcon><HistoryIcon color="action" /></ListItemIcon>
+                        <ListItemText
+                          primary={item.q}
+                          secondary={new Date(item.time).toLocaleString()}
+                          primaryTypographyProps={{ fontWeight: 500 }}
+                          secondaryTypographyProps={{ color: 'text.secondary' }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                    {index < historyItems.length - 1 && <Divider />}
+                  </React.Fragment>
+                ))}
+              </List>
+            </Paper>
+          )}
+        </Container>
+        <BottomNavSpacer />
+      </PageTransition>
 
       <Dialog open={showClearDialog} onClose={() => setShowClearDialog(false)} PaperProps={{ sx: { borderRadius: '16px', mx: 2 } }}>
         <DialogTitle sx={{ fontWeight: 700, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>

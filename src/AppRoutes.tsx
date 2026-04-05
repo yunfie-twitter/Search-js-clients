@@ -7,8 +7,9 @@ import HistoryPage from './pages/HistoryPage';
 import Settings from './pages/Settings';
 import Labs from './pages/Labs';
 import MobileBottomNav from './components/MobileBottomNav';
-import PageTransition from './components/PageTransition';
 
+// AppRoutes では PageTransition を使わない。
+// 各ページ内部でコンテンツ部分のみを PageTransition で包む。
 const AppRoutes: React.FC = () => {
   const location = useLocation();
   const scrollPositions = React.useRef<Record<string, number>>({});
@@ -31,15 +32,13 @@ const AppRoutes: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
-      <PageTransition>
-        <Routes location={location}>
-          <Route path="/" element={<Home />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/labs" element={<Labs />} />
-        </Routes>
-      </PageTransition>
+      <Routes location={location}>
+        <Route path="/" element={<Home />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/labs" element={<Labs />} />
+      </Routes>
       <MobileBottomNav />
     </Box>
   );

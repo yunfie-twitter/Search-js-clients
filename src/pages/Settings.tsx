@@ -29,6 +29,7 @@ import { triggerHaptic } from '../utils/haptics';
 import SectionHeader from '../components/settings/SectionHeader';
 import SwitchItem from '../components/settings/SwitchItem';
 import PageHeader from '../components/PageHeader';
+import PageTransition from '../components/PageTransition';
 import { BottomNavSpacer } from '../components/MobileBottomNav';
 import SettingsDisplaySection from '../components/settings/SettingsDisplaySection';
 import SettingsSearchSection from '../components/settings/SettingsSearchSection';
@@ -85,66 +86,58 @@ const Settings: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'background.default' }}>
+      {/* PageHeader はアニメ外 */}
       <PageHeader title={t.settings} />
 
-      <Container maxWidth="sm" sx={{ py: 2, flexGrow: 1 }}>
-
-        <SettingsDisplaySection
-          t={t}
-          themeMode={themeMode} setThemeMode={setThemeMode}
-          enableAnimations={enableAnimations} setEnableAnimations={setEnableAnimations}
-          language={language} setLanguage={setLanguage}
-        />
-
-        <SettingsSearchSection
-          t={t}
-          resultsPerPage={resultsPerPage} setResultsPerPage={setResultsPerPage}
-          defaultSearchType={defaultSearchType} setDefaultSearchType={setDefaultSearchType}
-          safeSearch={safeSearch} setSafeSearch={setSafeSearch}
-          cacheTtl={cacheTtl} setCacheTtl={setCacheTtl}
-        />
-
-        <SettingsRegionSection
-          t={t}
-          searchRegion={searchRegion} setSearchRegion={setSearchRegion}
-          searchLang={searchLang} setSearchLang={setSearchLang}
-        />
-
-        <SectionHeader label={t.sectionPrivacy} />
-        <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-          <List sx={{ py: 0 }}>
-            <SwitchItem icon={<HistoryIcon />} primary={t.saveHistory} checked={saveHistory} onChange={setSaveHistory} />
-          </List>
-        </Paper>
-
-        <SectionHeader label={t.about} />
-        <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-          <List sx={{ py: 0 }}>
-            <ListItem sx={{ py: 1.5, cursor: 'pointer', userSelect: 'none' }} onClick={handleVersionTap}>
-              <ListItemIcon><InfoIcon /></ListItemIcon>
-              <ListItemText
-                primary="Version"
-                secondary={
-                  <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    1.2.0
-                    {expUnlocked && (
-                      <Chip
-                        label={language === 'ja' ? '実験的機能解除済' : 'Experimental unlocked'}
-                        size="small" color="warning" variant="outlined"
-                        sx={{ fontSize: '11px', height: 20 }}
-                      />
-                    )}
-                  </Box>
-                }
-              />
-              <ChevronRightIcon sx={{ color: expUnlocked ? 'warning.main' : 'text.disabled', transition: 'color 0.2s' }} />
-            </ListItem>
-          </List>
-        </Paper>
-
-      </Container>
-
-      <BottomNavSpacer />
+      <PageTransition>
+        <Container maxWidth="sm" sx={{ py: 2, flexGrow: 1 }}>
+          <SettingsDisplaySection
+            t={t}
+            themeMode={themeMode} setThemeMode={setThemeMode}
+            enableAnimations={enableAnimations} setEnableAnimations={setEnableAnimations}
+            language={language} setLanguage={setLanguage}
+          />
+          <SettingsSearchSection
+            t={t}
+            resultsPerPage={resultsPerPage} setResultsPerPage={setResultsPerPage}
+            defaultSearchType={defaultSearchType} setDefaultSearchType={setDefaultSearchType}
+            safeSearch={safeSearch} setSafeSearch={setSafeSearch}
+            cacheTtl={cacheTtl} setCacheTtl={setCacheTtl}
+          />
+          <SettingsRegionSection
+            t={t}
+            searchRegion={searchRegion} setSearchRegion={setSearchRegion}
+            searchLang={searchLang} setSearchLang={setSearchLang}
+          />
+          <SectionHeader label={t.sectionPrivacy} />
+          <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+            <List sx={{ py: 0 }}>
+              <SwitchItem icon={<HistoryIcon />} primary={t.saveHistory} checked={saveHistory} onChange={setSaveHistory} />
+            </List>
+          </Paper>
+          <SectionHeader label={t.about} />
+          <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+            <List sx={{ py: 0 }}>
+              <ListItem sx={{ py: 1.5, cursor: 'pointer', userSelect: 'none' }} onClick={handleVersionTap}>
+                <ListItemIcon><InfoIcon /></ListItemIcon>
+                <ListItemText
+                  primary="Version"
+                  secondary={
+                    <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      1.2.0
+                      {expUnlocked && (
+                        <Chip label={language === 'ja' ? '実験的機能解除済' : 'Experimental unlocked'} size="small" color="warning" variant="outlined" sx={{ fontSize: '11px', height: 20 }} />
+                      )}
+                    </Box>
+                  }
+                />
+                <ChevronRightIcon sx={{ color: expUnlocked ? 'warning.main' : 'text.disabled', transition: 'color 0.2s' }} />
+              </ListItem>
+            </List>
+          </Paper>
+        </Container>
+        <BottomNavSpacer />
+      </PageTransition>
 
       <Dialog open={showWarning} onClose={() => setShowWarning(false)} PaperProps={{ sx: { borderRadius: '16px', mx: 2 } }}>
         <DialogTitle sx={{ fontWeight: 700, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
