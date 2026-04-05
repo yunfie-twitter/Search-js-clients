@@ -5,6 +5,7 @@ import { RefreshOutlined as RefreshIcon } from '@mui/icons-material';
 /**
  * Pull-to-Refresh のインジケーター。
  * usePullToRefresh から ref を渡して使う。
+ * left: 50vw でビューポート基準の左右中山に固定（overflow:hiddenの親に左右されない）
  */
 const PullToRefreshIndicator = forwardRef<HTMLDivElement>((_, ref) => (
   <Box
@@ -12,7 +13,7 @@ const PullToRefreshIndicator = forwardRef<HTMLDivElement>((_, ref) => (
     sx={{
       position: 'fixed',
       top: 'calc(env(safe-area-inset-top) + 12px)',
-      left: '50%',
+      left: '50vw',
       transform: 'translateX(-50%)',
       zIndex: 2000,
       opacity: 0,
