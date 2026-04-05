@@ -1,68 +1,78 @@
-import React from 'react';
-import { Breadcrumbs, Typography, Box, Avatar } from '@mui/material';
-import { NavigateNext as NavigateNextIcon } from '@mui/icons-material';
+import React, { memo } from 'react';
+import { Box, Typography } from '@mui/material';
+import { useTheme } from '@mui/material';
 
 interface ItemBreadcrumbURLProps {
   url: string;
   favicon?: string;
 }
 
-const ItemBreadcrumbURL: React.FC<ItemBreadcrumbURLProps> = ({ url, favicon }) => {
-  const getBreadcrumbs = (urlStr: string) => {
-    try {
-      const urlObj = new URL(urlStr);
-      const hostname = urlObj.hostname.replace('www.', '');
-      const pathParts = urlObj.pathname.split('/').filter(p => p.length > 0);
-      return [hostname, ...pathParts];
-    } catch (e) {
-      return [urlStr];
-    }
-  };
+const getSiteName = (urlStr: string): { name: string; domain: string } => {
+  try {
+    const u    = new URL(urlStr);
+    const host = u.hostname.replace(/^www\./, '');
+    // ブランド名推定: サブドメインなしの最初のセグメント
+    const parts = host.split('.');
+    const brand = parts.length >= 2
+      ? parts[parts.length - 2].charAt(0).toUpperCase() + parts[parts.length - 2].slice(1)
+      : host;
+    return { name: brand, domain: host };
+  } catch {
+    return { name: urlStr, domain: urlStr };
+  }
+};
 
-  const parts = getBreadcrumbs(url);
-  const faviconUrl = favicon || `https://www.google.com/s2/favicons?sz=64&domain=${new URL(url || 'http://localhost').hostname}`;
+const ItemBreadcrumbURL: React.FC<ItemBreadcrumbURLProps> = ({ url, favicon }) => {
+  const theme  = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const faviconUrl = favicon ||
+    `https://www.google.com/s2/favicons?sz=64&domain=${new URL(url || 'http://localhost').hostname}`;
+  const { name, domain } = getSiteName(url);
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', mb: '4px' }}>
-      <Avatar 
-        src={faviconUrl} 
-        sx={{ width: 16, height: 16, mr: 1, backgroundColor: 'transparent' }} 
-        variant="square"
-      >
-        <Box sx={{ width: 12, height: 12, backgroundColor: '#ccc', borderRadius: '2px' }} />
-      </Avatar>
-      <Breadcrumbs 
-        separator="›" 
-        sx={{ 
-          '& .MuiBreadcrumbs-separator': { 
-            mx: '4px', 
-            color: '#70757a',
-            fontSize: '14px'
-          },
-          '& .MuiBreadcrumbs-ol': {
-            flexWrap: 'nowrap',
-            overflow: 'hidden'
-          }
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', mb: '4px' }}>
+      {/* favicon */}
+      <Box
+        component="img"
+        src={faviconUrl}
+        alt=""
+        onError={(e: any) => { e.target.style.display = 'none'; }}
+        sx={{ width: 14, height: 14, borderRadius: '3px', flexShrink: 0, objectFit: 'contain' }}
+      />
+      {/* ブランド名 */}
+      <Typography
+        sx={{
+          fontSize: '12px',
+          fontWeight: 600,
+          color: isDark ? '#f2f2f7' : '#1c1c1e',
+          lineHeight: 1,
+          letterSpacing: '-0.005em',
+          whiteSpace: 'nowrap',
         }}
       >
-        {parts.map((part, index) => (
-          <Typography 
-            key={index} 
-            sx={{ 
-              fontSize: '12px', 
-              color: index === 0 ? '#202124' : '#4d5156',
-              whiteSpace: 'nowrap',
-              maxWidth: index === 0 ? 'none' : '150px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis'
-            }}
-          >
-            {part}
-          </Typography>
-        ))}
-      </Breadcrumbs>
+        {name}
+      </Typography>
+      {/* セパレーター */}
+      <Typography sx={{ fontSize: '11px', color: isDark ? '#48484a' : '#c7c7cc', lineHeight: 1 }}>
+        ·
+      </Typography>
+      {/* ドメイン */}
+      <Typography
+        sx={{
+          fontSize: '11px',
+          color: isDark ? '#636366' : '#8e8e93',
+          lineHeight: 1,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          maxWidth: '220px',
+          letterSpacing: '0em',
+        }}
+      >
+        {domain}
+      </Typography>
     </Box>
   );
 };
 
-export default ItemBreadcrumbURL;
+export default memo(ItemBreadcrumbURL);

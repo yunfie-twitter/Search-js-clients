@@ -11,23 +11,23 @@ const TAB_TYPES: SearchType[] = ['web', 'image', 'video', 'news'];
 
 const Tabs: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const navigate       = useNavigate();
+  const navigate = useNavigate();
   const { language, type, setType } = useSearchStore();
-  const t     = useMemo(() => translations[language], [language]);
-  const theme = useTheme();
+  const t = useMemo(() => translations[language], [language]);
+  const theme  = useTheme();
   const isDark = theme.palette.mode === 'dark';
-
-  const query = searchParams.get('q') || '';
+  const query  = searchParams.get('q') || '';
 
   const LABELS: Record<SearchType, string> = useMemo(() => ({
-    web:   t.all,
-    image: t.images,
-    video: t.videos,
-    news:  t.news,
+    web: t.all, image: t.images, video: t.videos, news: t.news,
   }), [t]);
 
+  const activeColor  = isDark ? '#0a84ff' : '#007aff';
+  const activeBg     = isDark ? 'rgba(10,132,255,0.18)' : 'rgba(0,122,255,0.10)';
+  const inactiveText = isDark ? '#8e8e93' : '#6c6c70';
+
   const handleChange = (newValue: SearchType) => {
-    if (newValue === type) return;       // 同じタブは何もしない
+    if (newValue === type) return;
     triggerHaptic();
     setType(newValue);
     navigate(`/search?q=${encodeURIComponent(query)}&t=${newValue}`, { replace: true });
@@ -39,13 +39,13 @@ const Tabs: React.FC = () => {
       role="tablist"
       sx={{
         display: 'flex',
-        alignItems: 'flex-end',
-        gap: { xs: '2px', sm: '4px' },
+        alignItems: 'center',
+        gap: '4px',
         width: '100%',
         overflowX: 'auto',
         scrollbarWidth: 'none',
         '&::-webkit-scrollbar': { display: 'none' },
-        pb: '1px',
+        py: '6px',
       }}
     >
       {TAB_TYPES.map((tabType) => {
@@ -57,51 +57,34 @@ const Tabs: React.FC = () => {
             aria-selected={isActive}
             onClick={() => handleChange(tabType)}
             sx={{
-              position: 'relative',
-              px: { xs: '14px', sm: '16px' },
-              py: '10px',
-              pb: '12px',
-              fontSize: '14px',
-              fontWeight: isActive ? 600 : 400,
-              color: isActive
-                ? (isDark ? '#0a84ff' : '#007aff')
-                : (isDark ? '#8e8e93' : '#6c6c70'),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              px: isActive ? '14px' : '12px',
+              py: '6px',
+              borderRadius: '20px',
+              fontSize: '13px',
+              fontWeight: isActive ? 700 : 400,
+              color: isActive ? activeColor : inactiveText,
+              backgroundColor: isActive ? activeBg : 'transparent',
               cursor: 'pointer',
               userSelect: 'none',
               whiteSpace: 'nowrap',
               flexShrink: 0,
               letterSpacing: '-0.01em',
-              // シンプルな color + font-weight のみアニメ— GPU 負荷ゼロ
               transition: [
+                `background-color ${DUR_NORMAL}ms ${EASE_SPRING}`,
                 `color ${DUR_FAST}ms ${EASE_SPRING}`,
-                `font-weight 0ms`,
-                `opacity ${DUR_FAST}ms ${EASE_SPRING}`,
+                `padding ${DUR_NORMAL}ms ${EASE_SPRING}`,
+                `transform ${DUR_FAST}ms ${EASE_SPRING}`,
               ].join(', '),
-              // タップ フィードバック
-              '&:active': { opacity: 0.65 },
+              '&:active': { transform: 'scale(0.92)', opacity: 0.75 },
               WebkitTapHighlightColor: 'transparent',
+              minWidth: 44,
+              minHeight: 32,
             }}
           >
             {LABELS[tabType]}
-
-            {/* アクティブインジケーターバー */}
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: 0,
-                left: isActive ? '14px' : '50%',
-                right: isActive ? '14px' : '50%',
-                height: 3,
-                borderRadius: '3px 3px 0 0',
-                backgroundColor: isDark ? '#0a84ff' : '#007aff',
-                opacity: isActive ? 1 : 0,
-                transition: [
-                  `left ${DUR_NORMAL}ms ${EASE_SPRING}`,
-                  `right ${DUR_NORMAL}ms ${EASE_SPRING}`,
-                  `opacity ${DUR_NORMAL}ms ${EASE_SPRING}`,
-                ].join(', '),
-              }}
-            />
           </Box>
         );
       })}
