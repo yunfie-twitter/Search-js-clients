@@ -4,7 +4,8 @@
  * expLenis=false のときは即座に destroy して通常スクロールに戻す。
  *
  * 依存: lenis（npm install lenis）
- * 静的 import を避け dynamic import のみ使用して型エラーを回避する。
+ * lenis が未インストールの場合は dynamic import が失敗するだけで
+ * アプリはクラッシュしない（try/catch で吸収）。
  */
 import { useEffect, useRef } from 'react';
 
@@ -23,22 +24,19 @@ export const useLenis = (enabled: boolean) => {
 
     const boot = async () => {
       try {
-        // dynamic import — 静的に import しないので型エラーにならない
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mod = await import(/* @vite-ignore */ 'lenis').catch(() => null);
-        if (!mod) return;
-        const Lenis = mod.default ?? mod.Lenis;
-        if (!Lenis) return;
-
+        // lenis はオプション依存 — TSC の TS2307 を抑制
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error: lenis may not be installed
+        const { default: Lenis } = await import('lenis');
         const root = document.getElementById('root');
         if (!root) return;
 
         lenis = new Lenis({
-          wrapper:         root,
-          content:         root,
-          duration:        1.1,
-          easing:          (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-          smoothWheel:     true,
+          wrapper:   root,
+          content:   root,
+          duration:  1.1,
+          easing:    (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          smoothWheel: true,
           touchMultiplier: 1.8,
         });
 
