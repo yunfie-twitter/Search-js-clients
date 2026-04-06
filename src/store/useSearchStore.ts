@@ -38,6 +38,8 @@ interface SearchState {
   expImageSearch: boolean;
   expLenis: boolean;
   expUnlocked: boolean;
+  expAiSummary: boolean;
+  geminiApiKey: string;
 
   setQuery: (q: string) => void;
   setType: (t: SearchType) => void;
@@ -56,6 +58,8 @@ interface SearchState {
   setExpImageSearch: (v: boolean) => void;
   setExpLenis: (v: boolean) => void;
   setExpUnlocked: (v: boolean) => void;
+  setExpAiSummary: (v: boolean) => void;
+  setGeminiApiKey: (key: string) => void;
 
   performSearch: (q: string, type: SearchType, page?: number) => Promise<void>;
   resetSearch: () => void;
@@ -106,6 +110,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   expImageSearch: saved.expImageSearch !== undefined ? saved.expImageSearch : false,
   expLenis:       saved.expLenis       !== undefined ? saved.expLenis       : false,
   expUnlocked:    saved.expUnlocked    !== undefined ? saved.expUnlocked    : false,
+  expAiSummary:   saved.expAiSummary   !== undefined ? saved.expAiSummary   : false,
+  geminiApiKey:   saved.geminiApiKey   || '',
 
   setQuery: (q) => set({ query: q }),
   setType: (t) => set({ type: t }),
@@ -124,6 +130,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   setExpImageSearch: (v) => { set({ expImageSearch: v }); saveSetting('expImageSearch', v); },
   setExpLenis: (v) => { set({ expLenis: v }); saveSetting('expLenis', v); },
   setExpUnlocked: (v) => { set({ expUnlocked: v }); saveSetting('expUnlocked', v); },
+  setExpAiSummary: (v) => { set({ expAiSummary: v }); saveSetting('expAiSummary', v); },
+  setGeminiApiKey: (key) => { set({ geminiApiKey: key }); saveSetting('geminiApiKey', key); },
 
   performSearch: async (q, type, pageNum = 1) => {
     if (!q) return;

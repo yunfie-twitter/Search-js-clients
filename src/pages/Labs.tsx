@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   Box, Container, Typography, List,
   IconButton, Divider, Paper, Alert,
+  TextField, InputAdornment, Collapse,
 } from '@mui/material';
 import {
   ArrowBackOutlined as ArrowBackIcon,
@@ -9,6 +10,10 @@ import {
   ImageSearchOutlined as ImageSearchIcon,
   SpeedOutlined    as LenisIcon,
   WarningAmberOutlined as WarningIcon,
+  AutoAwesomeOutlined as AiIcon,
+  KeyOutlined as KeyIcon,
+  VisibilityOutlined as ShowIcon,
+  VisibilityOffOutlined as HideIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
@@ -19,16 +24,20 @@ import SwitchItem from '../components/settings/SwitchItem';
 
 const Labs: React.FC = () => {
   const navigate = useNavigate();
-  const language       = useSearchStore((s) => s.language);
-  const expImageSearch = useSearchStore((s) => s.expImageSearch);
+  const language          = useSearchStore((s) => s.language);
+  const expImageSearch    = useSearchStore((s) => s.expImageSearch);
   const setExpImageSearch = useSearchStore((s) => s.setExpImageSearch);
-  const expLenis       = useSearchStore((s) => s.expLenis);
-  const setExpLenis    = useSearchStore((s) => s.setExpLenis);
+  const expLenis          = useSearchStore((s) => s.expLenis);
+  const setExpLenis       = useSearchStore((s) => s.setExpLenis);
+  const expAiSummary      = useSearchStore((s) => s.expAiSummary);
+  const setExpAiSummary   = useSearchStore((s) => s.setExpAiSummary);
+  const geminiApiKey      = useSearchStore((s) => s.geminiApiKey);
+  const setGeminiApiKey   = useSearchStore((s) => s.setGeminiApiKey);
   const t = React.useMemo(() => translations[language], [language]);
 
-  const [expAiSummary,       setExpAiSummary]       = useState(false);
   const [expInstantResults,  setExpInstantResults]  = useState(false);
   const [expKnowledgePanel,  setExpKnowledgePanel]  = useState(false);
+  const [showKey, setShowKey] = useState(false);
 
   const handleBack = () => { triggerHaptic(); navigate(-1); };
 
@@ -65,13 +74,70 @@ const Labs: React.FC = () => {
               icon={<LenisIcon />}
               primary={language === 'ja' ? 'Lenis 慣性スクロール（β）' : 'Lenis Inertia Scroll (β)'}
               secondary={language === 'ja'
-                ? 'lenis.js による滑らかな慣性スクロール。要 npm install lenis。'
-                : 'Smooth inertia scrolling powered by lenis.js. Requires npm install lenis.'}
+                ? 'lenis.js による滑らかな慣性スクロール。'
+                : 'Smooth inertia scrolling powered by lenis.js.'}
               checked={expLenis}
               onChange={setExpLenis}
               chip="β"
             />
           </List>
+        </Paper>
+
+        {/* ─ AI ─ */}
+        <SectionHeader title={language === 'ja' ? 'AI 機能' : 'AI Features'} />
+        <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider', mb: 2 }}>
+          <List sx={{ py: 0 }}>
+            <SwitchItem
+              icon={<AiIcon />}
+              primary={language === 'ja' ? 'AI 要約（Gemini）' : 'AI Summary (Gemini)'}
+              secondary={language === 'ja'
+                ? 'Gemini API で検索結果を要約表示。APIキーが必要です。'
+                : 'Summarize search results via Gemini API. Requires your API key.'}
+              checked={expAiSummary}
+              onChange={setExpAiSummary}
+              chip="β"
+            />
+          </List>
+          <Collapse in={expAiSummary}>
+            <Divider />
+            <Box sx={{ px: 2, py: 1.5 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label={language === 'ja' ? 'Gemini API キー' : 'Gemini API Key'}
+                placeholder="AIza..."
+                value={geminiApiKey}
+                onChange={(e) => setGeminiApiKey(e.target.value)}
+                type={showKey ? 'text' : 'password'}
+                autoComplete="off"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <KeyIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => setShowKey((v) => !v)} edge="end">
+                        {showKey
+                          ? <HideIcon sx={{ fontSize: 16 }} />
+                          : <ShowIcon sx={{ fontSize: 16 }} />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': { borderRadius: '10px' },
+                  '& .MuiInputLabel-root': { fontSize: '13px' },
+                }}
+                helperText={
+                  language === 'ja'
+                    ? 'キーはこのデバイスのローカルストレージにのみ保存されます。'
+                    : 'Your key is stored only in this device\'s local storage.'
+                }
+              />
+            </Box>
+          </Collapse>
         </Paper>
 
         {/* ─ 検索 ─ */}
@@ -93,15 +159,6 @@ const Labs: React.FC = () => {
         <SectionHeader title={language === 'ja' ? '開発中' : 'Coming Soon'} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           <List sx={{ py: 0 }}>
-            <SwitchItem
-              icon={<ScienceIcon />}
-              primary={t.experimentalAiSummary}
-              secondary={t.experimentalAiSummaryDesc}
-              checked={expAiSummary}
-              onChange={setExpAiSummary}
-              chip="β" disabled
-            />
-            <Divider />
             <SwitchItem
               icon={<ScienceIcon />}
               primary={t.experimentalInstantResults}
