@@ -22,6 +22,7 @@ interface Props {
 
 const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
   const geminiApiKey = useSearchStore((s) => s.geminiApiKey);
+  const geminiModel  = useSearchStore((s) => s.geminiModel);
   const language     = useSearchStore((s) => s.language);
   const theme        = useTheme();
   const isDark       = theme.palette.mode === 'dark';
@@ -52,14 +53,14 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
       .map((r) => (r as any).summary || (r as any).snippet || r.title || '')
       .filter(Boolean);
 
-    const result = await fetchGeminiSummary(query, snippets, geminiApiKey, language);
+    const result = await fetchGeminiSummary(query, snippets, geminiApiKey, language, geminiModel);
     if (result.error) {
       setError(result.error ?? '');
     } else {
       setSummary(result.text ?? '');
     }
     setLoading(false);
-  }, [query, results, geminiApiKey, language, loading]);
+  }, [query, results, geminiApiKey, language, geminiModel, loading]);
 
   // 結果が揃ったら自動実行
   useEffect(() => {
