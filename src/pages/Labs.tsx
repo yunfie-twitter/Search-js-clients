@@ -14,6 +14,7 @@ import {
   KeyOutlined as KeyIcon,
   VisibilityOutlined as ShowIcon,
   VisibilityOffOutlined as HideIcon,
+  TravelExploreOutlined as KnowledgeIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
@@ -24,19 +25,20 @@ import SwitchItem from '../components/settings/SwitchItem';
 
 const Labs: React.FC = () => {
   const navigate = useNavigate();
-  const language          = useSearchStore((s) => s.language);
-  const expImageSearch    = useSearchStore((s) => s.expImageSearch);
-  const setExpImageSearch = useSearchStore((s) => s.setExpImageSearch);
-  const expLenis          = useSearchStore((s) => s.expLenis);
-  const setExpLenis       = useSearchStore((s) => s.setExpLenis);
-  const expAiSummary      = useSearchStore((s) => s.expAiSummary);
-  const setExpAiSummary   = useSearchStore((s) => s.setExpAiSummary);
-  const geminiApiKey      = useSearchStore((s) => s.geminiApiKey);
-  const setGeminiApiKey   = useSearchStore((s) => s.setGeminiApiKey);
+  const language              = useSearchStore((s) => s.language);
+  const expImageSearch        = useSearchStore((s) => s.expImageSearch);
+  const setExpImageSearch     = useSearchStore((s) => s.setExpImageSearch);
+  const expLenis              = useSearchStore((s) => s.expLenis);
+  const setExpLenis           = useSearchStore((s) => s.setExpLenis);
+  const expAiSummary          = useSearchStore((s) => s.expAiSummary);
+  const setExpAiSummary       = useSearchStore((s) => s.setExpAiSummary);
+  const expKnowledgePanel     = useSearchStore((s) => s.expKnowledgePanel);
+  const setExpKnowledgePanel  = useSearchStore((s) => s.setExpKnowledgePanel);
+  const geminiApiKey          = useSearchStore((s) => s.geminiApiKey);
+  const setGeminiApiKey       = useSearchStore((s) => s.setGeminiApiKey);
   const t = React.useMemo(() => translations[language], [language]);
 
-  const [expInstantResults,  setExpInstantResults]  = useState(false);
-  const [expKnowledgePanel,  setExpKnowledgePanel]  = useState(false);
+  const [expInstantResults, setExpInstantResults] = useState(false);
   const [showKey, setShowKey] = useState(false);
 
   const handleBack = () => { triggerHaptic(); navigate(-1); };
@@ -152,6 +154,17 @@ const Labs: React.FC = () => {
               onChange={setExpImageSearch}
               chip="β"
             />
+            <Divider />
+            <SwitchItem
+              icon={<KnowledgeIcon />}
+              primary={language === 'ja' ? 'ナレッジパネル（Wikipedia）' : 'Knowledge Panel (Wikipedia)'}
+              secondary={language === 'ja'
+                ? 'クエリに関連する Wikipedia の概要をサイドバー／カードで表示します。'
+                : 'Shows a Wikipedia summary card in the sidebar or above results.'}
+              checked={expKnowledgePanel}
+              onChange={setExpKnowledgePanel}
+              chip="β"
+            />
           </List>
         </Paper>
 
@@ -165,15 +178,6 @@ const Labs: React.FC = () => {
               secondary={t.experimentalInstantResultsDesc}
               checked={expInstantResults}
               onChange={setExpInstantResults}
-              chip="β" disabled
-            />
-            <Divider />
-            <SwitchItem
-              icon={<ScienceIcon />}
-              primary={t.experimentalKnowledgePanel}
-              secondary={t.experimentalKnowledgePanelDesc}
-              checked={expKnowledgePanel}
-              onChange={setExpKnowledgePanel}
               chip="β" disabled
             />
           </List>

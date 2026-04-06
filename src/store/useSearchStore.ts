@@ -39,6 +39,7 @@ interface SearchState {
   expLenis: boolean;
   expUnlocked: boolean;
   expAiSummary: boolean;
+  expKnowledgePanel: boolean;
   geminiApiKey: string;
 
   setQuery: (q: string) => void;
@@ -59,6 +60,7 @@ interface SearchState {
   setExpLenis: (v: boolean) => void;
   setExpUnlocked: (v: boolean) => void;
   setExpAiSummary: (v: boolean) => void;
+  setExpKnowledgePanel: (v: boolean) => void;
   setGeminiApiKey: (key: string) => void;
 
   performSearch: (q: string, type: SearchType, page?: number) => Promise<void>;
@@ -107,11 +109,12 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   searchRegion: saved.searchRegion || 'JP',
   searchLang: saved.searchLang || 'ja',
 
-  expImageSearch: saved.expImageSearch !== undefined ? saved.expImageSearch : false,
-  expLenis:       saved.expLenis       !== undefined ? saved.expLenis       : false,
-  expUnlocked:    saved.expUnlocked    !== undefined ? saved.expUnlocked    : false,
-  expAiSummary:   saved.expAiSummary   !== undefined ? saved.expAiSummary   : false,
-  geminiApiKey:   saved.geminiApiKey   || '',
+  expImageSearch:     saved.expImageSearch     !== undefined ? saved.expImageSearch     : false,
+  expLenis:           saved.expLenis           !== undefined ? saved.expLenis           : false,
+  expUnlocked:        saved.expUnlocked        !== undefined ? saved.expUnlocked        : false,
+  expAiSummary:       saved.expAiSummary       !== undefined ? saved.expAiSummary       : false,
+  expKnowledgePanel:  saved.expKnowledgePanel  !== undefined ? saved.expKnowledgePanel  : false,
+  geminiApiKey:       saved.geminiApiKey       || '',
 
   setQuery: (q) => set({ query: q }),
   setType: (t) => set({ type: t }),
@@ -127,11 +130,12 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   setCacheTtl: (ttl) => { set({ cacheTtl: ttl }); saveSetting('cacheTtl', ttl); },
   setSearchRegion: (region) => { set({ searchRegion: region }); saveSetting('searchRegion', region); },
   setSearchLang: (lang) => { set({ searchLang: lang }); saveSetting('searchLang', lang); },
-  setExpImageSearch: (v) => { set({ expImageSearch: v }); saveSetting('expImageSearch', v); },
-  setExpLenis: (v) => { set({ expLenis: v }); saveSetting('expLenis', v); },
-  setExpUnlocked: (v) => { set({ expUnlocked: v }); saveSetting('expUnlocked', v); },
-  setExpAiSummary: (v) => { set({ expAiSummary: v }); saveSetting('expAiSummary', v); },
-  setGeminiApiKey: (key) => { set({ geminiApiKey: key }); saveSetting('geminiApiKey', key); },
+  setExpImageSearch:    (v) => { set({ expImageSearch: v });    saveSetting('expImageSearch', v); },
+  setExpLenis:          (v) => { set({ expLenis: v });          saveSetting('expLenis', v); },
+  setExpUnlocked:       (v) => { set({ expUnlocked: v });       saveSetting('expUnlocked', v); },
+  setExpAiSummary:      (v) => { set({ expAiSummary: v });      saveSetting('expAiSummary', v); },
+  setExpKnowledgePanel: (v) => { set({ expKnowledgePanel: v }); saveSetting('expKnowledgePanel', v); },
+  setGeminiApiKey:      (key) => { set({ geminiApiKey: key });   saveSetting('geminiApiKey', key); },
 
   performSearch: async (q, type, pageNum = 1) => {
     if (!q) return;

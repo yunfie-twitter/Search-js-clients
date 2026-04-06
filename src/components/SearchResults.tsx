@@ -22,6 +22,7 @@ import RelatedSearchesCard from './RelatedSearchesCard';
 import MediaCard from './MediaCard';
 import ItemBreadcrumbURL from './ItemBreadcrumbURL';
 import AiSummaryCard from './AiSummaryCard';
+import KnowledgePanel from './KnowledgePanel';
 import { EASE_SPRING, DUR_NORMAL, DUR_MODAL, staggerDelay } from '../utils/motion';
 
 const GRID_SKELETON_KEYS = Array.from({ length: 12 }, (_, i) => i);
@@ -286,22 +287,23 @@ const MediaGrid: React.FC<{
 
 // ─── Main ──────────────────────────────────────────────────────────────────────────
 const SearchResults: React.FC = () => {
-  const results          = useSearchStore((s) => s.results);
-  const isInitialLoading = useSearchStore((s) => s.isInitialLoading);
-  const query            = useSearchStore((s) => s.query);
-  const type             = useSearchStore((s) => s.type);
-  const selectedItem     = useSearchStore((s) => s.selectedItem);
-  const setSelectedItem  = useSearchStore((s) => s.setSelectedItem);
-  const language         = useSearchStore((s) => s.language);
-  const page             = useSearchStore((s) => s.page);
-  const expAiSummary     = useSearchStore((s) => s.expAiSummary);
-  const geminiApiKey     = useSearchStore((s) => s.geminiApiKey);
+  const results             = useSearchStore((s) => s.results);
+  const isInitialLoading    = useSearchStore((s) => s.isInitialLoading);
+  const query               = useSearchStore((s) => s.query);
+  const type                = useSearchStore((s) => s.type);
+  const selectedItem        = useSearchStore((s) => s.selectedItem);
+  const setSelectedItem     = useSearchStore((s) => s.setSelectedItem);
+  const language            = useSearchStore((s) => s.language);
+  const page                = useSearchStore((s) => s.page);
+  const expAiSummary        = useSearchStore((s) => s.expAiSummary);
+  const expKnowledgePanel   = useSearchStore((s) => s.expKnowledgePanel);
+  const geminiApiKey        = useSearchStore((s) => s.geminiApiKey);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [toast, setToast]               = useState<string | null>(null);
   const t        = React.useMemo(() => translations[language], [language]);
   const theme    = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isDark   = theme.palette.mode === 'dark';
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
@@ -310,19 +312,24 @@ const SearchResults: React.FC = () => {
   };
 
   const isGridLayout = type === 'image' || type === 'video';
-  const showAiSummary = expAiSummary && !!geminiApiKey && type === 'web' && !isInitialLoading && results.length > 0;
+  const showAiSummary      = expAiSummary && !!geminiApiKey && type === 'web' && !isInitialLoading && results.length > 0;
+  const showKnowledge      = expKnowledgePanel && type === 'web' && !!query;
 
   return (
-    <Box sx={{ width: '100%', overflowX: 'hidden' }}>
+    <Box sx={{ width: '100%' }}>
       {isGridLayout ? (
         <MediaGrid isLoading={isInitialLoading} results={results} onSelect={setSelectedItem} />
       ) : (
         <Box>
-          <Box sx={{ display: 'flex', gap: { xs: 0, md: '60px' }, alignItems: 'flex-start' }}>
+          <Box sx={{ display: 'flex', gap: { xs: 0, md: '32px' }, alignItems: 'flex-start' }}>
+            {/* ─ メイン列 ─ */}
             <Box sx={{ flex: 1, minWidth: 0, maxWidth: 750 }}>
               {/* AI 要約カード */}
-              {showAiSummary && (
-                <AiSummaryCard query={query} results={results} />
+              {showAiSummary && <AiSummaryCard query={query} results={results} />}
+
+              {/* ナレッジパネル（モバイル）: 結果リストの上 */}
+              {showKnowledge && isMobile && (
+                <KnowledgePanel query={query} mobile />
               )}
 
               {isInitialLoading
@@ -355,8 +362,13 @@ const SearchResults: React.FC = () => {
                 </Box>
               )}
             </Box>
-            <Box sx={{ width: 350, display: { xs: 'none', md: 'block' }, flexShrink: 0 }}>
-              <Box sx={{ position: 'sticky', top: 160 }}>
+
+            {/* ─ サイドバー（デスクトップのみ）─ */}
+            <Box sx={{ width: 320, display: { xs: 'none', md: 'block' }, flexShrink: 0 }}>
+              <Box sx={{ position: 'sticky', top: 80, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {showKnowledge && !isMobile && (
+                  <KnowledgePanel query={query} />
+                )}
                 <RelatedSearchesCard query={query} />
               </Box>
             </Box>
