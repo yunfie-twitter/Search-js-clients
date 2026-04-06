@@ -11,7 +11,6 @@ const GlobalAppStyles = () => {
   return (
     <MuiGlobalStyles
       styles={{
-        // ─ Reset & base ─
         '*': {
           WebkitTapHighlightColor: 'transparent',
           boxSizing: 'border-box',
@@ -36,42 +35,32 @@ const GlobalAppStyles = () => {
         },
         'p, span, div, a': { overflowWrap: 'anywhere', wordBreak: 'break-word' },
 
-        // ─ iOS overscroll (rubber-band) 全面抑制 ─
-        'html': {
-          overscrollBehavior: 'none',
-          // iOS Safari 向け: html 自体のバウンスを無効化
+        // ─ iOS overscroll 抑制: position:fixed なしで overscroll-behavior のみ ─
+        // position:fixed はスクロール位置をリセットする副作用があるため使わない
+        'html, body': {
           height: '100%',
-          overflow: 'hidden',
+          overscrollBehavior: 'none',
+          WebkitOverflowScrolling: 'auto',
         },
         'body': {
-          overscrollBehavior: 'none',
-          // スクロールは body に一本化し、引っ張りを止める
-          height: '100%',
           overflow: 'hidden',
-          position: 'fixed',
-          width: '100%',
-          // iOS Safari でのバウンススクロールを防ぐ
-          WebkitOverflowScrolling: 'auto',
-          touchAction: 'pan-x pan-y',
         },
         '#root': {
           height: '100%',
           overflowY: 'auto',
           overflowX: 'hidden',
-          // スクロール可能なのは #root のみ
+          overscrollBehavior: 'none',
           WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain',
           scrollBehavior: 'smooth',
           display: 'flex',
           flexDirection: 'column',
           width: '100%',
         },
         '.scrollable-list': {
-          overscrollBehaviorY: 'auto',
+          overscrollBehaviorY: 'contain',
           WebkitOverflowScrolling: 'touch',
         },
 
-        // ─ Slim scrollbar ─
         '*::-webkit-scrollbar':       { width: '4px', height: '4px' },
         '*::-webkit-scrollbar-track': { background: 'transparent' },
         '*::-webkit-scrollbar-thumb': {
@@ -80,7 +69,6 @@ const GlobalAppStyles = () => {
           '&:hover': { background: 'rgba(128,128,128,0.5)' },
         },
 
-        // ─ Button / card micro-interactions ─
         '.pm-btn': {
           transition: `transform ${DUR_FAST}ms ${EASE_SPRING}, box-shadow ${DUR_FAST}ms ${EASE_SPRING}, opacity ${DUR_FAST}ms ${EASE_SPRING}`,
           willChange: 'transform',
@@ -104,7 +92,6 @@ const GlobalAppStyles = () => {
         },
         '.pm-icon-btn:active': { transform: 'scale(0.88)', opacity: 0.65 },
 
-        // ─ Shimmer skeleton ─
         '@keyframes pm-shimmer': {
           '0%':   { backgroundPosition: '-600px 0' },
           '100%': { backgroundPosition:  '600px 0' },
@@ -116,7 +103,6 @@ const GlobalAppStyles = () => {
           borderRadius: '8px',
         },
 
-        // ─ Fade-up stagger ─
         '@keyframes pm-fade-up': {
           from: { opacity: 0, transform: 'translateY(10px)' },
           to:   { opacity: 1, transform: 'translateY(0)' },
@@ -125,28 +111,24 @@ const GlobalAppStyles = () => {
           animation: `pm-fade-up ${DUR_NORMAL}ms ${EASE_SPRING} both`,
         },
 
-        // ─ Cinematic modal ─
         '@keyframes pm-modal-in': {
           from: { opacity: 0, transform: 'scale(0.94) translateY(8px)' },
           to:   { opacity: 1, transform: 'scale(1) translateY(0)' },
         },
         '.pm-modal': { animation: `pm-modal-in 360ms ${EASE_SPRING} both` },
 
-        // ─ Bottom sheet ─
         '@keyframes pm-sheet-in': {
           from: { transform: 'translateY(100%)' },
           to:   { transform: 'translateY(0)' },
         },
         '.pm-sheet': { animation: `pm-sheet-in 360ms ${EASE_SPRING} both` },
 
-        // ─ Pulse ─
         '@keyframes pm-pulse': {
           '0%, 100%': { opacity: 1 },
           '50%':      { opacity: 0.45 },
         },
         '.pm-pulse': { animation: `pm-pulse 1.6s ${EASE_IN_OUT} infinite` },
 
-        // ─ prefers-reduced-motion — 低スペック端末の自動軽量化 ─
         '@media (prefers-reduced-motion: reduce)': {
           '*': {
             animationDuration:       '0.001ms !important',

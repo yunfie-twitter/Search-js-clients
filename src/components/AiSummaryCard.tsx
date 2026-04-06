@@ -9,6 +9,7 @@ import {
   ExpandLessOutlined as CollapseIcon,
   ExpandMoreOutlined as ExpandIcon,
   ErrorOutlineOutlined as ErrorIcon,
+  InfoOutlined as InfoIcon,
 } from '@mui/icons-material';
 import { useSearchStore } from '../store/useSearchStore';
 import { fetchGeminiSummary, clearSummaryCache } from '../utils/gemini';
@@ -31,7 +32,6 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
   const [loading,   setLoading]   = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
-  // query が変わるたびにリセット
   const prevQueryRef = useRef<string>('');
   useEffect(() => {
     if (prevQueryRef.current === query) return;
@@ -62,7 +62,6 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
     setLoading(false);
   }, [query, results, geminiApiKey, language, loading]);
 
-  // 結果が揃ったら自動実行
   useEffect(() => {
     if (results.length > 0 && !summary && !error && !loading) {
       run();
@@ -169,6 +168,26 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
               }}
             >
               {summary}
+            </Typography>
+          </Box>
+
+          {/* Disclaimer */}
+          <Box
+            sx={{
+              px: '16px', pb: '10px',
+              display: 'flex', alignItems: 'flex-start', gap: '5px',
+              borderTop: `1px solid ${isDark ? 'rgba(130,120,255,0.10)' : 'rgba(99,102,241,0.08)'}`,
+              pt: '8px',
+            }}
+          >
+            <InfoIcon sx={{ fontSize: 11, color: 'text.disabled', mt: '1px', flexShrink: 0 }} />
+            <Typography
+              variant="caption"
+              sx={{ fontSize: '10px', color: 'text.disabled', lineHeight: 1.5 }}
+            >
+              {language === 'ja'
+                ? 'AIは不正確な情報を表示することがあります。生成された回答を必ず再確認してください。'
+                : 'AI may display inaccurate information. Please verify generated responses.'}
             </Typography>
           </Box>
         </Collapse>
