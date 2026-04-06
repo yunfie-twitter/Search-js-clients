@@ -3,7 +3,6 @@ import {
   Box, Container, Typography, List,
   IconButton, Divider, Paper, Alert,
   TextField, InputAdornment, Collapse,
-  FormControl, InputLabel, Select, MenuItem,
 } from '@mui/material';
 import {
   ArrowBackOutlined as ArrowBackIcon,
@@ -15,21 +14,13 @@ import {
   KeyOutlined as KeyIcon,
   VisibilityOutlined as ShowIcon,
   VisibilityOffOutlined as HideIcon,
-  MemoryOutlined as ModelIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
-import type { GeminiModel } from '../store/useSearchStore';
 import translations from '../translations';
 import { triggerHaptic } from '../utils/haptics';
 import SectionHeader from '../components/settings/SectionHeader';
 import SwitchItem from '../components/settings/SwitchItem';
-
-const GEMINI_MODELS: { value: GeminiModel; label: string; tag?: string }[] = [
-  { value: 'gemini-2.0-flash-lite',        label: 'Gemini 2.0 Flash Lite',         tag: '推奨' },
-  { value: 'gemini-2.0-flash',             label: 'Gemini 2.0 Flash' },
-  { value: 'gemini-3.1-flash-lite-preview', label: 'Gemini 3.1 Flash Lite Preview', tag: 'Preview' },
-];
 
 const Labs: React.FC = () => {
   const navigate = useNavigate();
@@ -42,8 +33,6 @@ const Labs: React.FC = () => {
   const setExpAiSummary   = useSearchStore((s) => s.setExpAiSummary);
   const geminiApiKey      = useSearchStore((s) => s.geminiApiKey);
   const setGeminiApiKey   = useSearchStore((s) => s.setGeminiApiKey);
-  const geminiModel       = useSearchStore((s) => s.geminiModel);
-  const setGeminiModel    = useSearchStore((s) => s.setGeminiModel);
   const t = React.useMemo(() => translations[language], [language]);
 
   const [expInstantResults,  setExpInstantResults]  = useState(false);
@@ -100,20 +89,18 @@ const Labs: React.FC = () => {
           <List sx={{ py: 0 }}>
             <SwitchItem
               icon={<AiIcon />}
-              primary={language === 'ja' ? 'AI 要約（Gemini）' : 'AI Summary (Gemini)'}
+              primary={language === 'ja' ? 'AI 要約（Gemini 3.1 Flash Lite）' : 'AI Summary (Gemini 3.1 Flash Lite)'}
               secondary={language === 'ja'
-                ? 'Gemini API で検索結果を要約表示。APIキーが必要です。'
-                : 'Summarize search results via Gemini API. Requires your API key.'}
+                ? 'gemini-3.1-flash-lite-preview で検索結果を要約表示。APIキーが必要です。'
+                : 'Summarize results via gemini-3.1-flash-lite-preview. Requires your API key.'}
               checked={expAiSummary}
               onChange={setExpAiSummary}
               chip="β"
             />
           </List>
-
           <Collapse in={expAiSummary}>
             <Divider />
-            <Box sx={{ px: 2, pt: 1.5, pb: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              {/* API キー */}
+            <Box sx={{ px: 2, py: 1.5 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -149,48 +136,6 @@ const Labs: React.FC = () => {
                     : "Your key is stored only in this device's local storage."
                 }
               />
-
-              {/* モデル選択 */}
-              <FormControl fullWidth size="small">
-                <InputLabel sx={{ fontSize: '13px' }}>
-                  {language === 'ja' ? 'モデル' : 'Model'}
-                </InputLabel>
-                <Select
-                  value={geminiModel}
-                  label={language === 'ja' ? 'モデル' : 'Model'}
-                  onChange={(e) => setGeminiModel(e.target.value as GeminiModel)}
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <ModelIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                    </InputAdornment>
-                  }
-                  sx={{ borderRadius: '10px', fontSize: '13px' }}
-                >
-                  {GEMINI_MODELS.map((m) => (
-                    <MenuItem key={m.value} value={m.value} sx={{ fontSize: '13px' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span>{m.label}</span>
-                        {m.tag && (
-                          <Box
-                            component="span"
-                            sx={{
-                              fontSize: '10px', fontWeight: 700,
-                              px: '5px', py: '1px', borderRadius: '4px',
-                              bgcolor: m.tag === '推奨'
-                                ? 'primary.main'
-                                : 'warning.main',
-                              color: '#fff',
-                              lineHeight: 1.4,
-                            }}
-                          >
-                            {m.tag}
-                          </Box>
-                        )}
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
             </Box>
           </Collapse>
         </Paper>

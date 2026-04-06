@@ -11,7 +11,7 @@ import {
   ErrorOutlineOutlined as ErrorIcon,
 } from '@mui/icons-material';
 import { useSearchStore } from '../store/useSearchStore';
-import { fetchGeminiSummary } from '../utils/gemini';
+import { fetchGeminiSummary, clearSummaryCache } from '../utils/gemini';
 import { ResultMeta } from '@yunfie/search-js';
 import { EASE_SPRING, DUR_NORMAL } from '../utils/motion';
 
@@ -22,7 +22,6 @@ interface Props {
 
 const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
   const geminiApiKey = useSearchStore((s) => s.geminiApiKey);
-  const geminiModel  = useSearchStore((s) => s.geminiModel);
   const language     = useSearchStore((s) => s.language);
   const theme        = useTheme();
   const isDark       = theme.palette.mode === 'dark';
@@ -42,8 +41,9 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
     setCollapsed(false);
   }, [query]);
 
-  const run = useCallback(async () => {
+  const run = useCallback(async (forceRefresh = false) => {
     if (!query || results.length === 0 || loading) return;
+    if (forceRefresh) clearSummaryCache();
     setLoading(true);
     setError('');
     setSummary('');
@@ -53,14 +53,14 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
       .map((r) => (r as any).summary || (r as any).snippet || r.title || '')
       .filter(Boolean);
 
-    const result = await fetchGeminiSummary(query, snippets, geminiApiKey, language, geminiModel);
+    const result = await fetchGeminiSummary(query, snippets, geminiApiKey, language);
     if (result.error) {
       setError(result.error ?? '');
     } else {
       setSummary(result.text ?? '');
     }
     setLoading(false);
-  }, [query, results, geminiApiKey, language, geminiModel, loading]);
+  }, [query, results, geminiApiKey, language, loading]);
 
   // 結果が揃ったら自動実行
   useEffect(() => {
@@ -120,7 +120,7 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
         />
         {!loading && (summary || error) && (
           <Tooltip title={language === 'ja' ? '再生成' : 'Regenerate'}>
-            <IconButton size="small" onClick={run} sx={{ p: '3px', color: 'text.secondary' }}>
+            <IconButton size="small" onClick={() => run(true)} sx={{ p: '3px', color: 'text.secondary' }}>
               <RefreshIcon sx={{ fontSize: 14 }} />
             </IconButton>
           </Tooltip>

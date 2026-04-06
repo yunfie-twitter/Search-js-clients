@@ -35,17 +35,37 @@ const GlobalAppStyles = () => {
           touchAction: 'manipulation',
         },
         'p, span, div, a': { overflowWrap: 'anywhere', wordBreak: 'break-word' },
+
+        // ─ iOS overscroll (rubber-band) 全面抑制 ─
+        'html': {
+          overscrollBehavior: 'none',
+          // iOS Safari 向け: html 自体のバウンスを無効化
+          height: '100%',
+          overflow: 'hidden',
+        },
+        'body': {
+          overscrollBehavior: 'none',
+          // スクロールは body に一本化し、引っ張りを止める
+          height: '100%',
+          overflow: 'hidden',
+          position: 'fixed',
+          width: '100%',
+          // iOS Safari でのバウンススクロールを防ぐ
+          WebkitOverflowScrolling: 'auto',
+          touchAction: 'pan-x pan-y',
+        },
         '#root': {
-          minHeight: '100vh',
+          height: '100%',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          // スクロール可能なのは #root のみ
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          scrollBehavior: 'smooth',
           display: 'flex',
           flexDirection: 'column',
           width: '100%',
-          overflowX: 'hidden',
-          scrollBehavior: 'smooth',
-          overscrollBehavior: 'contain',
-          WebkitOverflowScrolling: 'touch',
         },
-        'html': { overscrollBehavior: 'none' },
         '.scrollable-list': {
           overscrollBehaviorY: 'auto',
           WebkitOverflowScrolling: 'touch',

@@ -12,10 +12,6 @@ import {
 
 export type SafeSearchLevel = 'off' | 'moderate' | 'strict';
 export type DefaultSearchType = 'web' | 'image' | 'video' | 'news';
-export type GeminiModel =
-  | 'gemini-2.0-flash-lite'
-  | 'gemini-2.0-flash'
-  | 'gemini-3.1-flash-lite-preview';
 
 interface SearchState {
   query: string;
@@ -44,7 +40,6 @@ interface SearchState {
   expUnlocked: boolean;
   expAiSummary: boolean;
   geminiApiKey: string;
-  geminiModel: GeminiModel;
 
   setQuery: (q: string) => void;
   setType: (t: SearchType) => void;
@@ -65,7 +60,6 @@ interface SearchState {
   setExpUnlocked: (v: boolean) => void;
   setExpAiSummary: (v: boolean) => void;
   setGeminiApiKey: (key: string) => void;
-  setGeminiModel: (model: GeminiModel) => void;
 
   performSearch: (q: string, type: SearchType, page?: number) => Promise<void>;
   resetSearch: () => void;
@@ -90,12 +84,6 @@ const saveSetting = (key: string, value: any) => {
 };
 
 const saved = settingsCache;
-
-const VALID_MODELS: GeminiModel[] = [
-  'gemini-2.0-flash-lite',
-  'gemini-2.0-flash',
-  'gemini-3.1-flash-lite-preview',
-];
 
 export const useSearchStore = create<SearchState>((set, get) => ({
   query: '',
@@ -124,9 +112,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   expUnlocked:    saved.expUnlocked    !== undefined ? saved.expUnlocked    : false,
   expAiSummary:   saved.expAiSummary   !== undefined ? saved.expAiSummary   : false,
   geminiApiKey:   saved.geminiApiKey   || '',
-  geminiModel:    VALID_MODELS.includes(saved.geminiModel)
-    ? saved.geminiModel
-    : 'gemini-2.0-flash-lite',
 
   setQuery: (q) => set({ query: q }),
   setType: (t) => set({ type: t }),
@@ -147,7 +132,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   setExpUnlocked: (v) => { set({ expUnlocked: v }); saveSetting('expUnlocked', v); },
   setExpAiSummary: (v) => { set({ expAiSummary: v }); saveSetting('expAiSummary', v); },
   setGeminiApiKey: (key) => { set({ geminiApiKey: key }); saveSetting('geminiApiKey', key); },
-  setGeminiModel: (model) => { set({ geminiModel: model }); saveSetting('geminiModel', model); },
 
   performSearch: async (q, type, pageNum = 1) => {
     if (!q) return;
