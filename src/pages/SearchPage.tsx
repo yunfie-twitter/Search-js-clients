@@ -49,13 +49,9 @@ const SearchPage: React.FC = () => {
   const isGridLayout = currentType === 'image' || currentType === 'video';
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%' }}>
       <PullToRefreshIndicator ref={setIndicator} />
-
-      {/* HeaderNav は PageTransition の外—アニメーション対象外 */}
       <HeaderNav />
-
-      {/* コンテンツのみ PageTransition で包む */}
       <PageTransition>
         <MainLayout isGridLayout={isGridLayout}>
           <SearchResults />

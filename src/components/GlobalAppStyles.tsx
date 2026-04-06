@@ -35,27 +35,14 @@ const GlobalAppStyles = () => {
         },
         'p, span, div, a': { overflowWrap: 'anywhere', wordBreak: 'break-word' },
 
-        // ─ iOS overscroll 抑制: overflow は触らず overscrollBehavior のみ ─
-        'html': {
-          height: '100%',
-          overscrollBehavior: 'none',
-        },
-        'body': {
-          height: '100%',
-          overscrollBehavior: 'none',
-          WebkitOverflowScrolling: 'touch',
-        },
+        // スクロールを完全にブラウザデフォルトに委ねる—overflow 設定は一切しない
         '#root': {
-          minHeight: '100%',
+          minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
           width: '100%',
-          overflowX: 'hidden',
-          overscrollBehavior: 'none',
-          scrollBehavior: 'smooth',
         },
         '.scrollable-list': {
-          overscrollBehaviorY: 'contain',
           WebkitOverflowScrolling: 'touch',
         },
 
