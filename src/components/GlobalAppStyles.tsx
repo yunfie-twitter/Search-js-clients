@@ -35,26 +35,24 @@ const GlobalAppStyles = () => {
         },
         'p, span, div, a': { overflowWrap: 'anywhere', wordBreak: 'break-word' },
 
-        // ─ iOS overscroll 抑制: position:fixed なしで overscroll-behavior のみ ─
-        // position:fixed はスクロール位置をリセットする副作用があるため使わない
-        'html, body': {
+        // ─ iOS overscroll 抑制: overflow は触らず overscrollBehavior のみ ─
+        'html': {
           height: '100%',
           overscrollBehavior: 'none',
-          WebkitOverflowScrolling: 'auto',
         },
         'body': {
-          overflow: 'hidden',
-        },
-        '#root': {
           height: '100%',
-          overflowY: 'auto',
-          overflowX: 'hidden',
           overscrollBehavior: 'none',
           WebkitOverflowScrolling: 'touch',
-          scrollBehavior: 'smooth',
+        },
+        '#root': {
+          minHeight: '100%',
           display: 'flex',
           flexDirection: 'column',
           width: '100%',
+          overflowX: 'hidden',
+          overscrollBehavior: 'none',
+          scrollBehavior: 'smooth',
         },
         '.scrollable-list': {
           overscrollBehaviorY: 'contain',
