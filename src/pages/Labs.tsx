@@ -15,6 +15,7 @@ import {
   VisibilityOutlined as ShowIcon,
   VisibilityOffOutlined as HideIcon,
   TravelExploreOutlined as KnowledgeIcon,
+  FactCheckOutlined as FactCheckIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
@@ -25,21 +26,26 @@ import SwitchItem from '../components/settings/SwitchItem';
 
 const Labs: React.FC = () => {
   const navigate = useNavigate();
-  const language              = useSearchStore((s) => s.language);
-  const expImageSearch        = useSearchStore((s) => s.expImageSearch);
-  const setExpImageSearch     = useSearchStore((s) => s.setExpImageSearch);
-  const expLenis              = useSearchStore((s) => s.expLenis);
-  const setExpLenis           = useSearchStore((s) => s.setExpLenis);
-  const expAiSummary          = useSearchStore((s) => s.expAiSummary);
-  const setExpAiSummary       = useSearchStore((s) => s.setExpAiSummary);
-  const expKnowledgePanel     = useSearchStore((s) => s.expKnowledgePanel);
-  const setExpKnowledgePanel  = useSearchStore((s) => s.setExpKnowledgePanel);
-  const geminiApiKey          = useSearchStore((s) => s.geminiApiKey);
-  const setGeminiApiKey       = useSearchStore((s) => s.setGeminiApiKey);
+  const language                  = useSearchStore((s) => s.language);
+  const expImageSearch            = useSearchStore((s) => s.expImageSearch);
+  const setExpImageSearch         = useSearchStore((s) => s.setExpImageSearch);
+  const expLenis                  = useSearchStore((s) => s.expLenis);
+  const setExpLenis               = useSearchStore((s) => s.setExpLenis);
+  const expAiSummary              = useSearchStore((s) => s.expAiSummary);
+  const setExpAiSummary           = useSearchStore((s) => s.setExpAiSummary);
+  const expKnowledgePanel         = useSearchStore((s) => s.expKnowledgePanel);
+  const setExpKnowledgePanel      = useSearchStore((s) => s.setExpKnowledgePanel);
+  const expGeminiFactCheck        = useSearchStore((s) => s.expGeminiFactCheck);
+  const setExpGeminiFactCheck     = useSearchStore((s) => s.setExpGeminiFactCheck);
+  const geminiApiKey              = useSearchStore((s) => s.geminiApiKey);
+  const setGeminiApiKey           = useSearchStore((s) => s.setGeminiApiKey);
+  const geminiFactCheckApiKey     = useSearchStore((s) => s.geminiFactCheckApiKey);
+  const setGeminiFactCheckApiKey  = useSearchStore((s) => s.setGeminiFactCheckApiKey);
   const t = React.useMemo(() => translations[language], [language]);
 
   const [expInstantResults, setExpInstantResults] = useState(false);
   const [showKey, setShowKey] = useState(false);
+  const [showFcKey, setShowFcKey] = useState(false);
 
   const handleBack = () => { triggerHaptic(); navigate(-1); };
 
@@ -89,6 +95,7 @@ const Labs: React.FC = () => {
         <SectionHeader title={language === 'ja' ? 'AI 機能' : 'AI Features'} />
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid', borderColor: 'divider', mb: 2 }}>
           <List sx={{ py: 0 }}>
+            {/* AI 要約 */}
             <SwitchItem
               icon={<AiIcon />}
               primary={language === 'ja' ? 'AI 要約（Gemini 3.1 Flash Lite）' : 'AI Summary (Gemini 3.1 Flash Lite)'}
@@ -106,7 +113,7 @@ const Labs: React.FC = () => {
               <TextField
                 fullWidth
                 size="small"
-                label={language === 'ja' ? 'Gemini API キー' : 'Gemini API Key'}
+                label={language === 'ja' ? 'Gemini API キー（要約用）' : 'Gemini API Key (Summary)'}
                 placeholder="AIza..."
                 value={geminiApiKey}
                 onChange={(e) => setGeminiApiKey(e.target.value)}
@@ -136,6 +143,62 @@ const Labs: React.FC = () => {
                   language === 'ja'
                     ? 'キーはこのデバイスのローカルストレージにのみ保存されます。'
                     : "Your key is stored only in this device's local storage."
+                }
+              />
+            </Box>
+          </Collapse>
+
+          {/* Gemini ファクトチェック */}
+          <Divider />
+          <List sx={{ py: 0 }}>
+            <SwitchItem
+              icon={<FactCheckIcon />}
+              primary={language === 'ja' ? 'Gemini ファクトチェック（β）' : 'Gemini Fact-Check (β)'}
+              secondary={language === 'ja'
+                ? 'AI要約の内容をGeminiで検証します。問題なければそのまま、誤りがあれば修正版を表示。AI要約が有効な場合のみ機能します。'
+                : 'Verify AI summary with Gemini. Shows original if OK, or corrected version if issues are found. Requires AI Summary to be enabled.'}
+              checked={expGeminiFactCheck}
+              onChange={setExpGeminiFactCheck}
+              chip="β"
+              disabled={!expAiSummary}
+            />
+          </List>
+          <Collapse in={expGeminiFactCheck && expAiSummary}>
+            <Divider />
+            <Box sx={{ px: 2, py: 1.5 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label={language === 'ja' ? 'ファクトチェック用 API キー（省略可）' : 'Fact-Check API Key (optional)'}
+                placeholder="AIza..."
+                value={geminiFactCheckApiKey}
+                onChange={(e) => setGeminiFactCheckApiKey(e.target.value)}
+                type={showFcKey ? 'text' : 'password'}
+                autoComplete="off"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <KeyIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => setShowFcKey((v) => !v)} edge="end">
+                        {showFcKey
+                          ? <HideIcon sx={{ fontSize: 16 }} />
+                          : <ShowIcon sx={{ fontSize: 16 }} />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': { borderRadius: '10px' },
+                  '& .MuiInputLabel-root': { fontSize: '13px' },
+                }}
+                helperText={
+                  language === 'ja'
+                    ? '空欄の場合は要約用APIキーを共用します。キーはローカルストレージにのみ保存されます。'
+                    : "If empty, the summary API key will be reused. Stored only in local storage."
                 }
               />
             </Box>

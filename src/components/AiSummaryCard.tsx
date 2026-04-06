@@ -10,9 +10,12 @@ import {
   ExpandMoreOutlined as ExpandIcon,
   ErrorOutlineOutlined as ErrorIcon,
   InfoOutlined as InfoIcon,
+  FactCheckOutlined as FactCheckIcon,
+  CheckCircleOutlined as CheckOkIcon,
+  WarningAmberOutlined as WarningIcon,
 } from '@mui/icons-material';
 import { useSearchStore } from '../store/useSearchStore';
-import { fetchGeminiSummary, clearSummaryCache } from '../utils/gemini';
+import { fetchGeminiSummary, fetchGeminiFactCheck, clearSummaryCache } from '../utils/gemini';
 import { ResultMeta } from '@yunfie/search-js';
 import { EASE_SPRING, DUR_NORMAL } from '../utils/motion';
 
@@ -21,16 +24,22 @@ interface Props {
   results: ResultMeta[];
 }
 
-const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
-  const geminiApiKey = useSearchStore((s) => s.geminiApiKey);
-  const language     = useSearchStore((s) => s.language);
-  const theme        = useTheme();
-  const isDark       = theme.palette.mode === 'dark';
+type FactCheckStatus = 'idle' | 'checking' | 'ok' | 'corrected' | 'error';
 
-  const [summary,   setSummary]   = useState<string>('');
-  const [error,     setError]     = useState<string>('');
-  const [loading,   setLoading]   = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
+  const geminiApiKey          = useSearchStore((s) => s.geminiApiKey);
+  const expGeminiFactCheck    = useSearchStore((s) => s.expGeminiFactCheck);
+  const geminiFactCheckApiKey = useSearchStore((s) => s.geminiFactCheckApiKey);
+  const language              = useSearchStore((s) => s.language);
+  const theme                 = useTheme();
+  const isDark                = theme.palette.mode === 'dark';
+
+  const [summary,         setSummary]         = useState<string>('');
+  const [error,           setError]           = useState<string>('');
+  const [loading,         setLoading]         = useState(false);
+  const [collapsed,       setCollapsed]       = useState(false);
+  const [factCheckStatus, setFactCheckStatus] = useState<FactCheckStatus>('idle');
+  const [correctedText,   setCorrectedText]   = useState<string>('');
 
   const prevQueryRef = useRef<string>('');
   useEffect(() => {
@@ -39,7 +48,31 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
     setSummary('');
     setError('');
     setCollapsed(false);
+    setFactCheckStatus('idle');
+    setCorrectedText('');
   }, [query]);
+
+  // ファクトチェックを実行
+  const runFactCheck = useCallback(async (text: string, snippets: string[]) => {
+    if (!expGeminiFactCheck) return;
+    // ファクトチェック専用キーがあればそちらを使い、なければ要約キーで代替
+    const fcKey = geminiFactCheckApiKey || geminiApiKey;
+    if (!fcKey) return;
+
+    setFactCheckStatus('checking');
+    const result = await fetchGeminiFactCheck(text, query, snippets, fcKey, language);
+    if (result.error && result.ok) {
+      // エラーだが元テキストは維持（サイレント）
+      setFactCheckStatus('error');
+      return;
+    }
+    if (result.ok) {
+      setFactCheckStatus('ok');
+    } else {
+      setCorrectedText(result.corrected ?? text);
+      setFactCheckStatus('corrected');
+    }
+  }, [expGeminiFactCheck, geminiFactCheckApiKey, geminiApiKey, query, language]);
 
   const run = useCallback(async (forceRefresh = false) => {
     if (!query || results.length === 0 || loading) return;
@@ -47,6 +80,8 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
     setLoading(true);
     setError('');
     setSummary('');
+    setFactCheckStatus('idle');
+    setCorrectedText('');
 
     const snippets = results
       .slice(0, 8)
@@ -57,10 +92,13 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
     if (result.error) {
       setError(result.error ?? '');
     } else {
-      setSummary(result.text ?? '');
+      const text = result.text ?? '';
+      setSummary(text);
+      // 要約完了後にファクトチェック実行
+      await runFactCheck(text, snippets);
     }
     setLoading(false);
-  }, [query, results, geminiApiKey, language, loading]);
+  }, [query, results, geminiApiKey, language, loading, runFactCheck]);
 
   useEffect(() => {
     if (results.length > 0 && !summary && !error && !loading) {
@@ -70,6 +108,9 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
   }, [results]);
 
   if (!summary && !error && !loading) return null;
+
+  // 表示するテキスト（修正版があればそちら）
+  const displayText = factCheckStatus === 'corrected' ? correctedText : summary;
 
   return (
     <Box
@@ -117,6 +158,22 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
             mr: 0.5,
           }}
         />
+        {/* ファクトチェックステータスバッジ */}
+        {expGeminiFactCheck && factCheckStatus === 'checking' && (
+          <Tooltip title={language === 'ja' ? 'ファクトチェック中…' : 'Fact-checking…'}>
+            <CircularProgress size={12} sx={{ color: isDark ? '#6ee7b7' : '#059669', mr: 0.5 }} />
+          </Tooltip>
+        )}
+        {expGeminiFactCheck && factCheckStatus === 'ok' && (
+          <Tooltip title={language === 'ja' ? 'ファクトチェック: 問題なし' : 'Fact-check: OK'}>
+            <CheckOkIcon sx={{ fontSize: 15, color: isDark ? '#6ee7b7' : '#059669' }} />
+          </Tooltip>
+        )}
+        {expGeminiFactCheck && factCheckStatus === 'corrected' && (
+          <Tooltip title={language === 'ja' ? 'ファクトチェック: 修正されました' : 'Fact-check: Corrected'}>
+            <WarningIcon sx={{ fontSize: 15, color: isDark ? '#fbbf24' : '#d97706' }} />
+          </Tooltip>
+        )}
         {!loading && (summary || error) && (
           <Tooltip title={language === 'ja' ? '再生成' : 'Regenerate'}>
             <IconButton size="small" onClick={() => run(true)} sx={{ p: '3px', color: 'text.secondary' }}>
@@ -157,6 +214,27 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
 
       {summary && !loading && (
         <Collapse in={!collapsed}>
+          {/* ファクトチェック修正バナー */}
+          {expGeminiFactCheck && factCheckStatus === 'corrected' && (
+            <Box
+              sx={{
+                mx: '16px', mt: '10px',
+                px: '10px', py: '6px',
+                borderRadius: '8px',
+                display: 'flex', alignItems: 'flex-start', gap: '6px',
+                bgcolor: isDark ? 'rgba(251,191,36,0.12)' : 'rgba(245,158,11,0.10)',
+                border: `1px solid ${isDark ? 'rgba(251,191,36,0.3)' : 'rgba(245,158,11,0.3)'}`,
+              }}
+            >
+              <FactCheckIcon sx={{ fontSize: 13, color: isDark ? '#fbbf24' : '#d97706', mt: '1px', flexShrink: 0 }} />
+              <Typography variant="caption" sx={{ fontSize: '11px', color: isDark ? '#fbbf24' : '#92400e', lineHeight: 1.5 }}>
+                {language === 'ja'
+                  ? 'ファクトチェックにより内容が修正されました。'
+                  : 'Content was corrected by fact-checking.'}
+              </Typography>
+            </Box>
+          )}
+
           <Box sx={{ px: '16px', py: '12px' }}>
             <Typography
               variant="body2"
@@ -167,7 +245,7 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
                 whiteSpace: 'pre-wrap',
               }}
             >
-              {summary}
+              {displayText}
             </Typography>
           </Box>
 
