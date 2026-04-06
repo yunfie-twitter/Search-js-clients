@@ -63,6 +63,8 @@ const translations = {
     experimentalImageSearchDesc: 'faiss.wholphin.net を使った画像アップロードによる類似画像検索',
     experimentalGeminiFactCheck: 'Gemini ファクトチェック（β）',
     experimentalGeminiFactCheckDesc: 'AI要約の内容をGeminiで検証し、誤りがあれば修正版を表示します',
+    experimentalMergedAiPanel: 'AI 要約 + ナレッジ 統合表示（β）',
+    experimentalMergedAiPanelDesc: 'AI要約とWikipediaナレッジを1枚のカードにまとめて表示します',
     saveHistory: '検索履歴を保存する',
     enableAnimations: 'アニメーションを有効にする',
     // 詳細検索
@@ -164,6 +166,8 @@ const translations = {
     experimentalImageSearchDesc: 'Find similar images via upload using faiss.wholphin.net',
     experimentalGeminiFactCheck: 'Gemini Fact-Check (β)',
     experimentalGeminiFactCheckDesc: 'Verify AI summary content with Gemini and show a corrected version if issues are found',
+    experimentalMergedAiPanel: 'Merged AI Summary + Knowledge Panel (β)',
+    experimentalMergedAiPanelDesc: 'Combines AI summary and Wikipedia knowledge into a single card',
     saveHistory: 'Save Search History',
     enableAnimations: 'Enable Animations',
     // Advanced Search

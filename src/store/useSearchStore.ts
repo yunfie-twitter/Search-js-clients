@@ -41,6 +41,7 @@ interface SearchState {
   expAiSummary: boolean;
   expKnowledgePanel: boolean;
   expGeminiFactCheck: boolean;
+  expMergedAiPanel: boolean;
   geminiApiKey: string;
   geminiFactCheckApiKey: string;
 
@@ -64,6 +65,7 @@ interface SearchState {
   setExpAiSummary: (v: boolean) => void;
   setExpKnowledgePanel: (v: boolean) => void;
   setExpGeminiFactCheck: (v: boolean) => void;
+  setExpMergedAiPanel: (v: boolean) => void;
   setGeminiApiKey: (key: string) => void;
   setGeminiFactCheckApiKey: (key: string) => void;
 
@@ -113,13 +115,14 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   searchRegion: saved.searchRegion || 'JP',
   searchLang: saved.searchLang || 'ja',
 
-  expImageSearch:       saved.expImageSearch       !== undefined ? saved.expImageSearch       : false,
-  expLenis:             saved.expLenis             !== undefined ? saved.expLenis             : false,
-  expUnlocked:          saved.expUnlocked          !== undefined ? saved.expUnlocked          : false,
-  expAiSummary:         saved.expAiSummary         !== undefined ? saved.expAiSummary         : false,
-  expKnowledgePanel:    saved.expKnowledgePanel    !== undefined ? saved.expKnowledgePanel    : false,
-  expGeminiFactCheck:   saved.expGeminiFactCheck   !== undefined ? saved.expGeminiFactCheck   : false,
-  geminiApiKey:         saved.geminiApiKey         || '',
+  expImageSearch:        saved.expImageSearch        !== undefined ? saved.expImageSearch        : false,
+  expLenis:              saved.expLenis              !== undefined ? saved.expLenis              : false,
+  expUnlocked:           saved.expUnlocked           !== undefined ? saved.expUnlocked           : false,
+  expAiSummary:          saved.expAiSummary          !== undefined ? saved.expAiSummary          : false,
+  expKnowledgePanel:     saved.expKnowledgePanel     !== undefined ? saved.expKnowledgePanel     : false,
+  expGeminiFactCheck:    saved.expGeminiFactCheck    !== undefined ? saved.expGeminiFactCheck    : false,
+  expMergedAiPanel:      saved.expMergedAiPanel      !== undefined ? saved.expMergedAiPanel      : false,
+  geminiApiKey:          saved.geminiApiKey          || '',
   geminiFactCheckApiKey: saved.geminiFactCheckApiKey || '',
 
   setQuery: (q) => set({ query: q }),
@@ -142,6 +145,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   setExpAiSummary:        (v) => { set({ expAiSummary: v });        saveSetting('expAiSummary', v); },
   setExpKnowledgePanel:   (v) => { set({ expKnowledgePanel: v });   saveSetting('expKnowledgePanel', v); },
   setExpGeminiFactCheck:  (v) => { set({ expGeminiFactCheck: v });  saveSetting('expGeminiFactCheck', v); },
+  setExpMergedAiPanel:    (v) => { set({ expMergedAiPanel: v });    saveSetting('expMergedAiPanel', v); },
   setGeminiApiKey:        (key) => { set({ geminiApiKey: key });    saveSetting('geminiApiKey', key); },
   setGeminiFactCheckApiKey: (key) => { set({ geminiFactCheckApiKey: key }); saveSetting('geminiFactCheckApiKey', key); },
 

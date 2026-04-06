@@ -16,6 +16,7 @@ import {
   VisibilityOffOutlined as HideIcon,
   TravelExploreOutlined as KnowledgeIcon,
   FactCheckOutlined as FactCheckIcon,
+  MergeOutlined as MergeIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
@@ -37,6 +38,8 @@ const Labs: React.FC = () => {
   const setExpKnowledgePanel      = useSearchStore((s) => s.setExpKnowledgePanel);
   const expGeminiFactCheck        = useSearchStore((s) => s.expGeminiFactCheck);
   const setExpGeminiFactCheck     = useSearchStore((s) => s.setExpGeminiFactCheck);
+  const expMergedAiPanel          = useSearchStore((s) => s.expMergedAiPanel);
+  const setExpMergedAiPanel       = useSearchStore((s) => s.setExpMergedAiPanel);
   const geminiApiKey              = useSearchStore((s) => s.geminiApiKey);
   const setGeminiApiKey           = useSearchStore((s) => s.setGeminiApiKey);
   const geminiFactCheckApiKey     = useSearchStore((s) => s.geminiFactCheckApiKey);
@@ -48,6 +51,8 @@ const Labs: React.FC = () => {
   const [showFcKey, setShowFcKey] = useState(false);
 
   const handleBack = () => { triggerHaptic(); navigate(-1); };
+
+  const bothAiEnabled = expAiSummary && expKnowledgePanel;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'background.default' }}>
@@ -111,8 +116,7 @@ const Labs: React.FC = () => {
             <Divider />
             <Box sx={{ px: 2, py: 1.5 }}>
               <TextField
-                fullWidth
-                size="small"
+                fullWidth size="small"
                 label={language === 'ja' ? 'Gemini API キー（要約用）' : 'Gemini API Key (Summary)'}
                 placeholder="AIza..."
                 value={geminiApiKey}
@@ -128,17 +132,12 @@ const Labs: React.FC = () => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton size="small" onClick={() => setShowKey((v) => !v)} edge="end">
-                        {showKey
-                          ? <HideIcon sx={{ fontSize: 16 }} />
-                          : <ShowIcon sx={{ fontSize: 16 }} />}
+                        {showKey ? <HideIcon sx={{ fontSize: 16 }} /> : <ShowIcon sx={{ fontSize: 16 }} />}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
-                sx={{
-                  '& .MuiOutlinedInput-root': { borderRadius: '10px' },
-                  '& .MuiInputLabel-root': { fontSize: '13px' },
-                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' }, '& .MuiInputLabel-root': { fontSize: '13px' } }}
                 helperText={
                   language === 'ja'
                     ? 'キーはこのデバイスのローカルストレージにのみ保存されます。'
@@ -167,8 +166,7 @@ const Labs: React.FC = () => {
             <Divider />
             <Box sx={{ px: 2, py: 1.5 }}>
               <TextField
-                fullWidth
-                size="small"
+                fullWidth size="small"
                 label={language === 'ja' ? 'ファクトチェック用 API キー（省略可）' : 'Fact-Check API Key (optional)'}
                 placeholder="AIza..."
                 value={geminiFactCheckApiKey}
@@ -184,17 +182,12 @@ const Labs: React.FC = () => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton size="small" onClick={() => setShowFcKey((v) => !v)} edge="end">
-                        {showFcKey
-                          ? <HideIcon sx={{ fontSize: 16 }} />
-                          : <ShowIcon sx={{ fontSize: 16 }} />}
+                        {showFcKey ? <HideIcon sx={{ fontSize: 16 }} /> : <ShowIcon sx={{ fontSize: 16 }} />}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
-                sx={{
-                  '& .MuiOutlinedInput-root': { borderRadius: '10px' },
-                  '& .MuiInputLabel-root': { fontSize: '13px' },
-                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' }, '& .MuiInputLabel-root': { fontSize: '13px' } }}
                 helperText={
                   language === 'ja'
                     ? '空欄の場合は要約用APIキーを共用します。キーはローカルストレージにのみ保存されます。'
@@ -203,6 +196,31 @@ const Labs: React.FC = () => {
               />
             </Box>
           </Collapse>
+
+          {/* AI 要約 + ナレッジパネル 統合表示 */}
+          <Divider />
+          <List sx={{ py: 0 }}>
+            <SwitchItem
+              icon={<MergeIcon />}
+              primary={language === 'ja' ? 'AI 要約 + ナレッジパネル 統合表示（β）' : 'Merged AI Summary + Knowledge Panel (β)'}
+              secondary={language === 'ja'
+                ? 'AI要約とWikipediaナレッジを1枚のカードにまとめて表示します。AI要約・ナレッジパネルの両方が有効な場合のみ機能します。'
+                : 'Combines AI summary and Wikipedia knowledge into a single card. Requires both AI Summary and Knowledge Panel to be enabled.'}
+              checked={expMergedAiPanel}
+              onChange={setExpMergedAiPanel}
+              chip="β"
+              disabled={!bothAiEnabled}
+            />
+          </List>
+          {!bothAiEnabled && expMergedAiPanel && (
+            <Box sx={{ px: 2, pb: 1.5 }}>
+              <Alert severity="info" sx={{ borderRadius: '10px', fontSize: '12px', py: '4px' }}>
+                {language === 'ja'
+                  ? 'AI要約とナレッジパネルを両方有効にしてください。'
+                  : 'Please enable both AI Summary and Knowledge Panel.'}
+              </Alert>
+            </Box>
+          )}
         </Paper>
 
         {/* ─ 検索 ─ */}

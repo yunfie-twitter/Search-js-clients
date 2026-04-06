@@ -23,6 +23,7 @@ import MediaCard from './MediaCard';
 import ItemBreadcrumbURL from './ItemBreadcrumbURL';
 import AiSummaryCard from './AiSummaryCard';
 import KnowledgePanel from './KnowledgePanel';
+import MergedAiPanel from './MergedAiPanel';
 import { EASE_SPRING, DUR_NORMAL, DUR_MODAL, staggerDelay } from '../utils/motion';
 
 const GRID_SKELETON_KEYS = Array.from({ length: 12 }, (_, i) => i);
@@ -297,6 +298,7 @@ const SearchResults: React.FC = () => {
   const page                = useSearchStore((s) => s.page);
   const expAiSummary        = useSearchStore((s) => s.expAiSummary);
   const expKnowledgePanel   = useSearchStore((s) => s.expKnowledgePanel);
+  const expMergedAiPanel    = useSearchStore((s) => s.expMergedAiPanel);
   const geminiApiKey        = useSearchStore((s) => s.geminiApiKey);
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -312,8 +314,10 @@ const SearchResults: React.FC = () => {
   };
 
   const isGridLayout = type === 'image' || type === 'video';
-  const showAiSummary      = expAiSummary && !!geminiApiKey && type === 'web' && !isInitialLoading && results.length > 0;
-  const showKnowledge      = expKnowledgePanel && type === 'web' && !!query;
+  const showAiSummary   = expAiSummary && !!geminiApiKey && type === 'web' && !isInitialLoading && results.length > 0;
+  const showKnowledge   = expKnowledgePanel && type === 'web' && !!query;
+  // 両方ONかつ統合モードONのとき、MergedAiPanel を使う
+  const useMerged       = expMergedAiPanel && showAiSummary && showKnowledge;
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -324,11 +328,18 @@ const SearchResults: React.FC = () => {
           <Box sx={{ display: 'flex', gap: { xs: 0, md: '32px' }, alignItems: 'flex-start' }}>
             {/* ─ メイン列 ─ */}
             <Box sx={{ flex: 1, minWidth: 0, maxWidth: 750 }}>
-              {/* AI 要約カード */}
-              {showAiSummary && <AiSummaryCard query={query} results={results} />}
+              {/* 統合パネル（両機能ON + 統合モードON）*/}
+              {useMerged && (
+                <MergedAiPanel query={query} results={results} />
+              )}
 
-              {/* ナレッジパネル（モバイル）: 結果リストの上 */}
-              {showKnowledge && isMobile && (
+              {/* 個別: AI 要約カード（統合モードOFF時のみ）*/}
+              {showAiSummary && !useMerged && (
+                <AiSummaryCard query={query} results={results} />
+              )}
+
+              {/* 個別: ナレッジパネル（モバイル・統合モードOFF時のみ）*/}
+              {showKnowledge && isMobile && !useMerged && (
                 <KnowledgePanel query={query} mobile />
               )}
 
@@ -366,7 +377,8 @@ const SearchResults: React.FC = () => {
             {/* ─ サイドバー（デスクトップのみ）─ */}
             <Box sx={{ width: 320, display: { xs: 'none', md: 'block' }, flexShrink: 0 }}>
               <Box sx={{ position: 'sticky', top: 80, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {showKnowledge && !isMobile && (
+                {/* 個別ナレッジパネル: 統合モードOFF時のみ表示 */}
+                {showKnowledge && !isMobile && !useMerged && (
                   <KnowledgePanel query={query} />
                 )}
                 <RelatedSearchesCard query={query} />
