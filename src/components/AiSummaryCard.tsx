@@ -54,9 +54,9 @@ const AiSummaryCard: React.FC<Props> = ({ query, results }) => {
 
     const result = await fetchGeminiSummary(query, snippets, geminiApiKey, language);
     if (result.error) {
-      setError(result.error);
+      setError(result.error ?? '');
     } else {
-      setSummary(result.text);
+      setSummary(result.text ?? '');
     }
     setLoading(false);
   }, [query, results, geminiApiKey, language, loading]);
