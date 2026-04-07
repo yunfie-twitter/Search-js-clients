@@ -19,7 +19,7 @@ const App: React.FC = () => {
   const theme = useAppTheme();
 
   useEffect(() => {
-    init({ API_BASE });
+    init({ API_BASE, TIMEOUT: 20000 });
   }, []);
 
   return (
