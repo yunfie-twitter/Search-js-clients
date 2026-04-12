@@ -3,6 +3,8 @@ import { useSearchStore } from '../store/useSearchStore';
 let ws: WebSocket | null = null;
 let reconnectTimer: any = null;
 let heartbeatTimer: any = null;
+// 他デバイスからの sync を import 中は自分から再ブロードキャストしない（ループ防止）
+let isReceiving = false;
 
 export const initSync = () => {
   const state = useSearchStore.getState();
@@ -37,23 +39,23 @@ export const initSync = () => {
       try {
         const message = JSON.parse(event.data);
 
-        // ping に対して即座に pong を返す
         if (message.type === 'ping') {
           ws?.send(JSON.stringify({ type: 'pong' }));
           return;
         }
 
-        // メッセージ ID があれば ACK を返す
         if (message.messageId) {
-          ws?.send(JSON.stringify({
-            type: 'ack',
-            messageId: message.messageId
-          }));
+          ws?.send(JSON.stringify({ type: 'ack', messageId: message.messageId }));
         }
 
         const store = useSearchStore.getState();
         if (message.type === 'sync') {
-          store.importData(JSON.stringify(message.data));
+          isReceiving = true;
+          try {
+            store.importData(JSON.stringify(message.data));
+          } finally {
+            isReceiving = false;
+          }
         } else if (
           message.type === 'presence' ||
           message.type === 'join' ||
@@ -147,9 +149,11 @@ const getAutoDeviceName = () => {
 };
 
 let lastDataStr = '';
+let lastHistoryVersion = -1;
 let lastSyncState = false;
 
 useSearchStore.subscribe((state) => {
+  // 同期スイッチの切り替え検知
   if (state.enableSync !== lastSyncState) {
     lastSyncState = state.enableSync;
     if (state.enableSync) initSync();
@@ -157,10 +161,17 @@ useSearchStore.subscribe((state) => {
   }
 
   if (!state.enableSync || !state.syncGroupId) return;
+  // 受信中は再ブロードキャストしない
+  if (isReceiving) return;
 
   const currentData = state.exportData();
-  if (currentData !== lastDataStr) {
+  // 設定変化 OR 履歴変化(橋渡しは exportData に含まれるが historyVersion で確実に検知)
+  const settingsChanged = currentData !== lastDataStr;
+  const historyChanged = state.historyVersion !== lastHistoryVersion;
+
+  if (settingsChanged || historyChanged) {
     lastDataStr = currentData;
+    lastHistoryVersion = state.historyVersion;
     broadcastSync(JSON.parse(currentData));
   }
 });
