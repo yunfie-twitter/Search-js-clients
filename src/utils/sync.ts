@@ -6,13 +6,11 @@ let heartbeatTimer: any = null;
 
 export const initSync = () => {
   const state = useSearchStore.getState();
-  // 接続条件のチェック
   if (!state.enableSync || !state.syncGroupId || !state.syncServerUrl) {
     stopSync();
     return;
   }
 
-  // 既に接続中なら何もしない
   if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
 
   try {
@@ -22,8 +20,8 @@ export const initSync = () => {
     ws.onopen = () => {
       console.log('Sync connected');
       const s = useSearchStore.getState();
-      ws?.send(JSON.stringify({ 
-        type: 'join', 
+      ws?.send(JSON.stringify({
+        type: 'join',
         roomId: s.syncGroupId,
         deviceId: s.deviceId,
         deviceName: s.deviceName || getAutoDeviceName(),
@@ -38,10 +36,29 @@ export const initSync = () => {
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
+
+        // ping に対して即座に pong を返す
+        if (message.type === 'ping') {
+          ws?.send(JSON.stringify({ type: 'pong' }));
+          return;
+        }
+
+        // メッセージ ID があれば ACK を返す
+        if (message.messageId) {
+          ws?.send(JSON.stringify({
+            type: 'ack',
+            messageId: message.messageId
+          }));
+        }
+
         const store = useSearchStore.getState();
         if (message.type === 'sync') {
           store.importData(JSON.stringify(message.data));
-        } else if (message.type === 'presence' || message.type === 'join' || message.type === 'presence_reply') {
+        } else if (
+          message.type === 'presence' ||
+          message.type === 'join' ||
+          message.type === 'presence_reply'
+        ) {
           handlePresence(message);
         }
       } catch (e) { console.error('Sync parse error', e); }
@@ -129,12 +146,10 @@ const getAutoDeviceName = () => {
   return 'Browser';
 };
 
-// ストアの変更を即座に同期エンジンへ反映させる
 let lastDataStr = '';
 let lastSyncState = false;
 
 useSearchStore.subscribe((state) => {
-  // 1. 同期スイッチの切り替えを検知して即座に接続/切断
   if (state.enableSync !== lastSyncState) {
     lastSyncState = state.enableSync;
     if (state.enableSync) initSync();
@@ -142,8 +157,7 @@ useSearchStore.subscribe((state) => {
   }
 
   if (!state.enableSync || !state.syncGroupId) return;
-  
-  // 2. データの変更を検知してブロードキャスト
+
   const currentData = state.exportData();
   if (currentData !== lastDataStr) {
     lastDataStr = currentData;
