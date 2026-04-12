@@ -4,7 +4,7 @@ let ws: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
-const DEVICE_TIMEOUT = 45000; // 45秒でオフライン判定
+const OFFLINE_THRESHOLD = 60000; // 60秒応答がなければオフライン
 
 export const initSync = () => {
   const state = useSearchStore.getState();
@@ -27,7 +27,7 @@ export const initSync = () => {
         deviceName: state.deviceName || getAutoDeviceName()
       }));
       startHeartbeat();
-      // 接続時に一度全データをブロードキャストして同期を強制する
+      // 初回同期
       broadcastSync(JSON.parse(state.exportData()));
     };
 
@@ -37,11 +37,7 @@ export const initSync = () => {
         const store = useSearchStore.getState();
 
         if (message.type === 'sync') {
-          const currentData = store.exportData();
-          if (JSON.stringify(message.data) !== currentData) {
-            console.log('Applying remote sync data');
-            store.importData(JSON.stringify(message.data));
-          }
+          store.importData(JSON.stringify(message.data));
         } else if (message.type === 'presence' || message.type === 'join') {
           handlePresence(message);
         }
@@ -72,11 +68,10 @@ const handlePresence = (msg: any) => {
     devices[idx] = { ...devices[idx], name: msg.deviceName, lastSeen: now };
   } else {
     devices.push({ id: msg.deviceId, name: msg.deviceName, lastSeen: now });
-    // 新しい人が来たら自分の存在も即座に知らせる（相互認識）
     broadcastPresence();
   }
 
-  store.setConnectedDevices(devices.filter(d => now - d.lastSeen < DEVICE_TIMEOUT));
+  store.setConnectedDevices(devices);
 };
 
 export const broadcastPresence = () => {
@@ -103,7 +98,7 @@ export const stopSync = () => {
   stopHeartbeat();
   if (ws) { ws.close(); ws = null; }
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
-  useSearchStore.getState().setConnectedDevices([]);
+  // デバイスリストは保持したままにする（オフライン表示のため）
 };
 
 export const broadcastSync = (data: any) => {
@@ -111,6 +106,9 @@ export const broadcastSync = (data: any) => {
     ws.send(JSON.stringify({ type: 'sync', data }));
   }
 };
+
+// ストアからアクセス可能にする
+(window as any)._syncUtils = { broadcastSync, exportData: () => useSearchStore.getState().exportData() };
 
 const getAutoDeviceName = () => {
   const ua = navigator.userAgent;
@@ -122,12 +120,10 @@ const getAutoDeviceName = () => {
   return 'Browser';
 };
 
-// ストアの変更を監視して自動同期
 let lastDataStr = '';
 useSearchStore.subscribe((state) => {
   if (!state.enableSync || !state.syncGroupId) return;
   
-  // 変更があった場合のみ文字列化して比較
   const currentData = state.exportData();
   if (currentData !== lastDataStr) {
     lastDataStr = currentData;

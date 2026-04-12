@@ -257,6 +257,7 @@ interface SearchState {
   resetAllData: () => void;
   exportData: () => string;
   importData: (json: string) => boolean;
+  triggerFullSync: () => void;
 
   syncGroupId: string;
   syncServerMode: 'default' | 'custom';

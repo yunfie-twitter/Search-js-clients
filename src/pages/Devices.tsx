@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, Container, Typography, List, ListItem, ListItemText, 
-  ListItemIcon, Paper, IconButton, TextField, Divider, Stack, Chip, Avatar
+  ListItemIcon, Paper, IconButton, TextField, Divider, Stack, Chip, Avatar, Button
 } from '@mui/material';
 import { 
   DevicesOutlined as DevicesIcon,
@@ -9,8 +9,10 @@ import {
   LaptopOutlined as PcIcon,
   SyncOutlined as SyncIcon,
   CheckCircleOutlined as OnlineIcon,
+  ErrorOutline as OfflineIcon,
   EditOutlined as EditIcon,
-  CheckOutlined as SaveIcon
+  CheckOutlined as SaveIcon,
+  CloudSyncOutlined as ManualSyncIcon
 } from '@mui/icons-material';
 import { useSearchStore } from '../store/useSearchStore';
 import { useShallow } from 'zustand/react/shallow';
@@ -18,17 +20,27 @@ import PageHeader from '../components/PageHeader';
 import PageTransition from '../components/PageTransition';
 import { triggerHaptic } from '../utils/haptics';
 
+const OFFLINE_MS = 60000; // 1分以上通信がなければオフライン
+
 const Devices: React.FC = () => {
-  const { deviceId, deviceName, setDeviceName, connectedDevices, enableSync } = useSearchStore(useShallow(s => ({
+  const { deviceId, deviceName, setDeviceName, connectedDevices, enableSync, triggerFullSync } = useSearchStore(useShallow(s => ({
     deviceId: s.deviceId,
     deviceName: s.deviceName,
     setDeviceName: s.setDeviceName,
     connectedDevices: s.connectedDevices,
-    enableSync: s.enableSync
+    enableSync: s.enableSync,
+    triggerFullSync: s.triggerFullSync
   })));
 
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState(deviceName || '');
+  const [now, setNow] = useState(Date.now());
+
+  // 10秒おきに再描画して Online/Offline 表示を更新
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleSaveName = () => {
     setDeviceName(tempName);
@@ -42,6 +54,8 @@ const Devices: React.FC = () => {
     return <PcIcon />;
   };
 
+  const sortedDevices = [...connectedDevices].sort((a, b) => b.lastSeen - a.lastSeen);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100dvh', bgcolor: 'background.default' }}>
       <PageHeader title="接続デバイス" />
@@ -49,6 +63,29 @@ const Devices: React.FC = () => {
         <PageTransition>
           <Container maxWidth="sm" sx={{ py: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
             
+            {/* 同期ステータス */}
+            <Paper elevation={0} sx={{ p: 2, borderRadius: '20px', border: '1px solid', borderColor: 'divider', bgcolor: enableSync ? 'rgba(76, 175, 80, 0.05)' : 'transparent' }}>
+              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <SyncIcon color={enableSync ? "success" : "disabled"} />
+                  <Typography variant="subtitle2" fontWeight={700}>
+                    {enableSync ? "同期システム稼働中" : "同期は無効です"}
+                  </Typography>
+                </Box>
+                {enableSync && (
+                  <Button 
+                    size="small" 
+                    variant="contained" 
+                    startIcon={<ManualSyncIcon />} 
+                    onClick={() => { triggerFullSync(); triggerHaptic(); }}
+                    sx={{ borderRadius: '10px', textTransform: 'none', boxShadow: 'none' }}
+                  >
+                    今すぐ同期
+                  </Button>
+                )}
+              </Stack>
+            </Paper>
+
             {/* このデバイスの設定 */}
             <Paper elevation={0} sx={{ p: 2, borderRadius: '20px', border: '1px solid', borderColor: 'divider' }}>
               <Stack spacing={2}>
@@ -57,7 +94,7 @@ const Devices: React.FC = () => {
                     <DevicesIcon />
                   </Avatar>
                   <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="overline" color="text.secondary" fontWeight={700}>このデバイス</Typography>
+                    <Typography variant="overline" color="text.secondary" fontWeight={700}>このデバイスの名前</Typography>
                     {isEditing ? (
                       <TextField
                         fullWidth
@@ -80,56 +117,54 @@ const Devices: React.FC = () => {
                     )}
                   </Box>
                 </Box>
-                <Typography variant="caption" color="text.secondary">ID: {deviceId}</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ opacity: 0.7 }}>Device ID: {deviceId}</Typography>
               </Stack>
             </Paper>
 
-            {/* 他のデバイス一覧 */}
+            {/* デバイス一覧 */}
             <Box>
-              <Typography variant="overline" color="text.secondary" sx={{ ml: 2, fontWeight: 700 }}>グループ内の他端末 ({connectedDevices.length})</Typography>
-              {!enableSync ? (
-                <Paper sx={{ p: 4, textAlign: 'center', borderRadius: '20px', mt: 1 }}>
-                  <SyncIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1, opacity: 0.5 }} />
-                  <Typography variant="body2" color="text.secondary">同期が有効になっていません</Typography>
-                </Paper>
-              ) : connectedDevices.length === 0 ? (
-                <Paper sx={{ p: 4, textAlign: 'center', borderRadius: '20px', mt: 1 }}>
-                  <Typography variant="body2" color="text.secondary">他のデバイスは見つかりませんでした</Typography>
+              <Typography variant="overline" color="text.secondary" sx={{ ml: 2, fontWeight: 700 }}>グループ内のデバイス ({sortedDevices.length})</Typography>
+              {sortedDevices.length === 0 ? (
+                <Paper sx={{ p: 4, textAlign: 'center', borderRadius: '20px', mt: 1, border: '1px dashed', borderColor: 'divider', bgcolor: 'transparent' }}>
+                  <Typography variant="body2" color="text.secondary">ペアリング済みの他端末はありません</Typography>
                 </Paper>
               ) : (
                 <Paper elevation={0} sx={{ borderRadius: '20px', overflow: 'hidden', border: '1px solid', borderColor: 'divider', mt: 1 }}>
                   <List sx={{ py: 0 }}>
-                    {connectedDevices.map((device, idx) => (
-                      <React.Fragment key={device.id}>
-                        <ListItem sx={{ py: 2 }}>
-                          <ListItemIcon sx={{ minWidth: 48 }}>
-                            {getIcon(device.name)}
-                          </ListItemIcon>
-                          <ListItemText 
-                            primary={device.name} 
-                            primaryTypographyProps={{ fontWeight: 700 }}
-                            secondary={`最終確認: ${new Date(device.lastSeen).toLocaleTimeString()}`}
-                          />
-                          <Chip 
-                            icon={<OnlineIcon sx={{ fontSize: '14px !important' }} />} 
-                            label="Online" 
-                            size="small" 
-                            color="success" 
-                            variant="outlined" 
-                            sx={{ borderRadius: '8px', fontWeight: 700, fontSize: '10px' }} 
-                          />
-                        </ListItem>
-                        {idx < connectedDevices.length - 1 && <Divider />}
-                      </React.Fragment>
-                    ))}
+                    {sortedDevices.map((device, idx) => {
+                      const isOnline = (now - device.lastSeen) < OFFLINE_MS;
+                      return (
+                        <React.Fragment key={device.id}>
+                          <ListItem sx={{ py: 2 }}>
+                            <ListItemIcon sx={{ minWidth: 48 }}>
+                              {getIcon(device.name)}
+                            </ListItemIcon>
+                            <ListItemText 
+                              primary={device.name} 
+                              primaryTypographyProps={{ fontWeight: 700, color: isOnline ? 'text.primary' : 'text.secondary' }}
+                              secondary={isOnline ? 'オンライン' : `最終確認: ${new Date(device.lastSeen).toLocaleTimeString()}`}
+                            />
+                            <Chip 
+                              icon={isOnline ? <OnlineIcon sx={{ fontSize: '14px !important' }} /> : <OfflineIcon sx={{ fontSize: '14px !important' }} />} 
+                              label={isOnline ? "Online" : "Offline"} 
+                              size="small" 
+                              color={isOnline ? "success" : "default"} 
+                              variant={isOnline ? "outlined" : "filled"} 
+                              sx={{ borderRadius: '8px', fontWeight: 700, fontSize: '10px', opacity: isOnline ? 1 : 0.6 }} 
+                            />
+                          </ListItem>
+                          {idx < sortedDevices.length - 1 && <Divider />}
+                        </React.Fragment>
+                      );
+                    })}
                   </List>
                 </Paper>
               )}
             </Box>
 
-            <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ px: 2 }}>
-              同じグループIDを設定している端末がここに表示されます。<br/>
-              設定の変更や検索履歴はリアルタイムでこれらの端末と共有されます。
+            <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ px: 2, mt: 2 }}>
+              設定の変更や検索履歴はバックグラウンドで自動同期されます。<br/>
+              同期が遅れている場合は「今すぐ同期」を押してください。
             </Typography>
 
           </Container>

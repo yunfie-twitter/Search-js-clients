@@ -101,7 +101,11 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
     if (useSearchStore.getState().expSonicUi) { import('../utils/sonic').then(m => m.playSonicClick()); }
     else { triggerHaptic(); }
 
-    if (saveHistory) addHistory(q, searchParams.get('t') || 'web');
+    if (saveHistory) {
+      addHistory(q, searchParams.get('t') || 'web');
+      // 履歴追加後に即座に同期をトリガー
+      useSearchStore.getState().triggerFullSync();
+    }
     setShowDropdown(false);
     setMobileOpen(false);
     setInputValue(q);
