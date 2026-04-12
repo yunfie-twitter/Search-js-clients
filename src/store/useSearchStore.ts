@@ -748,6 +748,13 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     } catch (e) { return false; }
   },
 
+  triggerFullSync: () => {
+    const syncUtils = (window as any)._syncUtils;
+    if (syncUtils && syncUtils.broadcastSync && syncUtils.exportData) {
+      syncUtils.broadcastSync(JSON.parse(syncUtils.exportData()));
+    }
+  },
+
   setSyncGroupId: (id) => { 
     const finalId = id || Math.random().toString(36).substring(2, 10).toUpperCase();
     set({ syncGroupId: finalId }); 
