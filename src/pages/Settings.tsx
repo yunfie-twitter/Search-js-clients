@@ -45,7 +45,7 @@ import jsQR from 'jsqr';
 const TAP_REQUIRED = 5;
 const TAP_RESET_MS = 2000;
 
-type SectionId = 'display' | 'search' | 'region' | 'privacy' | 'sync' | 'data' | 'about';
+type SectionId = 'general' | 'display' | 'search' | 'region' | 'privacy' | 'sync' | 'data' | 'about';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
@@ -79,7 +79,7 @@ const Settings: React.FC = () => {
   
   const t: any = (translations as any)[language];
 
-  const [activeSection, setActiveSection] = useState<SectionId>('display');
+  const [activeSection, setActiveSection] = useState<SectionId>('general');
   const [, setTapCount] = useState(0);
   const [snackMsg, setSnackMsg] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -202,13 +202,14 @@ const Settings: React.FC = () => {
   };
 
   const sidebarItems = useMemo(() => [
-    { id: 'display', label: language === 'ja' ? '表示設定' : 'Display', Icon: DisplayIcon },
-    { id: 'search',  label: language === 'ja' ? '検索設定' : 'Search',  Icon: SearchSettingsIcon },
-    { id: 'region',  label: language === 'ja' ? '地域と言語' : 'Region', Icon: RegionIcon },
-    { id: 'privacy', label: language === 'ja' ? 'プライバシー' : 'Privacy', Icon: PrivacyIcon },
-    { id: 'sync',    label: language === 'ja' ? 'リアルタイム同期' : 'Sync', Icon: SyncIcon },
-    { id: 'data',    label: language === 'ja' ? 'データ管理' : 'Data Management', Icon: DataIcon },
-    { id: 'about',   label: language === 'ja' ? 'このアプリについて' : 'About', Icon: InfoIcon },
+    { id: 'general',  label: language === 'ja' ? '一般' : 'General',          Icon: GeneralIcon },
+    { id: 'display',  label: language === 'ja' ? '表示設定' : 'Display',       Icon: DisplayIcon },
+    { id: 'search',   label: language === 'ja' ? '検索設定' : 'Search',        Icon: SearchSettingsIcon },
+    { id: 'region',   label: language === 'ja' ? '地域と言語' : 'Region',      Icon: RegionIcon },
+    { id: 'privacy',  label: language === 'ja' ? 'プライバシー' : 'Privacy',   Icon: PrivacyIcon },
+    { id: 'sync',     label: language === 'ja' ? 'リアルタイム同期' : 'Sync',  Icon: SyncIcon },
+    { id: 'data',     label: language === 'ja' ? 'データ管理' : 'Data Management', Icon: DataIcon },
+    { id: 'about',    label: language === 'ja' ? 'このアプリについて' : 'About', Icon: InfoIcon },
   ], [language]);
 
   const scrollToSection = (id: SectionId) => {
@@ -218,6 +219,14 @@ const Settings: React.FC = () => {
 
   const renderContent = () => (
     <>
+      <div id="section-general">
+        <SectionHeader label={language === 'ja' ? '一般' : 'General'} />
+        <Paper elevation={0} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
+          <List sx={{ py: 0 }}>
+            <SwitchItem icon={<HistoryIcon />} primary={t.saveHistory} checked={saveHistory} onChange={setSaveHistory} />
+          </List>
+        </Paper>
+      </div>
       <div id="section-display"><SettingsDisplaySection t={t} themeMode={themeMode} setThemeMode={setThemeMode} enableAnimations={enableAnimations} setEnableAnimations={setEnableAnimations} pageTransitionType={pageTransitionType} setPageTransitionType={setPageTransitionType} expLowEndMode={expLowEndMode} setExpLowEndMode={setExpLowEndMode} expProgressiveRender={expProgressiveRender} setExpProgressiveRender={setExpProgressiveRender} language={language} setLanguage={setLanguage} /></div>
       <div id="section-search"><SettingsSearchSection t={t} resultsPerPage={resultsPerPage} setResultsPerPage={setResultsPerPage} defaultSearchType={defaultSearchType} setDefaultSearchType={setDefaultSearchType} safeSearch={safeSearch} setSafeSearch={setSafeSearch} cacheTtl={cacheTtl} setCacheTtl={setCacheTtl} searchServerMode={searchServerMode} setSearchServerMode={setSearchServerMode} customSearchServer={customSearchServer} setCustomSearchServer={setCustomSearchServer} /></div>
       <div id="section-region"><SettingsRegionSection t={t} searchRegion={searchRegion} setSearchRegion={setSearchRegion} searchLang={searchLang} setSearchLang={setSearchLang} /></div>
