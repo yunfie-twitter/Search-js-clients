@@ -4,8 +4,6 @@ let ws: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
-const OFFLINE_THRESHOLD = 60000; // 60秒応答がなければオフライン
-
 export const initSync = () => {
   const state = useSearchStore.getState();
   if (!state.enableSync || !state.syncGroupId || !state.syncServerUrl) {

@@ -718,8 +718,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   resetAllData: () => {
     localStorage.removeItem(STORAGE_KEY);
     clearHistory();
-    settingsCache = initialState;
-    set(initialState as any);
+    const state = getInitialState();
+    set({ ...state, triggerFullSync: get().triggerFullSync } as any);
   },
   exportData: () => {
     const history = getHistory();
