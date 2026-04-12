@@ -3,7 +3,7 @@ import {
   Box, Container, List, Paper, ListItem, ListItemIcon, ListItemText,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
   Button, Snackbar, Chip, useMediaQuery, useTheme, Typography, Divider, Stack, 
-  TextField, InputAdornment, Tooltip, IconButton,
+  TextField, InputAdornment,
   ToggleButtonGroup, ToggleButton,
 } from '@mui/material';
 import {
@@ -25,9 +25,7 @@ import {
   CloudDownloadOutlined as ExportFileIcon,
   SyncOutlined as SyncIcon,
   GroupOutlined as GroupIcon,
-  AutorenewOutlined as AutoIcon,
   DnsOutlined as ServerIcon,
-  OpenInNewOutlined as OpenIcon,
   DevicesOutlined as DevicesIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';

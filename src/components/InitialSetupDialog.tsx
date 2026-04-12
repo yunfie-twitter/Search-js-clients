@@ -1,13 +1,12 @@
 import React, { memo, useState, useMemo, useRef, ChangeEvent } from 'react';
 import { 
-  Dialog, Typography, Box, Button, MobileStepper, useTheme, Stack,
-  Switch, ListItem, ListItemText, List, Paper,
+  Dialog, Typography, Box, Button, MobileStepper, Stack,
+  Switch, ListItem, ListItemText, Paper,
   ToggleButtonGroup, ToggleButton, Slide, Fade, Divider, keyframes, TextField, InputAdornment
 } from '@mui/material';
 import { 
   AutoAwesomeOutlined as MagicIcon,
   PaletteOutlined as ThemeIcon,
-  HistoryOutlined as HistoryIcon,
   RocketLaunchOutlined as StartIcon,
   CloudUploadOutlined as ImportIcon,
   FiberNewOutlined as NewIcon,
@@ -17,15 +16,12 @@ import {
   CheckCircleOutlined as CheckIcon,
   BoltOutlined as SpeedIcon,
   ShieldOutlined as PrivacyIcon,
-  AutoFixHighOutlined as GlassIcon,
   SearchOutlined as SearchIcon,
-  DashboardCustomizeOutlined as WidgetIcon,
   QrCodeScannerOutlined as ScanIcon
 } from '@mui/icons-material';
 import { useSearchStore } from '../store/useSearchStore';
 import { useShallow } from 'zustand/react/shallow';
 import { triggerHaptic } from '../utils/haptics';
-import translations from '../translations';
 import jsQR from 'jsqr';
 
 const slideUp = keyframes`
@@ -39,7 +35,6 @@ interface Props {
 }
 
 const InitialSetupDialog: React.FC<Props> = ({ open, onClose }) => {
-  const theme = useTheme();
   const [activeStep, setActiveStep] = useState(0);
   const [direction, setDirection] = useState<'left' | 'right'>('left');
   const [userType, setUserType] = useState<'new' | 'existing' | null>(null);
@@ -50,11 +45,8 @@ const InitialSetupDialog: React.FC<Props> = ({ open, onClose }) => {
 
   const { 
     language, setLanguage, setHasCompletedSetup, 
-    enableAnimations, setEnableAnimations,
-    saveHistory, setSaveHistory,
     themeMode, setThemeMode,
     safeSearch, setSafeSearch,
-    viewDensity, setViewDensity,
     expAiSummary, setExpAiSummary,
     geminiApiKey, setGeminiApiKey,
     expFrostGlass, setExpFrostGlass,
@@ -65,16 +57,10 @@ const InitialSetupDialog: React.FC<Props> = ({ open, onClose }) => {
     language: s.language,
     setLanguage: s.setLanguage,
     setHasCompletedSetup: s.setHasCompletedSetup,
-    enableAnimations: s.enableAnimations,
-    setEnableAnimations: s.setEnableAnimations,
-    saveHistory: s.saveHistory,
-    setSaveHistory: s.setSaveHistory,
     themeMode: s.themeMode,
     setThemeMode: s.setThemeMode,
     safeSearch: s.safeSearch,
     setSafeSearch: s.setSafeSearch,
-    viewDensity: s.viewDensity,
-    setViewDensity: s.setViewDensity,
     expAiSummary: s.expAiSummary,
     setExpAiSummary: s.setExpAiSummary,
     geminiApiKey: s.geminiApiKey,
@@ -87,8 +73,6 @@ const InitialSetupDialog: React.FC<Props> = ({ open, onClose }) => {
     setResultsPerPage: s.setResultsPerPage,
     importData: s.importData
   })));
-
-  const t = useMemo(() => translations[language], [language]);
 
   const premiumButtonStyle = {
     borderRadius: '12px',
@@ -383,7 +367,7 @@ const InitialSetupDialog: React.FC<Props> = ({ open, onClose }) => {
         <Stack spacing={0.5}>
           {(activeStep !== 2 && activeStep !== 3) && (
             <Button fullWidth variant="contained" onClick={handleNext} sx={{ ...premiumButtonStyle, py: 1.2, fontSize: '16px', fontWeight: 800, boxShadow: 'none' }}>
-              {activeStep === 7 ? (t.setupStart || 'はじめる') : (language === 'ja' ? '続ける' : 'Continue')}
+              {activeStep === 7 ? (language === 'ja' ? 'はじめる' : 'Start') : (language === 'ja' ? '続ける' : 'Continue')}
             </Button>
           )}
           <Box sx={{ minHeight: 32, display: 'flex', justifyContent: 'center' }}>

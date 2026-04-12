@@ -1,8 +1,8 @@
 import { useSearchStore } from '../store/useSearchStore';
 
-let ws = null;
-let reconnectTimer = null;
-let heartbeatTimer = null;
+let ws: WebSocket | null = null;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
 const DEVICE_TIMEOUT = 30000; // 30秒でオフライン判定
 
@@ -20,13 +20,14 @@ export const initSync = () => {
 
   ws.onopen = () => {
     console.log('Sync WebSocket connected to', url);
-    // 参加時にデバイス情報を送信
-    ws.send(JSON.stringify({ 
-      type: 'join', 
-      roomId: state.syncGroupId,
-      deviceId: state.deviceId,
-      deviceName: state.deviceName || getAutoDeviceName()
-    }));
+    if (ws) {
+      ws.send(JSON.stringify({ 
+        type: 'join', 
+        roomId: state.syncGroupId,
+        deviceId: state.deviceId,
+        deviceName: state.deviceName || getAutoDeviceName()
+      }));
+    }
     startHeartbeat();
   };
 
@@ -41,7 +42,6 @@ export const initSync = () => {
           store.importData(JSON.stringify(message.data));
         }
       } else if (message.type === 'presence' || message.type === 'joined') {
-        // デバイスの存在通知を受信
         updateDeviceList(message);
       }
     } catch (e) {
@@ -60,11 +60,11 @@ export const initSync = () => {
 
   ws.onerror = (err) => {
     console.error('Sync WebSocket error', err);
-    ws.close();
+    if (ws) ws.close();
   };
 };
 
-const updateDeviceList = (msg) => {
+const updateDeviceList = (msg: any) => {
   const store = useSearchStore.getState();
   const now = Date.now();
   
@@ -79,11 +79,9 @@ const updateDeviceList = (msg) => {
     newDevices.push({ id: msg.deviceId, name: msg.deviceName, lastSeen: now });
   }
 
-  // 古いデバイスを削除
   const activeDevices = newDevices.filter(d => now - d.lastSeen < DEVICE_TIMEOUT);
   store.setConnectedDevices(activeDevices);
 
-  // 自分の存在も定期的にブロードキャスト（相手が新しく入ってきた時のため）
   if (msg.type === 'join') {
     broadcastPresence();
   }
@@ -102,7 +100,7 @@ const broadcastPresence = () => {
 
 const startHeartbeat = () => {
   stopHeartbeat();
-  heartbeatTimer = setInterval(broadcastPresence, 10000); // 10秒おき
+  heartbeatTimer = setInterval(broadcastPresence, 10000);
 };
 
 const stopHeartbeat = () => {
@@ -122,7 +120,7 @@ export const stopSync = () => {
   useSearchStore.getState().setConnectedDevices([]);
 };
 
-export const broadcastSync = (data) => {
+export const broadcastSync = (data: any) => {
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: 'sync', data }));
   }
@@ -138,13 +136,12 @@ const getAutoDeviceName = () => {
   return 'Web Device';
 };
 
-// ストアの変更を監視して自動ブロードキャスト
 let lastBroadcastTime = 0;
 useSearchStore.subscribe((state, prevState) => {
   if (!state.enableSync || !state.syncGroupId) return;
 
   const now = Date.now();
-  if (now - lastBroadcastTime < 1500) return; // 少し長めのデバウンス
+  if (now - lastBroadcastTime < 1500) return;
 
   const data = JSON.parse(state.exportData());
   const prevData = JSON.parse(prevState.exportData());

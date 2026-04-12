@@ -6,8 +6,7 @@ import {
   Pager,
   createPager,
   getHistory,
-  clearHistory,
-  HistoryEntry
+  clearHistory
 } from '@yunfie/search-js';
 
 export type SafeSearchLevel = 'off' | 'moderate' | 'strict';

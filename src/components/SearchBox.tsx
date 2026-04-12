@@ -13,7 +13,6 @@ import {
 } from '@mui/icons-material';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { addHistory, getHistory, removeHistory, clearHistory } from '@yunfie/search-js';
-import { API_BASE } from '../config';
 import { useSearchStore } from '../store/useSearchStore';
 import translations from '../translations';
 import { EASE_SPRING, DUR_FAST, DUR_NORMAL } from '../utils/motion';

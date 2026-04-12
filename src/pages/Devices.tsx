@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { 
   Box, Container, Typography, List, ListItem, ListItemText, 
-  ListItemIcon, Paper, IconButton, TextField, Button, Divider, Stack, Chip, Avatar
+  ListItemIcon, Paper, IconButton, TextField, Divider, Stack, Chip, Avatar
 } from '@mui/material';
 import { 
   DevicesOutlined as DevicesIcon,

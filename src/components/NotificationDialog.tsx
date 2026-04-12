@@ -2,8 +2,9 @@ import React, { memo } from 'react';
 import { 
   Dialog, DialogTitle, DialogContent, List, ListItem, 
   ListItemText, ListItemIcon, IconButton, Typography, 
-  Box, Badge, Divider, Button 
+  Box, Badge, Divider
 } from '@mui/material';
+
 import { 
   NotificationsOutlined as NotificationsIcon,
   UpdateOutlined as UpdateIcon,
