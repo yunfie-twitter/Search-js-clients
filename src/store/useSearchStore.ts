@@ -11,6 +11,7 @@ import {
 
 export type SafeSearchLevel = 'off' | 'moderate' | 'strict';
 export type DefaultSearchType = 'web' | 'image' | 'video' | 'news';
+export type DeviceRole = 'owner' | 'guest';
 
 interface SearchState {
   query: string;
@@ -266,13 +267,15 @@ interface SearchState {
   enableSync: boolean;
   deviceId: string;
   deviceName: string;
-  connectedDevices: { id: string, name: string, lastSeen: number }[];
+  deviceRole: DeviceRole;
+  connectedDevices: { id: string, name: string, lastSeen: number, role?: DeviceRole }[];
   setSyncGroupId: (id: string) => void;
   setSyncServerMode: (mode: 'default' | 'custom') => void;
   setSyncServerUrl: (url: string) => void;
   setEnableSync: (v: boolean) => void;
   setDeviceName: (name: string) => void;
-  setConnectedDevices: (devices: { id: string, name: string, lastSeen: number }[]) => void;
+  setDeviceRole: (role: DeviceRole) => void;
+  setConnectedDevices: (devices: { id: string, name: string, lastSeen: number, role?: DeviceRole }[]) => void;
 }
 
 const searchCache = new Map<string, { results: ResultMeta[], pager: Pager }>();
@@ -393,6 +396,7 @@ const getInitialState = () => ({
   enableSync: false,
   deviceId: Math.random().toString(36).substring(2, 15),
   deviceName: '',
+  deviceRole: 'owner' as DeviceRole,
   connectedDevices: [],
 });
 
@@ -544,6 +548,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   enableSync: saved.enableSync !== undefined ? saved.enableSync : initialState.enableSync,
   deviceId: saved.deviceId || initialState.deviceId,
   deviceName: saved.deviceName || initialState.deviceName,
+  deviceRole: saved.deviceRole || initialState.deviceRole,
   connectedDevices: [],
 
   activeVideo: null,
@@ -720,28 +725,39 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     localStorage.removeItem(STORAGE_KEY);
     clearHistory();
     const state = getInitialState();
-    set({ ...state, triggerFullSync: get().triggerFullSync } as any);
+    set({ 
+      ...state, 
+      triggerFullSync: get().triggerFullSync,
+      regenerateDeviceId: get().regenerateDeviceId
+    } as any);
   },
   exportData: () => {
     const history = getHistory();
-    return JSON.stringify({ ...settingsCache, history });
+    // ゲストの場合は設定を含めず履歴のみにする
+    if (get().deviceRole === 'guest') {
+      return JSON.stringify({ history, deviceId: get().deviceId, deviceName: get().deviceName, role: 'guest' });
+    }
+    return JSON.stringify({ ...settingsCache, history, role: 'owner' });
   },
   importData: (json: string) => {
     try {
       const data = JSON.parse(json);
       if (typeof data !== 'object' || data === null) return false;
       
-      const { history, ...settings } = data;
+      const { history, deviceId, deviceName, connectedDevices, role, ...settings } = data;
       
-      // 設定の反映
-      settingsCache = { ...initialState, ...settings };
+      // 自分がゲストなら履歴だけ反映し、設定は無視する
+      if (get().deviceRole === 'guest') {
+        if (Array.isArray(history)) localStorage.setItem('wholphin_history', JSON.stringify(history));
+        return true;
+      }
+
+      // 自分がオーナーなら設定も履歴も反映する
+      settingsCache = { ...initialState, ...settings, deviceId: get().deviceId, deviceName: get().deviceName, deviceRole: get().deviceRole };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settingsCache));
       set(settingsCache as any);
       
-      // 履歴の反映
       if (Array.isArray(history)) {
-        clearHistory();
-        // 簡易的に履歴を復元（@yunfie/search-js の実装に依存）
         localStorage.setItem('wholphin_history', JSON.stringify(history));
       }
       
@@ -756,6 +772,12 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     }
   },
 
+  regenerateDeviceId: () => {
+    const newId = Math.random().toString(36).substring(2, 15);
+    set({ deviceId: newId });
+    saveSetting('deviceId', newId);
+  },
+
   setSyncGroupId: (id) => { 
     const finalId = id || Math.random().toString(36).substring(2, 10).toUpperCase();
     set({ syncGroupId: finalId }); 
@@ -765,5 +787,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   setSyncServerMode: (mode) => { set({ syncServerMode: mode }); saveSetting('syncServerMode', mode); },
   setEnableSync: (v) => { set({ enableSync: v }); saveSetting('enableSync', v); },
   setDeviceName: (name) => { set({ deviceName: name }); saveSetting('deviceName', name); },
+  setDeviceRole: (role) => { set({ deviceRole: role }); saveSetting('deviceRole', role); },
   setConnectedDevices: (devices) => set({ connectedDevices: devices }),
 }));

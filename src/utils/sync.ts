@@ -22,10 +22,10 @@ export const initSync = () => {
         type: 'join', 
         roomId: state.syncGroupId,
         deviceId: state.deviceId,
-        deviceName: state.deviceName || getAutoDeviceName()
+        deviceName: state.deviceName || getAutoDeviceName(),
+        role: state.deviceRole
       }));
       startHeartbeat();
-      // 初回同期
       broadcastSync(JSON.parse(state.exportData()));
     };
 
