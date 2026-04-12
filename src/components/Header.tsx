@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Toolbar, Box, Container } from '@mui/material';
+import { AppBar, Toolbar, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 import SearchBox from './SearchBox';
@@ -16,12 +16,14 @@ const Header: React.FC = () => {
         backgroundColor: '#ffffff', 
         zIndex: (theme) => theme.zIndex.drawer + 1,
         borderBottom: '1px solid #ebebeb',
-        width: '100%'
+        width: '100%',
+        pt: 'env(safe-area-inset-top)'
       }}
     >
       <Toolbar 
         disableGutters 
         sx={{ 
+          minHeight: { xs: 56, sm: 64 },
           py: 1, 
           px: { xs: 2, md: '180px' }, // 左端の垂直基準線 (Logo/Input/Tabs/Results)
           display: 'flex', 

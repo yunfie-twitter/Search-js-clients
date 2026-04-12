@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, IconButton, Tooltip,
@@ -15,6 +15,7 @@ import { BottomNavSpacer } from '../components/MobileBottomNav';
 import type { FaissImageResult } from '../components/ImageSearch';
 
 const FAISS_BASE = 'https://faiss.wholphin.net';
+const IMAGES_PER_PAGE = 20;
 
 const ImageSearchResultPage: React.FC = () => {
   const location = useLocation();
@@ -29,10 +30,30 @@ const ImageSearchResultPage: React.FC = () => {
   const results   = state?.results   ?? [];
   const previewSrc = state?.previewSrc ?? null;
 
+  const [visibleCount, setVisibleCount] = useState(IMAGES_PER_PAGE);
+  const observerTarget = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + IMAGES_PER_PAGE, results.length));
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+    return () => observer.disconnect();
+  }, [results.length]);
+
+  const visibleResults = results.slice(0, visibleCount);
+
   return (
     <Box sx={{
       display: 'flex', flexDirection: 'column', minHeight: '100vh',
-      paddingTop: 'env(safe-area-inset-top)',
+      paddingTop: 'calc(env(safe-area-inset-top) + 8px)',
       backgroundColor: 'background.default',
     }}>
       {/* ── ヘッダー ── */}
@@ -98,49 +119,54 @@ const ImageSearchResultPage: React.FC = () => {
             </Typography>
           </Box>
         ) : (
-          <ImageList
-            variant="masonry"
-            cols={isMobile ? 2 : 3}
-            gap={isMobile ? 6 : 10}
-            sx={{ mt: 0 }}
-          >
-            {results.map((item, i) => (
-              <ImageListItem key={item.id ?? i}>
-                <img
-                  src={item.url}
-                  alt={item.title ?? ''}
-                  loading="lazy"
-                  style={{ borderRadius: 8, width: '100%', display: 'block' }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-                <ImageListItemBar
-                  title={item.title}
-                  subtitle={
-                    <>
-                      {item.score != null && (
-                        <span style={{ fontSize: '10px' }}>score: {item.score.toFixed(3)}</span>
-                      )}
-                      <span style={{ fontSize: '10px', display: 'block', opacity: 0.7 }}>
-                        {FAISS_BASE}
-                      </span>
-                    </>
-                  }
-                  actionIcon={
-                    item.url ? (
-                      <Tooltip title={t.visitWebsite}>
-                        <IconButton size="small" component="a" href={item.url}
-                          target="_blank" rel="noopener"
-                          sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                          <OpenInNewIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    ) : undefined
-                  }
-                  sx={{ borderRadius: '0 0 8px 8px' }}
-                />
-              </ImageListItem>
-            ))}
-          </ImageList>
+          <>
+            <ImageList
+              variant="masonry"
+              cols={isMobile ? 2 : 3}
+              gap={isMobile ? 6 : 10}
+              sx={{ mt: 0 }}
+            >
+              {visibleResults.map((item, i) => (
+                <ImageListItem key={item.id ?? i}>
+                  <img
+                    src={item.url}
+                    alt={item.title ?? ''}
+                    loading="lazy"
+                    style={{ borderRadius: 8, width: '100%', display: 'block' }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <ImageListItemBar
+                    title={item.title}
+                    subtitle={
+                      <>
+                        {item.score != null && (
+                          <span style={{ fontSize: '10px' }}>score: {item.score.toFixed(3)}</span>
+                        )}
+                        <span style={{ fontSize: '10px', display: 'block', opacity: 0.7 }}>
+                          {FAISS_BASE}
+                        </span>
+                      </>
+                    }
+                    actionIcon={
+                      item.url ? (
+                        <Tooltip title={t.visitWebsite}>
+                          <IconButton size="small" component="a" href={item.url}
+                            target="_blank" rel="noopener"
+                            sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                            <OpenInNewIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      ) : undefined
+                    }
+                    sx={{ borderRadius: '0 0 8px 8px' }}
+                  />
+                </ImageListItem>
+              ))}
+            </ImageList>
+            {visibleCount < results.length && (
+              <Box ref={observerTarget} sx={{ height: 20, my: 2 }} />
+            )}
+          </>
         )}
       </Box>
 

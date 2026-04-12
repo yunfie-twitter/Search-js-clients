@@ -6,7 +6,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 import { Box } from '@mui/material';
-import { EASE_SPRING, EASE_IN, DUR_PAGE } from '../utils/motion';
+import { EASE_SPRING, EASE_IN, DUR_PAGE, DUR_FAST } from '../utils/motion';
+import { useSearchStore } from '../store/useSearchStore';
 
 const OUT_MS = 90;
 const IN_MS  = DUR_PAGE;
@@ -19,18 +20,29 @@ const VARIANTS = {
   backOut:    { x:  '10px', opacity: 0, scale: 0.99 },
   backIn:     { x: '-14px', opacity: 0, scale: 1.00 },
   idle:       { x:   '0px', opacity: 1, scale: 1.00 },
+  tabOut:     { x:   '0px', opacity: 0, scale: 0.98 },
+  tabIn:      { x:   '0px', opacity: 0, scale: 0.98 },
+  swipeBackOut: { x: '100%', opacity: 0, scale: 1 },
+  swipeBackIn:  { x: '100%', opacity: 0, scale: 1 },
+  settingsIn:   { x: '0px', opacity: 0, scale: 0.94 },
+  settingsOut:  { x: '0px', opacity: 0, scale: 0.94 },
+  labsIn:       { x: '0px', opacity: 0, scale: 0.98, y: '40px' },
+  labsOut:      { x: '0px', opacity: 0, scale: 0.98, y: '40px' },
 } as const;
 
 type VKey = keyof typeof VARIANTS;
 
-const toCss = (v: (typeof VARIANTS)[VKey]) => ({
-  transform: `translateX(${v.x}) scale(${v.scale})`,
+const toCss = (v: (typeof VARIANTS)[VKey] & { y?: string }) => ({
+  transform: `translate3d(${v.x}, ${v.y || '0px'}, 0) scale(${v.scale})`,
   opacity: v.opacity,
 });
 
 const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const navType  = useNavigationType();
+  const enableAnimations = useSearchStore(s => s.enableAnimations);
+  const pageTransitionType = useSearchStore(s => s.pageTransitionType);
+  const expSwipeBack = useSearchStore(s => s.expSwipeBack);
 
   const prevKey    = useRef(location.key);
   const prevSearch = useRef(location.search);
@@ -38,27 +50,88 @@ const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const [trans, setTrans] = useState('');
   const animating  = useRef(false);
 
-  const animate = useCallback(() => {
-    if (animating.current) return;
+  const animate = useCallback((isTabSwitch = false, forcedInKey?: VKey, forcedOutKey?: VKey) => {
+    if (animating.current || !enableAnimations || pageTransitionType === 'none') return;
     animating.current = true;
     const isBack = navType === 'POP';
 
-    setTrans(`transform ${OUT_MS}ms ${EASE_IN}, opacity ${OUT_MS}ms ${EASE_IN}`);
-    setVkey(isBack ? 'backOut' : 'forwardOut');
+    // 強制的にフェードのみにする条件（ユーザー設定または画像・動画グリッド）
+    const forceFade = pageTransitionType === 'fade';
 
-    setTimeout(() => {
-      setTrans('none');
-      setVkey(isBack ? 'backIn' : 'forwardIn');
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        setTrans(`transform ${IN_MS}ms ${EASE_SPRING}, opacity ${IN_MS}ms ${EASE_SPRING}`);
-        setVkey('idle');
-        setTimeout(() => { animating.current = false; }, IN_MS);
-      }));
-    }, OUT_MS);
-  }, [navType]);
+    if (isTabSwitch && !forcedInKey) {
+       const TAB_OUT = 60;
+       setTrans(`opacity ${TAB_OUT}ms ${EASE_IN}, transform ${TAB_OUT}ms ${EASE_IN}`);
+       setVkey('tabOut');
+       setTimeout(() => {
+         setTrans('none');
+         setVkey('tabIn');
+         requestAnimationFrame(() => requestAnimationFrame(() => {
+           setTrans(`opacity ${DUR_FAST}ms ${EASE_SPRING}, transform ${DUR_FAST}ms ${EASE_SPRING}`);
+           setVkey('idle');
+           setTimeout(() => { animating.current = false; }, DUR_FAST);
+         }));
+       }, TAB_OUT);
+       return;
+    }
+
+    if (expSwipeBack && isBack && !forcedInKey) {
+       setTrans(`transform ${OUT_MS}ms ${EASE_IN}, opacity ${OUT_MS}ms ${EASE_IN}`);
+       setVkey('swipeBackOut');
+       setTimeout(() => {
+         setTrans('none');
+         setVkey('backIn');
+         requestAnimationFrame(() => requestAnimationFrame(() => {
+           setTrans(`transform ${IN_MS}ms ${EASE_SPRING}, opacity ${IN_MS}ms ${EASE_SPRING}`);
+           setVkey('idle');
+           setTimeout(() => { animating.current = false; }, IN_MS);
+         }));
+       }, OUT_MS);
+       return;
+    }
+
+    let outKey: VKey = forcedOutKey || (isBack ? 'backOut' : 'forwardOut');
+    let inKey: VKey  = forcedInKey  || (isBack ? 'backIn' : 'forwardIn');
+
+    if (forceFade) {
+      outKey = 'tabOut';
+      inKey = 'tabIn';
+    }
+
+    if (!forcedInKey && !forceFade) {
+      if (location.pathname === '/settings') {
+        inKey = 'settingsIn';
+      } else if (location.pathname === '/labs') {
+        inKey = 'labsIn';
+      }
+    }
+
+    setTrans(`transform ${OUT_MS}ms ${EASE_IN}, opacity ${OUT_MS}ms ${EASE_IN}`);
+    setVkey(outKey);
+
+    // RAFを使用してブラウザの次のフレームで確実に切り替える
+    const nextFrame = () => {
+      setTimeout(() => {
+        setTrans('none');
+        setVkey(inKey);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          setTrans(`transform ${IN_MS}ms ${EASE_SPRING}, opacity ${IN_MS}ms ${EASE_SPRING}`);
+          setVkey('idle');
+          // 完了通知もRAFで行う
+          requestAnimationFrame(() => {
+            setTimeout(() => { animating.current = false; }, IN_MS);
+          });
+        }));
+      }, OUT_MS);
+    };
+    requestAnimationFrame(nextFrame);
+    }, [navType, enableAnimations, pageTransitionType, expSwipeBack, location.pathname]);
 
   useEffect(() => {
-    if (location.key === prevKey.current) return;
+    if (location.key === prevKey.current || !enableAnimations) {
+       if (!enableAnimations) setVkey('idle');
+       return;
+    }
+    const isBack = navType === 'POP';
     prevKey.current = location.key;
 
     const prevParams = new URLSearchParams(prevSearch.current);
@@ -69,19 +142,30 @@ const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) =
     const newQ  = newParams.get('q');
     prevSearch.current = location.search;
 
-    // タブ切り替え（q共通、tのみ変化）はスキップ
-    if (location.pathname === '/search' && prevQ === newQ && prevT !== newT) return;
+    // タブ切り替え
+    if (location.pathname === '/search' && prevQ === newQ && prevT !== newT) {
+      // グリッドが絡む場合はさらに簡略化
+      if (GRID_TYPES.has(prevT) || GRID_TYPES.has(newT)) {
+        animate(true, 'tabIn', 'tabOut');
+      } else {
+        animate(true);
+      }
+      return;
+    }
 
-    // グリッド↔リスト 切り替え（画像/動画 ↔ その他）はスキップ
-    if (
-      location.pathname === '/search' &&
-      prevQ === newQ &&
-      GRID_TYPES.has(prevT) !== GRID_TYPES.has(newT)
-    ) return;
+    // 画像・動画ページへの遷移・離脱は X軸移動を抑制して軽量化
+    if (location.pathname === '/search' && GRID_TYPES.has(newT)) {
+       animate(false, 'tabIn', isBack ? 'backOut' : 'forwardOut');
+       return;
+    }
 
-    animate();
+    animate(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.key]);
+  }, [location.key, enableAnimations, navType]);
+
+  if (!enableAnimations) {
+    return <>{children}</>;
+  }
 
   return (
     <Box

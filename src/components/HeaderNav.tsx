@@ -6,19 +6,19 @@ import SearchBox from './SearchBox';
 import Tabs from './Tabs';
 import { glass } from '../utils/glass';
 import { EASE_SPRING, DUR_NORMAL } from '../utils/motion';
+import { useScrollHeader } from '../hooks/useScrollHeader';
+import { useSearchStore } from '../store/useSearchStore';
 
 export const VERTICAL_GUIDE_LINE = { xs: 2, sm: 3, md: 6, lg: '180px' };
-
-// body へのオーバースクロール抑制（ヘッダーが引っ張られないように）
-if (typeof document !== 'undefined') {
-  document.documentElement.style.overscrollBehaviorY = 'none';
-}
 
 const HeaderNav: React.FC = () => {
   const navigate = useNavigate();
   const theme    = useTheme();
   const isDark   = theme.palette.mode === 'dark';
   const g        = glass(isDark, 'light');
+  
+  const expScrollHeader = useSearchStore((s) => s.expScrollHeader);
+  const { hidden } = useScrollHeader(expScrollHeader);
 
   return (
     <AppBar
@@ -30,13 +30,15 @@ const HeaderNav: React.FC = () => {
         zIndex: 1100,
         top: 0,
         width: '100%',
-        overscrollBehavior: 'none',
-        paddingTop: 'env(safe-area-inset-top)',
+        paddingTop: 'calc(env(safe-area-inset-top) + 8px)',
         // 白線を小さめに：透明度を下げる
         borderBottom: `1px solid ${
           isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'
         }`,
-        transition: `background-color ${DUR_NORMAL}ms ${EASE_SPRING}`,
+        transition: `background-color ${DUR_NORMAL}ms ${EASE_SPRING}, transform 200ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms cubic-bezier(0.4, 0, 0.2, 1)`,
+        transform: hidden ? 'translateY(-100%) scale(0.98)' : 'translateY(0) scale(1)',
+        opacity: hidden ? 0 : 1,
+        pointerEvents: hidden ? 'none' : 'auto',
       }}
     >
       <Toolbar

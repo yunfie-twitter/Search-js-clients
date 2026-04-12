@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, memo, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useRef, memo, useEffect, useMemo, Suspense, lazy } from 'react';
 import {
   InputBase, IconButton, Box, List, ListItem,
   ListItemButton, ListItemIcon, ListItemText,
@@ -16,9 +16,11 @@ import { addHistory, getHistory, removeHistory, clearHistory } from '@yunfie/sea
 import { API_BASE } from '../config';
 import { useSearchStore } from '../store/useSearchStore';
 import translations from '../translations';
-import FullScreenSearchDialog from './FullScreenSearchDialog';
-import AdvancedSearchDialog from './AdvancedSearchDialog';
 import { EASE_SPRING, DUR_FAST, DUR_NORMAL } from '../utils/motion';
+import { triggerHaptic } from '../utils/haptics';
+
+const FullScreenSearchDialog = lazy(() => import('./FullScreenSearchDialog'));
+const AdvancedSearchDialog = lazy(() => import('./AdvancedSearchDialog'));
 
 const SuggestionItem = memo(({ title, isHistory, onSelect, onRemove }: any) => (
   <ListItem
@@ -47,6 +49,9 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
   const navigate   = useNavigate();
   const language   = useSearchStore((s) => s.language);
   const saveHistory = useSearchStore((s) => s.saveHistory);
+  const enableAnimations = useSearchStore((s) => s.enableAnimations);
+  const error = useSearchStore((s) => s.error);
+  const expErrorShake = useSearchStore((s) => s.expErrorShake);
   const t = useMemo(() => translations[language], [language]);
   const theme  = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -57,6 +62,7 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
   const [isAdvancedOpen, setAdvancedOpen]       = useState(false);
   const [inputValue, setInputValue]             = useState(searchParams.get('q') || '');
   const [isFocused, setIsFocused]               = useState(false);
+  const [shake, setShake]                       = useState(false);
 
   const inputRef       = useRef<HTMLInputElement>(null);
   const latestQueryRef = useRef('');
@@ -64,9 +70,38 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
   const isHome         = variant === 'home';
   const hasDropdown    = !!(showDropdown && suggestions.length > 0);
 
+  const expCommandPalette = useSearchStore((s) => s.expCommandPalette);
+  const expSonicUi = useSearchStore((s) => s.expSonicUi);
+
+  useEffect(() => {
+    if (error && expErrorShake && enableAnimations) {
+      if (expSonicUi) { import('../utils/sonic').then(m => m.playSonicClick()); } else { triggerHaptic(); }
+      setShake(true);
+      const timer = setTimeout(() => setShake(false), 500);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [error, expErrorShake, enableAnimations, expSonicUi]);
+
+  useEffect(() => {
+    if (!expCommandPalette) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setMobileOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [expCommandPalette]);
+
   const handleSearch = useCallback((query: string) => {
     const q = query.trim();
     if (!q) return;
+    
+    if (useSearchStore.getState().expSonicUi) { import('../utils/sonic').then(m => m.playSonicClick()); }
+    else { triggerHaptic(); }
+
     if (saveHistory) addHistory(q, searchParams.get('t') || 'web');
     setShowDropdown(false);
     setMobileOpen(false);
@@ -93,7 +128,9 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
     }
     timerRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(val)}&type=suggest`, { headers: { Accept: 'application/json' } });
+        const { searchServerMode, customSearchServer } = useSearchStore.getState();
+        const apiBase = searchServerMode === 'custom' ? customSearchServer : 'https://api.wholphin.net';
+        const res = await fetch(`${apiBase}/search?q=${encodeURIComponent(val)}&type=suggest`, { headers: { Accept: 'application/json' } });
         if (res.ok && val === latestQueryRef.current) {
           const data  = await res.json();
           const items = (Array.isArray(data) ? data : (data.results || data.items || [])).slice(0, 8);
@@ -114,12 +151,16 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
   const searchBarBg = isDark ? 'rgba(118,118,128,0.24)' : 'rgba(118,118,128,0.12)';
   const focusRing   = isFocused ? `0 0 0 3px ${isDark ? 'rgba(10,132,255,0.30)' : 'rgba(0,122,255,0.22)'}` : 'none';
 
+  const baseClassName = enableAnimations ? 'pm-search-focus' : '';
+  const finalClassName = `${baseClassName}${shake ? ' pm-shake' : ''}`.trim();
+
   return (
     <Box sx={{ position: 'relative', width: '100%' }}>
       <ClickAwayListener onClickAway={() => { setShowDropdown(false); setIsFocused(false); }}>
         <Box>
           {/* Search bar */}
           <Box
+            className={finalClassName}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -159,6 +200,9 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
               placeholder={t.placeholder}
               onChange={(e) => triggerSuggest(e.target.value)}
               onFocus={() => {
+                // Prefetch SearchPage code for faster navigation
+                import('../pages/SearchPage').catch(() => {});
+                
                 if (window.innerWidth < 600) { setMobileOpen(true); return; }
                 setIsFocused(true);
                 triggerSuggest(inputRef.current?.value || '');
@@ -237,8 +281,16 @@ const SearchBox: React.FC<{ variant?: 'header' | 'home' }> = ({ variant = 'heade
         </Box>
       </ClickAwayListener>
 
-      <FullScreenSearchDialog open={isMobileSearchOpen} onClose={() => setMobileOpen(false)} onSearch={handleSearch} initialValue={inputRef.current?.value || ''} />
-      <AdvancedSearchDialog open={isAdvancedOpen} onClose={() => setAdvancedOpen(false)} onSearch={handleSearch} baseQuery={inputValue} />
+      <Suspense fallback={null}>
+        {isMobileSearchOpen && (
+          <FullScreenSearchDialog open={isMobileSearchOpen} onClose={() => setMobileOpen(false)} onSearch={handleSearch} initialValue={inputRef.current?.value || ''} />
+        )}
+      </Suspense>
+      <Suspense fallback={null}>
+        {isAdvancedOpen && (
+          <AdvancedSearchDialog open={isAdvancedOpen} onClose={() => setAdvancedOpen(false)} onSearch={handleSearch} baseQuery={inputValue} />
+        )}
+      </Suspense>
     </Box>
   );
 };

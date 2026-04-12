@@ -13,7 +13,7 @@ interface RelatedSearchesCardProps {
 const RelatedSearchesCard: React.FC<RelatedSearchesCardProps> = ({ query }) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const navigate = useNavigate();
-  const { language } = useSearchStore();
+  const language = useSearchStore(s => s.language);
   const t = translations[language];
 
   useEffect(() => {

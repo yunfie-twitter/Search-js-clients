@@ -40,3 +40,25 @@ export async function fetchWikiSummary(
 }
 
 export function clearWikiCache() { cache.clear(); }
+
+export async function fetchWikiRelated(title: string, lang: 'ja' | 'en' = 'ja'): Promise<WikiSummary[]> {
+  try {
+    const encoded = encodeURIComponent(title.trim());
+    const url = `https://${lang}.wikipedia.org/api/rest_v1/page/related/${encoded}`;
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!data.pages || !Array.isArray(data.pages)) return [];
+
+    return data.pages.slice(0, 5).map((p: any) => ({
+      title: p.title,
+      description: p.description,
+      extract: p.extract,
+      thumbnail: p.thumbnail,
+      pageUrl: p.content_urls?.desktop?.page ?? `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(p.title)}`,
+      wikibaseItem: p.wikibase_item,
+    }));
+  } catch {
+    return [];
+  }
+}

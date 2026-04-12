@@ -7,9 +7,11 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
+import { useShallow } from 'zustand/react/shallow';
 import translations from '../translations';
 import { triggerHaptic } from '../utils/haptics';
 import { EASE_SPRING, DUR_FAST, DUR_NORMAL } from '../utils/motion';
+import { useScrollHeader } from '../hooks/useScrollHeader';
 
 export const BOTTOM_NAV_HEIGHT = 68;
 
@@ -17,7 +19,7 @@ export const BottomNavSpacer: React.FC = () => (
   <Box sx={{ display: { xs: 'block', md: 'none' }, height: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom))` }} />
 );
 
-const NavContainer = styled(Box, { shouldForwardProp: (p) => p !== 'isDark' })<{ isDark: boolean }>(({ isDark }) => ({
+const NavContainer = styled(Box, { shouldForwardProp: (p) => p !== 'isDark' && p !== 'hidden' && p !== 'lowEnd' })<{ isDark: boolean; hidden: boolean; lowEnd: boolean }>(({ isDark, hidden, lowEnd }) => ({
   position: 'fixed',
   bottom: 0, left: 0, right: 0,
   zIndex: 1200,
@@ -28,14 +30,18 @@ const NavContainer = styled(Box, { shouldForwardProp: (p) => p !== 'isDark' })<{
   paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)',
   paddingTop: '10px',
   paddingLeft: 8, paddingRight: 8,
-  backgroundColor: isDark ? 'rgba(11,11,15,0.82)' : 'rgba(255,255,255,0.82)',
-  backdropFilter: 'saturate(180%) blur(24px)',
-  WebkitBackdropFilter: 'saturate(180%) blur(24px)',
+  backgroundColor: isDark ? (lowEnd ? '#0B0B0F' : 'rgba(11,11,15,0.82)') : (lowEnd ? '#ffffff' : 'rgba(255,255,255,0.82)'),
+  backdropFilter: lowEnd ? 'none' : 'saturate(180%) blur(24px)',
+  WebkitBackdropFilter: lowEnd ? 'none' : 'saturate(180%) blur(24px)',
   borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
-  boxShadow: isDark
+  boxShadow: lowEnd ? 'none' : (isDark
     ? '0 -4px 24px rgba(0,0,0,0.32)'
-    : '0 -4px 24px rgba(0,0,0,0.06)',
+    : '0 -4px 24px rgba(0,0,0,0.06)'),
   contain: 'paint',
+  transition: lowEnd ? 'none' : `transform ${DUR_NORMAL}ms ${EASE_SPRING}, opacity ${DUR_NORMAL}ms ${EASE_SPRING}`,
+  transform: hidden ? 'translateY(100%)' : 'translateY(0)',
+  opacity: hidden ? 0 : 1,
+  pointerEvents: hidden ? 'none' : 'auto',
 }));
 
 const NavItem = styled(Box)({
@@ -53,16 +59,23 @@ const NavItem = styled(Box)({
 const MobileBottomNav: React.FC = () => {
   const navigate   = useNavigate();
   const location   = useLocation();
-  const { query, language } = useSearchStore();
+  const { query, language, expHideNavOnScroll, expLiquidTabBar, expLowEndMode } = useSearchStore(useShallow(s => ({ query: s.query, language: s.language, expHideNavOnScroll: s.expHideNavOnScroll, expLiquidTabBar: s.expLiquidTabBar, expLowEndMode: s.expLowEndMode })));
   const t      = translations[language];
   const theme  = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  // 設定を削除—左：Home、中央：FAB(検索)、右：履歴
+  const { hidden } = useScrollHeader(expHideNavOnScroll);
+
   const SIDE_ITEMS = useMemo(() => [
     { label: t.navHome,    path: '/',        Icon: HomeIcon    },
     { label: t.navHistory, path: '/history', Icon: HistoryIcon },
   ], [t]);
+
+  const activeIndex = useMemo(() => {
+    if (location.pathname === '/') return 0;
+    if (location.pathname === '/history') return 2;
+    return -1;
+  }, [location.pathname]);
 
   const handleNav = (path: string) => { triggerHaptic(); navigate(path); };
   const handleFab = () => {
@@ -73,17 +86,39 @@ const MobileBottomNav: React.FC = () => {
   const activeColor   = isDark ? '#0a84ff' : '#007aff';
   const inactiveColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)';
 
-  const left  = SIDE_ITEMS.slice(0, 1); // Home
-  const right = SIDE_ITEMS.slice(1);    // 履歴
+  const left  = SIDE_ITEMS.slice(0, 1);
+  const right = SIDE_ITEMS.slice(1);
 
   return (
     <Box sx={{ display: { xs: 'block', md: 'none' } }}>
-      <NavContainer isDark={isDark}>
+      <NavContainer isDark={isDark} hidden={hidden} lowEnd={expLowEndMode}>
+        {/* Liquid Indicator */}
+        {expLiquidTabBar && activeIndex !== -1 && (
+          <Box sx={{
+            position: 'absolute',
+            top: 10,
+            left: `${(activeIndex * 33.33) + 4}%`,
+            width: '25%',
+            height: 48,
+            backgroundColor: isDark ? 'rgba(10,132,255,0.12)' : 'rgba(0,122,255,0.08)',
+            borderRadius: '16px',
+            transition: `left 450ms ${EASE_SPRING}, width 450ms ${EASE_SPRING}`,
+            zIndex: -1,
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: -4, left: '50%', transform: 'translateX(-50%)',
+              width: 4, height: 4, borderRadius: '50%',
+              backgroundColor: activeColor,
+            }
+          }} />
+        )}
+
         {/* 左: Home */}
         {left.map(({ label, path, Icon }) => {
           const isActive = location.pathname === path;
           return (
-            <NavItem key={path} onClick={() => handleNav(path)} sx={{ flex: 1 }}>
+            <NavItem key={path} onClick={() => handleNav(path)} sx={{ flex: 1, zIndex: 1 }}>
               <Icon sx={{
                 fontSize: 24,
                 color: isActive ? activeColor : inactiveColor,

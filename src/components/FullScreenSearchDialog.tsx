@@ -68,7 +68,7 @@ const FullScreenSuggestionItem = memo(({ item, onSelect, onRemove }: any) => (
 
 const FullScreenSearchDialog: React.FC<any> = ({ open, onClose, onSearch, initialValue }) => {
   const [suggestions, setSuggestions] = useState<{ title: string; isHistory: boolean }[]>([]);
-  const { language } = useSearchStore();
+  const language = useSearchStore(s => s.language);
   const t = translations[language];
   const [inputValue, setInputValue] = useState(initialValue);
   
@@ -121,6 +121,7 @@ const FullScreenSearchDialog: React.FC<any> = ({ open, onClose, onSearch, initia
       }, 50);
       return () => clearTimeout(tid);
     }
+    return undefined;
   }, [open, initialValue, updateSuggestions]);
 
   const handleRemoveHistory = useCallback((e: React.MouseEvent, q: string) => {

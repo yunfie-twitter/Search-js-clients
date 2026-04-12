@@ -4,7 +4,7 @@ import { useSearchStore } from '../store/useSearchStore';
 import translations from '../translations';
 
 const Footer: React.FC = () => {
-  const { language } = useSearchStore();
+  const language = useSearchStore(s => s.language);
   const t = translations[language];
 
   return (

@@ -27,7 +27,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, action }) => {
       sx={{
         ...g,
         zIndex: 1100,
-        paddingTop: 'env(safe-area-inset-top)',
+        paddingTop: 'calc(env(safe-area-inset-top) + 8px)',
         borderBottom: '1px solid',
         transition: `background-color ${DUR_NORMAL}ms ${EASE_SPRING}`,
       }}

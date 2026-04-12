@@ -23,6 +23,7 @@ const SwitchItem: React.FC<Props> = ({ icon, primary, secondary, checked, onChan
   <ListItem sx={{ py: 1.5, opacity: disabled ? 0.5 : 1 }}>
     <ListItemIcon>{icon}</ListItemIcon>
     <ListItemText
+      primaryTypographyProps={{ component: 'div' }}
       primary={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {primary}
@@ -47,3 +48,4 @@ const SwitchItem: React.FC<Props> = ({ icon, primary, secondary, checked, onChan
 );
 
 export default SwitchItem;
+

@@ -8,6 +8,7 @@ import { Box, useTheme } from '@mui/material';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { SearchType } from '@yunfie/search-js';
 import { useSearchStore } from '../store/useSearchStore';
+import { useShallow } from 'zustand/react/shallow';
 import translations from '../translations';
 import { triggerHaptic } from '../utils/haptics';
 import { EASE_SPRING, DUR_FAST, DUR_NORMAL } from '../utils/motion';
@@ -17,7 +18,7 @@ const TAB_TYPES: SearchType[] = ['web', 'image', 'video', 'news'];
 const Tabs: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate       = useNavigate();
-  const { language, type, setType } = useSearchStore();
+  const { language, type, setType } = useSearchStore(useShallow(s => ({ language: s.language, type: s.type, setType: s.setType })));
   const t      = useMemo(() => translations[language], [language]);
   const theme  = useTheme();
   const isDark = theme.palette.mode === 'dark';

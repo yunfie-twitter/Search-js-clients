@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { SearchType } from '@yunfie/search-js';
@@ -14,7 +14,8 @@ import { useSwipePageNav } from '../hooks/useSwipePageNav';
 
 const SearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { performSearch } = useSearchStore();
+  const performSearch = useSearchStore(s => s.performSearch);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const query       = searchParams.get('q') || '';
   const currentType = (searchParams.get('t') as SearchType) || 'web';
@@ -23,7 +24,7 @@ const SearchPage: React.FC = () => {
   useEffect(() => {
     if (query) {
       performSearch(query, currentType, page);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [query, currentType, page, performSearch]);
 
@@ -34,30 +35,63 @@ const SearchPage: React.FC = () => {
   const { setIndicator } = usePullToRefresh({ onRefresh: handleRefresh });
 
   const goNext = useCallback(() => {
-    setSearchParams({ q: query, t: currentType, page: String(page + 1) });
-    window.scrollTo({ top: 0 });
-  }, [query, currentType, page, setSearchParams]);
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('page', String(page + 1));
+      return newParams;
+    });
+    scrollContainerRef.current?.scrollTo({ top: 0 });
+  }, [page, setSearchParams]);
 
   const goPrev = useCallback(() => {
     if (page <= 1) return;
-    setSearchParams({ q: query, t: currentType, page: String(page - 1) });
-    window.scrollTo({ top: 0 });
-  }, [query, currentType, page, setSearchParams]);
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('page', String(page - 1));
+      return newParams;
+    });
+    scrollContainerRef.current?.scrollTo({ top: 0 });
+  }, [page, setSearchParams]);
 
   useSwipePageNav({ onNext: goNext, onPrev: goPrev });
 
   const isGridLayout = currentType === 'image' || currentType === 'video';
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%' }}>
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '100dvh', // Use dynamic viewport height
+      width: '100%',
+      overflow: 'hidden',
+      position: 'fixed', // Lock the base page position
+      top: 0, left: 0, right: 0, bottom: 0,
+    }}>
       <PullToRefreshIndicator ref={setIndicator} />
+      
       <HeaderNav />
-      <PageTransition>
-        <MainLayout isGridLayout={isGridLayout}>
-          <SearchResults />
-        </MainLayout>
-        <Footer />
-      </PageTransition>
+
+      {/* This is the ONLY scrollable container */}
+      <Box
+        ref={scrollContainerRef}
+        id="search-scroll-container"
+        sx={{
+          flexGrow: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          display: 'flex',
+          flexDirection: 'column',
+          overscrollBehaviorY: 'contain', // Prevent propagation to body
+        }}
+      >
+        <PageTransition>
+          <MainLayout isGridLayout={isGridLayout}>
+            <SearchResults />
+          </MainLayout>
+          <Footer />
+        </PageTransition>
+      </Box>
     </Box>
   );
 };

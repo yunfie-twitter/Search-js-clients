@@ -6,124 +6,150 @@ import { EASE_SPRING, DUR_FAST, DUR_NORMAL } from '../utils/motion';
 const EASE_IN_OUT = 'cubic-bezier(0.45, 0, 0.55, 1)';
 
 const GlobalAppStyles = () => {
-  const { enableAnimations } = useSearchStore();
+  const enableAnimations = useSearchStore((s) => s.enableAnimations);
+  const expHoverElevation = useSearchStore((s) => s.expHoverElevation);
+  const expSpringCard = useSearchStore((s) => s.expSpringCard);
+  const expLowEndMode = useSearchStore((s) => s.expLowEndMode);
 
-  return (
-    <MuiGlobalStyles
-      styles={{
-        '*': {
-          WebkitTapHighlightColor: 'transparent',
-          boxSizing: 'border-box',
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          ...(enableAnimations ? {} : { transition: 'none !important', animation: 'none !important' }),
-        },
-        'input, textarea, [contenteditable="true"], .selectable': {
-          userSelect: 'text !important',
-          WebkitUserSelect: 'text !important',
-        },
-        '.selectable *, .selectable a, .selectable p, .selectable span': {
-          userSelect: 'text !important',
-          WebkitUserSelect: 'text !important',
-        },
-        'a, button, [role="button"], .clickable': {
-          WebkitTapHighlightColor: 'transparent',
-          WebkitTouchCallout: 'none',
-          outline: 'none',
-          cursor: 'pointer',
-          touchAction: 'manipulation',
-        },
-        'p, span, div, a': { overflowWrap: 'anywhere', wordBreak: 'break-word' },
+  const styles = React.useMemo(() => ({
+    '*': {
+      WebkitTapHighlightColor: 'transparent',
+      boxSizing: 'border-box',
+      textRendering: expLowEndMode ? 'optimizeSpeed' : 'optimizeLegibility',
+      WebkitFontSmoothing: expLowEndMode ? 'auto' : 'antialiased',
+      ...(expLowEndMode ? {
+        animation: 'none !important',
+        transition: 'none !important',
+        boxShadow: 'none !important',
+        backdropFilter: 'none !important',
+        WebkitBackdropFilter: 'none !important',
+      } : !enableAnimations ? {
+        transition: 'none !important',
+        animation: 'none !important'
+      } : {}),
+    },
 
-        // スクロールを完全にブラウザデフォルトに委ねる—overflow 設定は一切しない
-        '#root': {
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          width: '100%',
-        },
-        '.scrollable-list': {
-          WebkitOverflowScrolling: 'touch',
-        },
+    'html, body': {
+      overscrollBehavior: 'none',
+      margin: 0,
+      padding: 0,
+      // ズームを禁止（ネイティブアプリ風）
+      touchAction: 'manipulation',
+      WebkitTextSizeAdjust: 'none',
+      userSelect: 'none',
+    },
 
-        '*::-webkit-scrollbar':       { width: '4px', height: '4px' },
-        '*::-webkit-scrollbar-track': { background: 'transparent' },
-        '*::-webkit-scrollbar-thumb': {
-          background: 'rgba(128,128,128,0.28)',
-          borderRadius: '4px',
-          '&:hover': { background: 'rgba(128,128,128,0.5)' },
-        },
+    '#root': {
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      contain: expLowEndMode ? 'layout' : 'none',
+      // overflow は CssBaseline に任せるかデフォルトの挙動（bodyスクロール）に従う
+    },
 
-        '.pm-btn': {
-          transition: `transform ${DUR_FAST}ms ${EASE_SPRING}, box-shadow ${DUR_FAST}ms ${EASE_SPRING}, opacity ${DUR_FAST}ms ${EASE_SPRING}`,
-          willChange: 'transform',
-        },
-        '.pm-btn:hover':   { transform: 'scale(1.02)' },
-        '.pm-btn:active':  { transform: 'scale(0.95)', opacity: 0.82 },
+    // ─── 極限最適化: 静的クラス群 (sxオーバーヘッドの完全排除) ───
+    
+    // 汎用ボタン
+    '.pm-btn-base': {
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: expLowEndMode ? '4px' : '12px',
+      transition: expLowEndMode ? 'none' : `all ${DUR_FAST}ms ${EASE_SPRING}`,
+      cursor: 'pointer',
+      border: 'none',
+      outline: 'none',
+      userSelect: 'none',
+      backfaceVisibility: 'hidden',
+      transform: 'translateZ(0)',
+      willChange: expLowEndMode ? 'auto' : 'transform, opacity',
+    },
 
-        '.pm-card': {
-          transition: `transform ${DUR_NORMAL}ms ${EASE_SPRING}, box-shadow ${DUR_NORMAL}ms ${EASE_SPRING}`,
-          willChange: 'transform',
-          transformOrigin: 'center center',
-        },
-        '@media (hover: hover)': {
-          '.pm-card:hover': { transform: 'translateY(-3px) scale(1.01)', boxShadow: '0 12px 40px rgba(0,0,0,0.12)' },
-        },
-        '.pm-card:active': { transform: 'scale(0.97)' },
+    // 検索結果カード (Web用)
+    '.pm-result-item-root': {
+      position: 'relative',
+      marginBottom: '16px',
+      overflow: 'hidden',
+      borderRadius: '16px',
+      contain: 'content', // 描画範囲を完全に限定
+    },
+    '.pm-result-card-inner': {
+      padding: '16px 18px',
+      borderRadius: '16px',
+      backgroundColor: 'var(--mui-palette-background-paper)',
+      border: '1px solid var(--mui-palette-divider)',
+      transition: expLowEndMode ? 'none' : `box-shadow ${DUR_NORMAL}ms ${EASE_SPRING}, transform 200ms ease-out`,
+      boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+      cursor: 'pointer',
+      backfaceVisibility: 'hidden',
+      transform: 'translateZ(0)',
+    },
+    '.pm-result-card-inner:hover': {
+      transform: expLowEndMode ? 'none' : 'translateY(-1px) translateZ(0)',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.09)',
+    },
 
-        '.pm-icon-btn': {
-          transition: `transform ${DUR_FAST}ms ${EASE_SPRING}, opacity ${DUR_FAST}ms ${EASE_SPRING}`,
-          willChange: 'transform',
-        },
-        '.pm-icon-btn:active': { transform: 'scale(0.88)', opacity: 0.65 },
+    // メディアカード (画像・動画グリッド用)
+    '.pm-media-card-root': {
+      width: '100%',
+      borderRadius: expLowEndMode ? '2px' : '8px',
+      overflow: 'hidden',
+      border: '1px solid var(--mui-palette-divider)',
+      backgroundColor: 'var(--mui-palette-background-paper)',
+      display: 'flex',
+      flexDirection: 'column',
+      transition: expLowEndMode ? 'none' : 'transform 180ms cubic-bezier(0.22,1,0.36,1)',
+      WebkitTapHighlightColor: 'transparent',
+      contain: 'layout paint',
+      contentVisibility: 'auto',
+      containIntrinsicSize: '200px 250px',
+      backfaceVisibility: 'hidden',
+      transform: 'translateZ(0)',
+    },
+    '.pm-media-card-root:active': { transform: expLowEndMode ? 'none' : 'scale(0.97) translateZ(0)' },
 
-        '@keyframes pm-shimmer': {
-          '0%':   { backgroundPosition: '-600px 0' },
-          '100%': { backgroundPosition:  '600px 0' },
-        },
-        '.pm-skeleton': {
-          backgroundImage: 'linear-gradient(90deg, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.10) 37%, rgba(0,0,0,0.05) 63%)',
-          backgroundSize: '1200px 100%',
-          animation: `pm-shimmer 1.4s ${EASE_IN_OUT} infinite`,
-          borderRadius: '8px',
-        },
+    '.pm-media-thumb-container': {
+      position: 'relative',
+      width: '100%',
+      aspectRatio: '4 / 3',
+      backgroundColor: 'var(--mui-palette-action-hover)',
+      overflow: 'hidden',
+      flexShrink: 0,
+    },
 
-        '@keyframes pm-fade-up': {
-          from: { opacity: 0, transform: 'translateY(10px)' },
-          to:   { opacity: 1, transform: 'translateY(0)' },
-        },
-        '.pm-fade-up': {
-          animation: `pm-fade-up ${DUR_NORMAL}ms ${EASE_SPRING} both`,
-        },
+    // スケルトン
+    '.pm-skeleton': {
+      backgroundColor: 'rgba(0,0,0,0.06)',
+      backgroundImage: expLowEndMode ? 'none' : 'linear-gradient(90deg, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.10) 37%, rgba(0,0,0,0.05) 63%)',
+      backgroundSize: '1200px 100%',
+      animation: expLowEndMode ? 'none' : `pm-shimmer 1.4s ${EASE_IN_OUT} infinite`,
+      borderRadius: expLowEndMode ? '2px' : '8px',
+    },
 
-        '@keyframes pm-modal-in': {
-          from: { opacity: 0, transform: 'scale(0.94) translateY(8px)' },
-          to:   { opacity: 1, transform: 'scale(1) translateY(0)' },
-        },
-        '.pm-modal': { animation: `pm-modal-in 360ms ${EASE_SPRING} both` },
+    '@keyframes pm-shimmer': {
+      '0%':   { backgroundPosition: '-600px 0' },
+      '100%': { backgroundPosition:  '600px 0' },
+    },
 
-        '@keyframes pm-sheet-in': {
-          from: { transform: 'translateY(100%)' },
-          to:   { transform: 'translateY(0)' },
-        },
-        '.pm-sheet': { animation: `pm-sheet-in 360ms ${EASE_SPRING} both` },
+    '@keyframes pm-fade-up': {
+      from: { opacity: 0, transform: 'translateY(10px) translateZ(0)' },
+      to:   { opacity: 1, transform: 'translateY(0) translateZ(0)' },
+    },
+    '.pm-fade-up': {
+      animation: expLowEndMode ? 'none' : `pm-fade-up ${DUR_NORMAL}ms ${EASE_SPRING} both`,
+    },
 
-        '@keyframes pm-pulse': {
-          '0%, 100%': { opacity: 1 },
-          '50%':      { opacity: 0.45 },
-        },
-        '.pm-pulse': { animation: `pm-pulse 1.6s ${EASE_IN_OUT} infinite` },
+    // ガラスエフェクト (通常モード時のみ)
+    '.pm-glass': {
+      backdropFilter: expLowEndMode ? 'none' : 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: expLowEndMode ? 'none' : 'blur(20px) saturate(180%)',
+      backgroundColor: 'rgba(var(--paper-rgb), 0.7)',
+    },
 
-        '@media (prefers-reduced-motion: reduce)': {
-          '*': {
-            animationDuration:       '0.001ms !important',
-            animationIterationCount: '1 !important',
-            transitionDuration:      '0.001ms !important',
-          },
-        },
-      }}
-    />
-  );
+  }), [enableAnimations, expHoverElevation, expSpringCard, expLowEndMode]);
+
+  return <MuiGlobalStyles styles={styles as any} />;
 };
 
 export default GlobalAppStyles;

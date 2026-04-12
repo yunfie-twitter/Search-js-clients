@@ -5,6 +5,7 @@ import {
   AnimationOutlined  as AnimationIcon,
   LanguageOutlined   as LanguageIcon,
   SettingsOutlined   as SettingsIcon,
+  SpeedOutlined      as SpeedIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { triggerHaptic } from '../../utils/haptics';
@@ -18,12 +19,20 @@ interface Props {
   setThemeMode: (v: any) => void;
   enableAnimations: boolean;
   setEnableAnimations: (v: boolean) => void;
+  pageTransitionType: 'standard' | 'fade' | 'none';
+  setPageTransitionType: (v: 'standard' | 'fade' | 'none') => void;
+  expLowEndMode: boolean;
+  setExpLowEndMode: (v: boolean) => void;
+  expProgressiveRender: boolean;
+  setExpProgressiveRender: (v: boolean) => void;
   language: string;
   setLanguage: (v: any) => void;
 }
 
 const SettingsDisplaySection: React.FC<Props> = ({
-  t, themeMode, setThemeMode, enableAnimations, setEnableAnimations, language, setLanguage,
+  t, themeMode, setThemeMode, enableAnimations, setEnableAnimations,
+  pageTransitionType, setPageTransitionType, expLowEndMode, setExpLowEndMode,
+  expProgressiveRender, setExpProgressiveRender, language, setLanguage,
 }) => {
   const navigate = useNavigate();
 
@@ -45,6 +54,35 @@ const SettingsDisplaySection: React.FC<Props> = ({
           </SelectItem>
           <Divider />
           <SwitchItem icon={<AnimationIcon />} primary={t.enableAnimations} checked={enableAnimations} onChange={setEnableAnimations} />
+          {enableAnimations && (
+            <SelectItem
+              icon={<AnimationIcon sx={{ opacity: 0 }} />}
+              primary={language === 'ja' ? 'ページ遷移スタイル' : 'Page Transition Style'}
+              secondary={pageTransitionType}
+              value={pageTransitionType}
+              onChange={(v) => setPageTransitionType(v as any)}
+            >
+              <MenuItem value="standard">{language === 'ja' ? '標準 (スライド)' : 'Standard (Slide)'}</MenuItem>
+              <MenuItem value="fade">{language === 'ja' ? '軽量 (フェード)' : 'Lightweight (Fade)'}</MenuItem>
+              <MenuItem value="none">{language === 'ja' ? 'なし' : 'None'}</MenuItem>
+            </SelectItem>
+          )}
+          <Divider />
+          <SwitchItem
+            icon={<SpeedIcon />}
+            primary={language === 'ja' ? '低スペックモード (省電力)' : 'Low End Mode (Battery Saver)'}
+            secondary={language === 'ja' ? 'ぼかしや重い演出を無効化します' : 'Disable blurs and heavy effects'}
+            checked={expLowEndMode}
+            onChange={setExpLowEndMode}
+          />
+          <Divider />
+          <SwitchItem
+            icon={<SpeedIcon />}
+            primary={language === 'ja' ? '段階的レンダリング' : 'Progressive Rendering'}
+            secondary={language === 'ja' ? '結果を少しずつ表示してフリーズを防ぎます' : 'Display results gradually to prevent freezing'}
+            checked={expProgressiveRender}
+            onChange={setExpProgressiveRender}
+          />
         </List>
       </Paper>
 

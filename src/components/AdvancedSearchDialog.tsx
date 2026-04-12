@@ -22,7 +22,7 @@ function getDateBefore(days: number): string {
 }
 
 const AdvancedSearchDialog: React.FC<Props> = ({ open, onClose, onSearch, baseQuery }) => {
-  const { language } = useSearchStore();
+  const language = useSearchStore(s => s.language);
   const t = translations[language];
 
   const [allWords, setAllWords] = useState(baseQuery);

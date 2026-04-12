@@ -1,10 +1,11 @@
 import React from 'react';
-import { List, Divider, Paper, MenuItem } from '@mui/material';
+import { List, Divider, Paper, MenuItem, ListItem, ListItemIcon, ListItemText, TextField, Box } from '@mui/material';
 import {
   SearchOutlined as SearchIcon,
   FilterListOutlined as FilterIcon,
   TimerOutlined as TimerIcon,
   FormatListNumberedOutlined as ListIcon,
+  DnsOutlined as ServerIcon,
 } from '@mui/icons-material';
 import SectionHeader from './SectionHeader';
 import SelectItem from './SelectItem';
@@ -19,6 +20,10 @@ interface Props {
   setSafeSearch: (v: any) => void;
   cacheTtl: number;
   setCacheTtl: (v: any) => void;
+  searchServerMode: 'default' | 'custom';
+  setSearchServerMode: (v: 'default' | 'custom') => void;
+  customSearchServer: string;
+  setCustomSearchServer: (v: string) => void;
 }
 
 const SettingsSearchSection: React.FC<Props> = ({
@@ -26,6 +31,8 @@ const SettingsSearchSection: React.FC<Props> = ({
   defaultSearchType, setDefaultSearchType,
   safeSearch, setSafeSearch,
   cacheTtl, setCacheTtl,
+  searchServerMode, setSearchServerMode,
+  customSearchServer, setCustomSearchServer,
 }) => (
   <>
     <SectionHeader label={t.sectionSearch} />
@@ -56,6 +63,36 @@ const SettingsSearchSection: React.FC<Props> = ({
           <MenuItem value="30">{t.cacheTtl30}</MenuItem>
           <MenuItem value="60">{t.cacheTtl60}</MenuItem>
         </SelectItem>
+        <Divider />
+        <SelectItem icon={<ServerIcon />} primary={t.searchServer} value={searchServerMode} onChange={(v) => setSearchServerMode(v as any)}>
+          <MenuItem value="default">{t.searchServerDefault}</MenuItem>
+          <MenuItem value="custom">{t.searchServerCustom}</MenuItem>
+        </SelectItem>
+        {searchServerMode === 'custom' && (
+          <>
+            <Divider />
+            <ListItem sx={{ py: 2, px: 2, display: 'block' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <ListItemIcon sx={{ minWidth: 40, color: 'text.secondary' }}>
+                  <ServerIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary={t.customServerUrl} />
+              </Box>
+              <TextField
+                fullWidth
+                size="small"
+                variant="outlined"
+                value={customSearchServer}
+                onChange={(e) => setCustomSearchServer(e.target.value)}
+                placeholder="https://api.example.com"
+                sx={{ 
+                  '& .MuiOutlinedInput-root': { borderRadius: '10px' },
+                  mt: 0.5
+                }}
+              />
+            </ListItem>
+          </>
+        )}
       </List>
     </Paper>
   </>

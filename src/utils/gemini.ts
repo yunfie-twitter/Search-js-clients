@@ -31,10 +31,12 @@ export async function fetchGeminiSummary(
   snippets: string[],
   apiKey: string,
   language: 'ja' | 'en' = 'ja',
+  contextHistory: string[] = [],
 ): Promise<GeminiResult> {
   if (!apiKey) return { error: 'API key is not set.' };
 
-  const cacheKey = `${language}:${query}`;
+  const contextStr = contextHistory.length > 0 ? contextHistory.join(',') : '';
+  const cacheKey = `${language}:${query}:${contextStr}`;
   const cached = summaryCache.get(cacheKey);
   if (cached) return { text: cached };
 
@@ -43,10 +45,18 @@ export async function fetchGeminiSummary(
     .map((s, i) => `[${i + 1}] ${s}`)
     .join('\n');
 
-  const prompt =
-    language === 'ja'
-      ? `あなたは優秀な検索アシスタントです。\n以下の検索クエリと検索結果スニペットをもとに、日本語で簡潔な要約（3〜5文）を作成してください。\n事実のみを述べ、余分な前置きは不要です。\n\n検索クエリ: ${query}\n\n検索結果スニペット:\n${contextBlock}`
-      : `You are a helpful search assistant.\nBased on the search query and snippets below, write a concise summary (3-5 sentences) in English.\nState only facts, no preamble needed.\n\nSearch query: ${query}\n\nSnippets:\n${contextBlock}`;
+  let systemPrompt = language === 'ja'
+    ? `あなたは優秀な検索アシスタントです。\n以下の検索クエリと検索結果スニペットをもとに、日本語で簡潔な要約（3〜5文）を作成してください。\n事実のみを述べ、余分な前置きは不要です。`
+    : `You are a helpful search assistant.\nBased on the search query and snippets below, write a concise summary (3-5 sentences) in English.\nState only facts, no preamble needed.`;
+
+  if (contextHistory.length > 0) {
+     const historyText = language === 'ja'
+       ? `\n\n【文脈情報】ユーザーは直前に以下の検索を行っています。この文脈を踏まえて回答してください。\n履歴: ${contextHistory.join(' -> ')}`
+       : `\n\n[Context] The user recently searched for the following queries. Please consider this context.\nHistory: ${contextHistory.join(' -> ')}`;
+     systemPrompt += historyText;
+  }
+
+  const prompt = `${systemPrompt}\n\n検索クエリ: ${query}\n\n検索結果スニペット:\n${contextBlock}`;
 
   const url = `${GEMINI_API_BASE}/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
 
@@ -150,4 +160,34 @@ export async function fetchGeminiFactCheck(
 /** 要約キャッシュを全消去（必要なら呼び出す） */
 export function clearSummaryCache(): void {
   summaryCache.clear();
+}
+
+export async function generateGeminiContent(prompt: string, apiKey: string): Promise<string> {
+  if (!apiKey) throw new Error('API key is not set.');
+
+  const url = `${GEMINI_API_BASE}/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 512,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const errJson = await res.json().catch(() => ({}));
+    throw new Error((errJson as any)?.error?.message || `HTTP ${res.status}`);
+  }
+
+  const json = await res.json();
+  const text: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+
+  if (!text) throw new Error('Empty response from Gemini.');
+
+  return text.trim();
 }
