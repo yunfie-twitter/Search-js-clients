@@ -25,6 +25,7 @@ import {
   GroupOutlined as GroupIcon,
   DnsOutlined as ServerIcon,
   DevicesOutlined as DevicesIcon,
+  CachedOutlined as ClearCacheIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../store/useSearchStore';
@@ -61,7 +62,7 @@ const Settings: React.FC = () => {
     expProgressiveRender, setExpProgressiveRender, searchServerMode, setSearchServerMode,
     customSearchServer, setCustomSearchServer, resetAllData, exportData, importData,
     syncGroupId, setSyncGroupId, syncServerMode, setSyncServerMode, syncServerUrl, setSyncServerUrl,
-    enableSync, setEnableSync, connectedDevices,
+    enableSync, setEnableSync, connectedDevices, clearSearchCache,
   } = useSearchStore(useShallow(s => ({ 
     themeMode: s.themeMode, setThemeMode: s.setThemeMode, language: s.language, setLanguage: s.setLanguage,
     saveHistory: s.saveHistory, setSaveHistory: s.setSaveHistory, enableAnimations: s.enableAnimations, setEnableAnimations: s.setEnableAnimations,
@@ -75,6 +76,7 @@ const Settings: React.FC = () => {
     syncGroupId: s.syncGroupId, setSyncGroupId: s.setSyncGroupId, syncServerMode: s.syncServerMode, setSyncServerMode: s.setSyncServerMode,
     syncServerUrl: s.syncServerUrl, setSyncServerUrl: s.setSyncServerUrl, enableSync: s.enableSync, setEnableSync: s.setEnableSync,
     connectedDevices: s.connectedDevices,
+    clearSearchCache: s.clearSearchCache,
   })));
   
   const t: any = (translations as any)[language];
@@ -129,6 +131,12 @@ const Settings: React.FC = () => {
       } else setSnackMsg(language === 'ja' ? '不正なファイルです' : 'Invalid file');
     };
     reader.readAsText(file);
+  };
+
+  const handleClearCache = () => {
+    clearSearchCache();
+    triggerHaptic();
+    setSnackMsg(language === 'ja' ? '検索キャッシュをクリアしました' : 'Search cache cleared');
   };
 
   const handleShowSyncQr = async () => {
@@ -264,7 +272,7 @@ const Settings: React.FC = () => {
                   <ListItemIcon><DevicesIcon /></ListItemIcon>
                   <ListItemText 
                     primary={language === 'ja' ? '接続デバイス一覧' : 'Connected Devices'} 
-                    secondary={language === 'ja' ? `${connectedDevices.length} 台の端末がオンライン` : `${connectedDevices.length} devices online`} 
+                    secondary={language === 'ja' ? `${(connectedDevices ?? []).length} 台の端末がオンライン` : `${(connectedDevices ?? []).length} devices online`} 
                   />
                   <ChevronRightIcon />
                 </ListItem>
@@ -289,14 +297,16 @@ const Settings: React.FC = () => {
         </Paper>
       </div>
       <div id="section-data">
-        <SectionHeader label="Data Management" />
+        <SectionHeader label={language === 'ja' ? 'データ管理' : 'Data Management'} />
         <Paper elevation={0} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
           <List sx={{ py: 0 }}>
-            <ListItem button onClick={handleExportFile}><ListItemIcon><ExportFileIcon /></ListItemIcon><ListItemText primary="Export to file" /></ListItem>
+            <ListItem button onClick={handleClearCache}><ListItemIcon><ClearCacheIcon /></ListItemIcon><ListItemText primary={language === 'ja' ? '検索キャッシュをクリア' : 'Clear Search Cache'} secondary={language === 'ja' ? 'インメモリの検索結果キャッシュを削除します' : 'Remove cached search results from memory'} /></ListItem>
             <Divider />
-            <ListItem button component="label"><ListItemIcon><ImportFileIcon /></ListItemIcon><ListItemText primary="Import from file" /><input type="file" accept=".json" hidden onChange={handleImportFile} /></ListItem>
+            <ListItem button onClick={handleExportFile}><ListItemIcon><ExportFileIcon /></ListItemIcon><ListItemText primary={language === 'ja' ? 'ファイルにエクスポート' : 'Export to file'} /></ListItem>
             <Divider />
-            <ListItem button onClick={() => setShowDeleteConfirm(true)} sx={{ color: 'error.main' }}><ListItemIcon><DeleteIcon color="error" /></ListItemIcon><ListItemText primary="Delete All Data" /></ListItem>
+            <ListItem button component="label"><ListItemIcon><ImportFileIcon /></ListItemIcon><ListItemText primary={language === 'ja' ? 'ファイルからインポート' : 'Import from file'} /><input type="file" accept=".json" hidden onChange={handleImportFile} /></ListItem>
+            <Divider />
+            <ListItem button onClick={() => setShowDeleteConfirm(true)} sx={{ color: 'error.main' }}><ListItemIcon><DeleteIcon color="error" /></ListItemIcon><ListItemText primary={language === 'ja' ? '全データを削除' : 'Delete All Data'} /></ListItem>
           </List>
         </Paper>
       </div>
