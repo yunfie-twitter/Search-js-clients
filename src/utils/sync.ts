@@ -56,6 +56,15 @@ export const initSync = () => {
 
 const handlePresence = (msg: any) => {
   const store = useSearchStore.getState();
+  
+  // ID衝突検知: 自分と同じIDを使っている他端末がいれば、自分側を再生成する
+  if (msg.deviceId === store.deviceId && msg.type !== 'joined_ack') {
+    console.warn('Device ID collision detected. Regenerating identity...');
+    store.regenerateDeviceId();
+    broadcastPresence();
+    return;
+  }
+
   if (!msg.deviceId || msg.deviceId === store.deviceId) return;
 
   const now = Date.now();

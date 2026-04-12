@@ -258,6 +258,7 @@ interface SearchState {
   exportData: () => string;
   importData: (json: string) => boolean;
   triggerFullSync: () => void;
+  regenerateDeviceId: () => void;
 
   syncGroupId: string;
   syncServerMode: 'default' | 'custom';
