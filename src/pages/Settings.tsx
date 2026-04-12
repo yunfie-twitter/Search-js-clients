@@ -220,29 +220,33 @@ const Settings: React.FC = () => {
     if (videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
       const canvas = canvasRef.current;
       const video = videoRef.current;
-      canvas.height = video.videoHeight;
-      canvas.width = video.videoWidth;
+      // パフォーマンスのため解像度を少し落として処理
+      const scale = 0.5;
+      canvas.width = video.videoWidth * scale;
+      canvas.height = video.videoHeight * scale;
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (ctx) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
         if (code) {
-          handleScannedResult(code.data);
-          return;
+          if (handleScannedResult(code.data)) {
+            return; // 成功時のみループ終了
+          }
         }
       }
     }
     requestAnimationFrame(scanFrame);
   };
 
-  const handleScannedResult = (data: string) => {
+  const handleScannedResult = (data: string): boolean => {
     if (scannerMode === 'import') {
       if (importData(data)) {
         triggerHaptic();
         stopScan();
         setSnackMsg(language === 'ja' ? '設定をインポートしました' : 'Settings imported');
-        setTimeout(() => window.location.reload(), 1000);
+        setTimeout(() => window.location.reload(), 800);
+        return true;
       }
     } else {
       try {
@@ -254,11 +258,11 @@ const Settings: React.FC = () => {
           triggerHaptic();
           stopScan();
           setSnackMsg(language === 'ja' ? '同期設定を完了しました' : 'Sync pairing completed');
+          return true;
         }
-      } catch (e) {
-        // Not a sync QR, ignore or show error
-      }
+      } catch (e) { /* Invalid Sync QR, keep scanning */ }
     }
+    return false;
   };
 
   const stopScan = () => {

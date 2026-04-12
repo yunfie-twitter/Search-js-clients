@@ -4,7 +4,7 @@ let ws: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
-const DEVICE_TIMEOUT = 30000; // 30秒でオフライン判定
+const DEVICE_TIMEOUT = 45000; // 45秒でオフライン判定
 
 export const initSync = () => {
   const state = useSearchStore.getState();
@@ -15,80 +15,72 @@ export const initSync = () => {
 
   if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
 
-  const url = state.syncServerUrl;
-  ws = new WebSocket(url);
+  try {
+    ws = new WebSocket(state.syncServerUrl);
 
-  ws.onopen = () => {
-    console.log('Sync WebSocket connected to', url);
-    if (ws) {
-      ws.send(JSON.stringify({ 
+    ws.onopen = () => {
+      console.log('Sync connected');
+      ws?.send(JSON.stringify({ 
         type: 'join', 
         roomId: state.syncGroupId,
         deviceId: state.deviceId,
         deviceName: state.deviceName || getAutoDeviceName()
       }));
-    }
-    startHeartbeat();
-  };
+      startHeartbeat();
+      // 接続時に一度全データをブロードキャストして同期を強制する
+      broadcastSync(JSON.parse(state.exportData()));
+    };
 
-  ws.onmessage = (event) => {
-    try {
-      const message = JSON.parse(event.data);
-      const store = useSearchStore.getState();
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        const store = useSearchStore.getState();
 
-      if (message.type === 'sync') {
-        const currentData = store.exportData();
-        if (JSON.stringify(message.data) !== currentData) {
-          store.importData(JSON.stringify(message.data));
+        if (message.type === 'sync') {
+          const currentData = store.exportData();
+          if (JSON.stringify(message.data) !== currentData) {
+            console.log('Applying remote sync data');
+            store.importData(JSON.stringify(message.data));
+          }
+        } else if (message.type === 'presence' || message.type === 'join') {
+          handlePresence(message);
         }
-      } else if (message.type === 'presence' || message.type === 'joined') {
-        updateDeviceList(message);
+      } catch (e) { console.error('Sync parse error', e); }
+    };
+
+    ws.onclose = () => {
+      stopHeartbeat();
+      if (useSearchStore.getState().enableSync) {
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(initSync, 3000);
       }
-    } catch (e) {
-      console.error('Failed to process sync message', e);
-    }
-  };
+    };
 
-  ws.onclose = () => {
-    console.log('Sync WebSocket closed');
-    stopHeartbeat();
-    if (useSearchStore.getState().enableSync) {
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-      reconnectTimer = setTimeout(initSync, 5000);
-    }
-  };
-
-  ws.onerror = (err) => {
-    console.error('Sync WebSocket error', err);
-    if (ws) ws.close();
-  };
+    ws.onerror = () => ws?.close();
+  } catch (e) { console.error('WS Init error', e); }
 };
 
-const updateDeviceList = (msg: any) => {
+const handlePresence = (msg: any) => {
   const store = useSearchStore.getState();
-  const now = Date.now();
-  
   if (!msg.deviceId || msg.deviceId === store.deviceId) return;
 
-  const newDevices = [...store.connectedDevices];
-  const idx = newDevices.findIndex(d => d.id === msg.deviceId);
+  const now = Date.now();
+  const devices = [...store.connectedDevices];
+  const idx = devices.findIndex(d => d.id === msg.deviceId);
   
   if (idx > -1) {
-    newDevices[idx] = { ...newDevices[idx], name: msg.deviceName, lastSeen: now };
+    devices[idx] = { ...devices[idx], name: msg.deviceName, lastSeen: now };
   } else {
-    newDevices.push({ id: msg.deviceId, name: msg.deviceName, lastSeen: now });
-  }
-
-  const activeDevices = newDevices.filter(d => now - d.lastSeen < DEVICE_TIMEOUT);
-  store.setConnectedDevices(activeDevices);
-
-  if (msg.type === 'join') {
+    devices.push({ id: msg.deviceId, name: msg.deviceName, lastSeen: now });
+    // 新しい人が来たら自分の存在も即座に知らせる（相互認識）
     broadcastPresence();
   }
+
+  store.setConnectedDevices(devices.filter(d => now - d.lastSeen < DEVICE_TIMEOUT));
 };
 
-const broadcastPresence = () => {
-  if (ws && ws.readyState === WebSocket.OPEN) {
+export const broadcastPresence = () => {
+  if (ws?.readyState === WebSocket.OPEN) {
     const state = useSearchStore.getState();
     ws.send(JSON.stringify({
       type: 'presence',
@@ -100,7 +92,7 @@ const broadcastPresence = () => {
 
 const startHeartbeat = () => {
   stopHeartbeat();
-  heartbeatTimer = setInterval(broadcastPresence, 10000);
+  heartbeatTimer = setInterval(broadcastPresence, 15000);
 };
 
 const stopHeartbeat = () => {
@@ -109,19 +101,13 @@ const stopHeartbeat = () => {
 
 export const stopSync = () => {
   stopHeartbeat();
-  if (ws) {
-    ws.close();
-    ws = null;
-  }
-  if (reconnectTimer) {
-    clearTimeout(reconnectTimer);
-    reconnectTimer = null;
-  }
+  if (ws) { ws.close(); ws = null; }
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
   useSearchStore.getState().setConnectedDevices([]);
 };
 
 export const broadcastSync = (data: any) => {
-  if (ws && ws.readyState === WebSocket.OPEN) {
+  if (ws?.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: 'sync', data }));
   }
 };
@@ -130,24 +116,21 @@ const getAutoDeviceName = () => {
   const ua = navigator.userAgent;
   if (/iPhone/i.test(ua)) return 'iPhone';
   if (/iPad/i.test(ua)) return 'iPad';
-  if (/Android/i.test(ua)) return 'Android Device';
+  if (/Android/i.test(ua)) return 'Android';
   if (/Mac/i.test(ua)) return 'Mac';
-  if (/Win/i.test(ua)) return 'Windows PC';
-  return 'Web Device';
+  if (/Win/i.test(ua)) return 'Windows';
+  return 'Browser';
 };
 
-let lastBroadcastTime = 0;
-useSearchStore.subscribe((state, prevState) => {
+// ストアの変更を監視して自動同期
+let lastDataStr = '';
+useSearchStore.subscribe((state) => {
   if (!state.enableSync || !state.syncGroupId) return;
-
-  const now = Date.now();
-  if (now - lastBroadcastTime < 1500) return;
-
-  const data = JSON.parse(state.exportData());
-  const prevData = JSON.parse(prevState.exportData());
-
-  if (JSON.stringify(data) !== JSON.stringify(prevData)) {
-    lastBroadcastTime = now;
-    broadcastSync(data);
+  
+  // 変更があった場合のみ文字列化して比較
+  const currentData = state.exportData();
+  if (currentData !== lastDataStr) {
+    lastDataStr = currentData;
+    broadcastSync(JSON.parse(currentData));
   }
 });
