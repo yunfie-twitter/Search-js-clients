@@ -78,8 +78,6 @@ const InitialSetupDialog: React.FC<Props> = ({ open, onClose }) => {
     setEnableSync: s.setEnableSync
   })));
 
-  const t: any = (translations as any)[language];
-
   const premiumButtonStyle = {
     borderRadius: '12px',
     textTransform: 'none',

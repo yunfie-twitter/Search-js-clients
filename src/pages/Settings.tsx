@@ -2,19 +2,17 @@ import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
   Box, Container, List, Paper, ListItem, ListItemIcon, ListItemText,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-  Button, Snackbar, Chip, useMediaQuery, useTheme, Typography, Divider, Stack, 
+  Button, Snackbar, useMediaQuery, useTheme, Typography, Divider, Stack, 
   TextField, InputAdornment, ToggleButtonGroup, ToggleButton,
 } from '@mui/material';
 import {
   HistoryOutlined as HistoryIcon,
   InfoOutlined as InfoIcon,
   ChevronRightOutlined as ChevronRightIcon,
-  WarningAmberOutlined as WarningIcon,
   PaletteOutlined as DisplayIcon,
   SearchOutlined as SearchSettingsIcon,
   PublicOutlined as RegionIcon,
   ScienceOutlined as LabsIcon,
-  SettingsOutlined as GeneralIcon,
   LockOutlined as PrivacyIcon,
   StorageOutlined as DataIcon,
   QrCodeOutlined as QrCodeIcon,
@@ -58,7 +56,7 @@ const Settings: React.FC = () => {
     enableAnimations, setEnableAnimations, pageTransitionType, setPageTransitionType,
     resultsPerPage, setResultsPerPage, defaultSearchType, setDefaultSearchType,
     safeSearch, setSafeSearch, cacheTtl, setCacheTtl, searchRegion, setSearchRegion,
-    searchLang, setSearchLang, expUnlocked, setExpUnlocked, expLowEndMode, setExpLowEndMode,
+    searchLang, setSearchLang, expUnlocked, expLowEndMode, setExpLowEndMode,
     expProgressiveRender, setExpProgressiveRender, searchServerMode, setSearchServerMode,
     customSearchServer, setCustomSearchServer, resetAllData, exportData, importData,
     syncGroupId, setSyncGroupId, syncServerMode, setSyncServerMode, syncServerUrl, setSyncServerUrl,
@@ -82,10 +80,8 @@ const Settings: React.FC = () => {
 
   const [activeSection, setActiveSection] = useState<SectionId>('display');
   const [, setTapCount] = useState(0);
-  const [showWarning, setShowWarning] = useState(false);
   const [snackMsg, setSnackMsg] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showQrExport, setShowQrExport] = useState(false);
   const [showSyncQr, setShowSyncQr] = useState(false);
   const [qrImageUrl, setQrImageUrl] = useState('');
   const [showQrScanner, setShowQrScanner] = useState(false);
