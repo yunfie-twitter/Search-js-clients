@@ -13,6 +13,7 @@ import {
   SearchOutlined as SearchSettingsIcon,
   PublicOutlined as RegionIcon,
   ScienceOutlined as LabsIcon,
+  SettingsOutlined as GeneralIcon,
   LockOutlined as PrivacyIcon,
   StorageOutlined as DataIcon,
   QrCodeOutlined as QrCodeIcon,
@@ -67,7 +68,7 @@ const Settings: React.FC = () => {
     pageTransitionType: s.pageTransitionType, setPageTransitionType: s.setPageTransitionType, resultsPerPage: s.resultsPerPage, setResultsPerPage: s.setResultsPerPage,
     defaultSearchType: s.defaultSearchType, setDefaultSearchType: s.setDefaultSearchType, safeSearch: s.safeSearch, setSafeSearch: s.setSafeSearch,
     cacheTtl: s.cacheTtl, setCacheTtl: s.setCacheTtl, searchRegion: s.searchRegion, setSearchRegion: s.setSearchRegion,
-    searchLang: s.searchLang, setSearchLang: s.setSearchLang, expUnlocked: s.expUnlocked, setExpUnlocked: s.setExpUnlocked,
+    searchLang: s.searchLang, setSearchLang: s.setSearchLang, expUnlocked: s.expUnlocked,
     expLowEndMode: s.expLowEndMode, setExpLowEndMode: s.setExpLowEndMode, expProgressiveRender: s.expProgressiveRender, setExpProgressiveRender: s.setExpProgressiveRender,
     searchServerMode: s.searchServerMode, setSearchServerMode: s.setSearchServerMode, customSearchServer: s.customSearchServer, setCustomSearchServer: s.setCustomSearchServer,
     resetAllData: s.resetAllData, exportData: s.exportData, importData: s.importData,
@@ -97,7 +98,7 @@ const Settings: React.FC = () => {
     setTapCount((prev) => {
       const next = prev + 1;
       const remaining = TAP_REQUIRED - next;
-      if (next >= TAP_REQUIRED) { setShowWarning(true); triggerHaptic(); return 0; }
+      if (next >= TAP_REQUIRED) { triggerHaptic(); return 0; }
       if (next >= 2) setSnackMsg(language === 'ja' ? `あと ${remaining} 回で実験的機能が解除されます` : `${remaining} more tap${remaining !== 1 ? 's' : ''} to unlock experimental features`);
       return next;
     });
@@ -172,7 +173,6 @@ const Settings: React.FC = () => {
   };
 
   const handleScannedResult = (data: string): boolean => {
-    // 1. 同期ペアリングQRの判別
     try {
       const syncObj = JSON.parse(data);
       if (syncObj.id && syncObj.srv) {
@@ -186,7 +186,6 @@ const Settings: React.FC = () => {
       }
     } catch (e) { /* ignore */ }
 
-    // 2. フル設定インポートの判別
     if (importData(data)) {
       triggerHaptic();
       stopScan();
@@ -247,7 +246,6 @@ const Settings: React.FC = () => {
               onChange={(val) => {
                 setEnableSync(val);
                 triggerHaptic();
-                // 変更を即座にエンジンへ伝える（sync.tsのsubscribeが処理しますが、念のため）
               }} 
             />
             {enableSync && (
@@ -272,8 +270,8 @@ const Settings: React.FC = () => {
               <Box>
                 <Typography variant="caption" sx={{ color: 'text.secondary', ml: 1, mb: 0.5, display: 'block', fontWeight: 700 }}>シグナリングサーバー</Typography>
                 <ToggleButtonGroup fullWidth value={syncServerMode} exclusive onChange={(_, v) => { if (v) { setSyncServerMode(v); if (v === 'default') setSyncServerUrl('wss://turn.wholphin.net/ws'); } }} size="small" sx={{ bgcolor: 'action.hover', borderRadius: '10px', p: 0.5, mb: syncServerMode === 'custom' ? 1 : 0 }}>
-                  <ToggleButton value="default" sx={{ border: 'none', borderRadius: '8px !important', textTransform: 'none' }}>Default</ToggleButton>
-                  <ToggleButton value="custom" sx={{ border: 'none', borderRadius: '8px !important', textTransform: 'none' }}>Custom</ToggleButton>
+                  <ToggleButton value="default" sx={{ border: 'none', borderRadius: '10px !important', textTransform: 'none' }}>Default</ToggleButton>
+                  <ToggleButton value="custom" sx={{ border: 'none', borderRadius: '10px !important', textTransform: 'none' }}>Custom</ToggleButton>
                 </ToggleButtonGroup>
                 {syncServerMode === 'custom' && <TextField placeholder="wss://..." value={syncServerUrl} onChange={(e) => setSyncServerUrl(e.target.value)} fullWidth size="small" InputProps={{ startAdornment: <InputAdornment position="start"><ServerIcon fontSize="small" /></InputAdornment>, sx: { borderRadius: '10px' } }} />}
               </Box>

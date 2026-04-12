@@ -22,7 +22,6 @@ import {
 import { useSearchStore } from '../store/useSearchStore';
 import { useShallow } from 'zustand/react/shallow';
 import { triggerHaptic } from '../utils/haptics';
-import translations from '../translations';
 import jsQR from 'jsqr';
 
 const slideUp = keyframes`
