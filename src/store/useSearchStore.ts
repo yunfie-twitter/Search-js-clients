@@ -140,8 +140,6 @@ interface SearchState {
   activeVideo: ResultMeta | null;
   isVideoMinimized: boolean;
   videoPosition: { x: number; y: number };
-  
-  // 履歴同期用のトリガー
   historyVersion: number;
 
   // Actions
@@ -269,6 +267,11 @@ const searchCache = new Map<string, { results: ResultMeta[], pager: Pager }>();
 const STORAGE_KEY = 'wholphin_settings';
 
 const getInitialState = () => ({
+  // --- runtime fields (never persisted, must always be initialised) ---
+  query: '', type: 'web' as SearchType, results: [] as ResultMeta[],
+  isLoading: false, isInitialLoading: false, error: null,
+  pager: null, selectedItem: null, page: 1,
+  // --- persisted settings ---
   language: 'ja', themeMode: 'system', saveHistory: true, enableAnimations: true, pageTransitionType: 'standard', resultsPerPage: 20, defaultSearchType: 'web', safeSearch: 'moderate', cacheTtl: 5, searchRegion: 'JP', searchLang: 'ja',
   expImageSearch: false, expLenis: false, expUnlocked: false, expAiSummary: false, expKnowledgePanel: false, expGeminiFactCheck: false, expMergedAiPanel: false, expHomeCards: false, expCustomAccentColor: false, accentColor: '', expCustomFontSize: false, fontSizeBase: 17, expAiHistorySummary: false, expLongPressMenu: false, expWeatherCard: false, expSettingsExportImport: false, expScrollHeader: false, expLongPressRelated: false, expScreenshotShare: false, expHistoryExport: false, expHistoryHeatmap: false, expFocusMode: false, expContextMemory: false, expQueryExpansion: false, expSwipeActions: false, expViewDensity: false, viewDensity: 'comfortable', expSearchLater: false, expWikiQuickJump: false, expMiniBrowser: false, expPrivateMode: false, expEncryptedStorage: false, expColorBlindMode: false,
   expSpringCard: false, expBottomSheet: false, expPeekAndPop: false, expLiquidTabBar: false, expBreadcrumbsNav: false, expSwipeBack: false, expMorphingSearch: false, expFocusBlur: false, expTypingIndicator: false, expPersonalizedSkeleton: false, expHoverElevation: false, expReadProgress: false, expCopyToast: false, expErrorShake: false, expEnhancedRipple: false, expDynamicGradient: false, expFrostGlass: false, expJustifyText: false, expEnhancedAnimations: false, expLowEndMode: false, expProgressiveRender: true, expUseInvidious: false, invidiousInstance: 'https://inv.nadeko.net/', customInvidiousUrl: '', expNewsMarkdown: false, markdownApiEndpoint: 'http://localhost:8000/convert', markdownApiMethod: 'POST',
@@ -278,7 +281,7 @@ const getInitialState = () => ({
   lastResultCount: 10, hasCompletedSetup: false, notifications: [{ id: 'welcome', title: 'Wholphinへようこそ', message: '最新の検索体験をお楽しみください。', date: Date.now(), read: false, type: 'update' }],
   activeHomeCards: ['weather', 'trending', 'features'], widgetSizes: {}, thirdPartyWidgets: [], rssFeeds: ['https://news.yahoo.co.jp/rss/topics/it.xml'], worldClocks: ['America/New_York', 'Europe/London', 'Asia/Tokyo'], searchLaterList: [], geminiApiKey: '', geminiFactCheckApiKey: '',
   syncGroupId: '', syncServerMode: 'default', syncServerUrl: 'wss://turn.wholphin.net/ws', enableSync: false,
-  deviceId: Math.random().toString(36).substring(2, 15), deviceName: '', deviceRole: 'owner' as DeviceRole, connectedDevices: [],
+  deviceId: Math.random().toString(36).substring(2, 15), deviceName: '', deviceRole: 'owner' as DeviceRole, connectedDevices: [] as { id: string, name: string, lastSeen: number, role?: DeviceRole }[],
   activeVideo: null, isVideoMinimized: false, videoPosition: { x: 0, y: 0 },
   historyVersion: 0,
 });
@@ -299,7 +302,7 @@ const saveSetting = (key: string, value: any) => {
   if (saveTimeout) clearTimeout(saveTimeout);
   saveTimeout = setTimeout(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settingsCache)); } catch (e) { console.error('Failed to save settings', e); }
-  }, 1000); 
+  }, 1000);
 };
 
 const saved = settingsCache;
@@ -420,7 +423,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   deviceId: saved.deviceId || initialState.deviceId,
   deviceName: saved.deviceName || initialState.deviceName,
   deviceRole: saved.deviceRole || initialState.deviceRole,
-  // fix: connectedDevices must always be an array to prevent .length crash
   connectedDevices: Array.isArray(saved.connectedDevices) ? saved.connectedDevices : initialState.connectedDevices,
 
   // Actions
