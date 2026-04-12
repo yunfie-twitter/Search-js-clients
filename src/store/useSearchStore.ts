@@ -250,6 +250,7 @@ interface SearchState {
   performSearch: (q: string, type: SearchType, page?: number) => Promise<void>;
   resetSearch: () => void;
   resetAllData: () => void;
+  clearSearchCache: () => void;
   exportData: () => string;
   importData: (json: string) => boolean;
   triggerFullSync: () => void;
@@ -419,6 +420,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   deviceId: saved.deviceId || initialState.deviceId,
   deviceName: saved.deviceName || initialState.deviceName,
   deviceRole: saved.deviceRole || initialState.deviceRole,
+  // fix: connectedDevices must always be an array to prevent .length crash
+  connectedDevices: Array.isArray(saved.connectedDevices) ? saved.connectedDevices : initialState.connectedDevices,
 
   // Actions
   setQuery: (q) => set({ query: q }),
@@ -525,6 +528,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   setVideoPosition: (pos) => set({ videoPosition: pos }),
   performSearch: async (q, type, pageNum = 1) => { if (!q) return; const { resultsPerPage, searchLang } = get(); const cacheKey = `${q}:${type}:${searchLang}:${resultsPerPage}:${pageNum}`; const cached = searchCache.get(cacheKey); if (cached) { set({ query: q, type, page: pageNum, results: cached.results, pager: cached.pager, isInitialLoading: false, error: null }); return; } const searchId = Math.random().toString(36).substring(7); (window as any)._lastSearchId = searchId; set({ query: q, type, page: pageNum, isInitialLoading: true, results: [], error: null }); try { const pager = createPager({ q, type, lang: searchLang }, resultsPerPage); set({ pager }); let result = null; for (let i = 0; i < pageNum; i++) { result = await pager.next(); } if ((window as any)._lastSearchId !== searchId) return; const data = result?.data as any; const items = Array.isArray(data) ? data : (data?.results || []); if (result && result.ok && items.length > 0) { set({ results: items, isInitialLoading: false }); searchCache.set(cacheKey, { results: items, pager: pager }); if (searchCache.size > 20) { const firstKey = searchCache.keys().next().value; if (firstKey !== undefined) searchCache.delete(firstKey); } } else { set({ results: [], error: result?.error || 'Search failed', isInitialLoading: false }); } } catch (e) { if ((window as any)._lastSearchId !== searchId) return; set({ results: [], error: 'An unexpected error occurred', isInitialLoading: false }); } },
   resetSearch: () => { set({ results: [], pager: null, error: null, isInitialLoading: false, isLoading: false }); },
+  clearSearchCache: () => { searchCache.clear(); },
   resetAllData: () => { localStorage.removeItem(STORAGE_KEY); clearHistory(); const state = getInitialState(); set({ ...state, triggerFullSync: get().triggerFullSync, regenerateDeviceId: get().regenerateDeviceId, notifyHistoryChange: get().notifyHistoryChange } as any); },
   exportData: () => { const history = getHistory(); if (get().deviceRole === 'guest') { return JSON.stringify({ history, deviceId: get().deviceId, deviceName: get().deviceName, role: 'guest' }); } return JSON.stringify({ ...settingsCache, history, role: 'owner' }); },
   importData: (json: string) => {
