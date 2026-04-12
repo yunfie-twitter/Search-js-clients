@@ -42,7 +42,7 @@ const RssCard: React.FC = () => {
           const title = node.querySelector('title')?.textContent || 'No title';
           let link = node.querySelector('link')?.textContent || '';
           if (!link) link = node.querySelector('link')?.getAttribute('href') || '#';
-          return { title, link.trim() };
+          return { title, link: link.trim() };
         });
 
         if (isMounted) {
