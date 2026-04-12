@@ -28,14 +28,12 @@ interface SearchState {
   enableAnimations: boolean;
   pageTransitionType: 'standard' | 'fade' | 'none';
   page: number;
-
   resultsPerPage: 10 | 20 | 50;
   defaultSearchType: DefaultSearchType;
   safeSearch: SafeSearchLevel;
   cacheTtl: 0 | 5 | 30 | 60;
   searchRegion: string;
   searchLang: string;
-
   expImageSearch: boolean;
   expLenis: boolean;
   expUnlocked: boolean;
@@ -69,7 +67,6 @@ interface SearchState {
   expPrivateMode: boolean;
   expEncryptedStorage: boolean;
   expColorBlindMode: boolean;
-  
   expSpringCard: boolean;
   expBottomSheet: boolean;
   expPeekAndPop: boolean;
@@ -97,10 +94,8 @@ interface SearchState {
   expNewsMarkdown: boolean;
   markdownApiEndpoint: string;
   markdownApiMethod: 'POST' | 'GET';
-
   searchServerMode: 'default' | 'custom';
   customSearchServer: string;
-
   expMicroSparks: boolean;
   expCommandPalette: boolean;
   expVoiceWaveform: boolean;
@@ -117,23 +112,15 @@ interface SearchState {
   expMarkerHighlight: boolean;
   expFlipImageZoom: boolean;
   expKineticTypography: boolean;
-
   exp3dTouch: boolean;
   expNativeScrollBounce: boolean;
   expNativePageTransition: boolean;
   expNativeHapticFeedback: boolean;
   expNativeContextMenu: boolean;
   expNativePullToRefresh: boolean;
-
   lastResultCount: number;
-
   hasCompletedSetup: boolean;
   notifications: { id: string; title: string; message: string; date: number; read: boolean; type: 'update' | 'rss' }[];
-  setHasCompletedSetup: (v: boolean) => void;
-  addNotification: (n: { title: string; message: string; type: 'update' | 'rss' }) => void;
-  markNotificationRead: (id: string) => void;
-  clearNotifications: () => void;
-
   activeHomeCards: string[];
   widgetSizes: Record<string, 'small' | 'medium' | 'large'>;
   thirdPartyWidgets: { id: string, name: string, code: string }[];
@@ -142,7 +129,22 @@ interface SearchState {
   searchLaterList: { id: string, q: string, time: number }[];
   geminiApiKey: string;
   geminiFactCheckApiKey: string;
+  syncGroupId: string;
+  syncServerMode: 'default' | 'custom';
+  syncServerUrl: string;
+  enableSync: boolean;
+  deviceId: string;
+  deviceName: string;
+  deviceRole: DeviceRole;
+  connectedDevices: { id: string, name: string, lastSeen: number, role?: DeviceRole }[];
+  activeVideo: ResultMeta | null;
+  isVideoMinimized: boolean;
+  videoPosition: { x: number; y: number };
+  
+  // 履歴同期用のトリガー
+  historyVersion: number;
 
+  // Actions
   setQuery: (q: string) => void;
   setType: (t: SearchType) => void;
   setSelectedItem: (item: ResultDetail | null) => void;
@@ -191,7 +193,6 @@ interface SearchState {
   setExpPrivateMode: (v: boolean) => void;
   setExpEncryptedStorage: (v: boolean) => void;
   setExpColorBlindMode: (v: boolean) => void;
-
   setExpSpringCard: (v: boolean) => void;
   setExpBottomSheet: (v: boolean) => void;
   setExpPeekAndPop: (v: boolean) => void;
@@ -215,16 +216,17 @@ interface SearchState {
   setExpProgressiveRender: (v: boolean) => void;
   setExpFlipImageZoom: (v: boolean) => void;
   setExpKineticTypography: (v: boolean) => void;
-
   setExp3dTouch: (v: boolean) => void;
   setExpNativeScrollBounce: (v: boolean) => void;
   setExpNativePageTransition: (v: boolean) => void;
   setExpNativeHapticFeedback: (v: boolean) => void;
   setExpNativeContextMenu: (v: boolean) => void;
   setExpNativePullToRefresh: (v: boolean) => void;
-
   setLastResultCount: (n: number) => void;
-
+  setHasCompletedSetup: (v: boolean) => void;
+  addNotification: (n: { title: string; message: string; type: 'update' | 'rss' }) => void;
+  markNotificationRead: (id: string) => void;
+  clearNotifications: () => void;
   setActiveHomeCards: (cards: string[]) => void;
   setWidgetSizes: (sizes: Record<string, 'small' | 'medium' | 'large'>) => void;
   setThirdPartyWidgets: (widgets: { id: string, name: string, code: string }[]) => void;
@@ -234,41 +236,25 @@ interface SearchState {
   removeSearchLater: (id: string) => void;
   setGeminiApiKey: (key: string) => void;
   setGeminiFactCheckApiKey: (key: string) => void;
-
   setExpUseInvidious: (v: boolean) => void;
   setInvidiousInstance: (v: string) => void;
   setCustomInvidiousUrl: (v: string) => void;
   setExpNewsMarkdown: (v: boolean) => void;
   setMarkdownApiEndpoint: (v: string) => void;
   setMarkdownApiMethod: (v: 'POST' | 'GET') => void;
-
   setSearchServerMode: (mode: 'default' | 'custom') => void;
   setCustomSearchServer: (server: string) => void;
-
-  activeVideo: ResultMeta | null;
-  isVideoMinimized: boolean;
-  videoPosition: { x: number; y: number };
   setActiveVideo: (v: ResultMeta | null) => void;
   setVideoMinimized: (v: boolean) => void;
   setVideoPosition: (pos: { x: number; y: number }) => void;
-
   performSearch: (q: string, type: SearchType, page?: number) => Promise<void>;
   resetSearch: () => void;
-
   resetAllData: () => void;
   exportData: () => string;
   importData: (json: string) => boolean;
   triggerFullSync: () => void;
   regenerateDeviceId: () => void;
-
-  syncGroupId: string;
-  syncServerMode: 'default' | 'custom';
-  syncServerUrl: string;
-  enableSync: boolean;
-  deviceId: string;
-  deviceName: string;
-  deviceRole: DeviceRole;
-  connectedDevices: { id: string, name: string, lastSeen: number, role?: DeviceRole }[];
+  notifyHistoryChange: () => void;
   setSyncGroupId: (id: string) => void;
   setSyncServerMode: (mode: 'default' | 'custom') => void;
   setSyncServerUrl: (url: string) => void;
@@ -282,122 +268,18 @@ const searchCache = new Map<string, { results: ResultMeta[], pager: Pager }>();
 const STORAGE_KEY = 'wholphin_settings';
 
 const getInitialState = () => ({
-  language: 'ja',
-  themeMode: 'system',
-  saveHistory: true,
-  enableAnimations: true,
-  pageTransitionType: 'standard',
-  resultsPerPage: 20,
-  defaultSearchType: 'web',
-  safeSearch: 'moderate',
-  cacheTtl: 5,
-  searchRegion: 'JP',
-  searchLang: 'ja',
-  expImageSearch: false,
-  expLenis: false,
-  expUnlocked: false,
-  expAiSummary: false,
-  expKnowledgePanel: false,
-  expGeminiFactCheck: false,
-  expMergedAiPanel: false,
-  expHomeCards: false,
-  expCustomAccentColor: false,
-  accentColor: '',
-  expCustomFontSize: false,
-  fontSizeBase: 17,
-  expAiHistorySummary: false,
-  expLongPressMenu: false,
-  expWeatherCard: false,
-  expSettingsExportImport: false,
-  expScrollHeader: false,
-  expLongPressRelated: false,
-  expScreenshotShare: false,
-  expHistoryExport: false,
-  expHistoryHeatmap: false,
-  expFocusMode: false,
-  expContextMemory: false,
-  expQueryExpansion: false,
-  expSwipeActions: false,
-  expViewDensity: false,
-  viewDensity: 'comfortable',
-  expSearchLater: false,
-  expWikiQuickJump: false,
-  expMiniBrowser: false,
-  expPrivateMode: false,
-  expEncryptedStorage: false,
-  expColorBlindMode: false,
-  expSpringCard: false,
-  expBottomSheet: false,
-  expPeekAndPop: false,
-  expLiquidTabBar: false,
-  expBreadcrumbsNav: false,
-  expSwipeBack: false,
-  expMorphingSearch: false,
-  expFocusBlur: false,
-  expTypingIndicator: false,
-  expPersonalizedSkeleton: false,
-  expHoverElevation: false,
-  expReadProgress: false,
-  expCopyToast: false,
-  expErrorShake: false,
-  expEnhancedRipple: false,
-  expDynamicGradient: false,
-  expFrostGlass: false,
-  expJustifyText: false,
-  expEnhancedAnimations: false,
-  expLowEndMode: false,
-  expProgressiveRender: true,
-  expUseInvidious: false,
-  invidiousInstance: 'https://inv.nadeko.net/',
-  customInvidiousUrl: '',
-  expNewsMarkdown: false,
-  markdownApiEndpoint: 'http://localhost:8000/convert',
-  markdownApiMethod: 'POST',
-  searchServerMode: 'default',
-  customSearchServer: 'https://api.wholphin.net',
-  expMicroSparks: false,
-  expCommandPalette: false,
-  expVoiceWaveform: false,
-  expHideNavOnScroll: false,
-  expBionicReading: false,
-  expReadingTimeBadge: false,
-  expLiquidPtr: false,
-  expGyroParallax: false,
-  expSwipeMultiSelect: false,
-  expSonicUi: false,
-  expThumbFab: false,
-  expCursorHalo: false,
-  expChameleonTheme: false,
-  expMarkerHighlight: false,
-  expFlipImageZoom: false,
-  expKineticTypography: false,
-  exp3dTouch: false,
-  expNativeScrollBounce: false,
-  expNativePageTransition: false,
-  expNativeHapticFeedback: false,
-  expNativeContextMenu: false,
-  expNativePullToRefresh: false,
-  lastResultCount: 10,
-  hasCompletedSetup: false,
-  notifications: [
-    { id: 'welcome', title: 'Wholphinへようこそ', message: '最新の検索体験をお楽しみください。', date: Date.now(), read: false, type: 'update' }
-  ],
-  activeHomeCards: ['weather', 'trending', 'features'],
-  widgetSizes: {},
-  thirdPartyWidgets: [],
-  rssFeeds: ['https://news.yahoo.co.jp/rss/topics/it.xml'],
-  worldClocks: ['America/New_York', 'Europe/London', 'Asia/Tokyo'],
-  searchLaterList: [],
-  geminiApiKey: '',
-  geminiFactCheckApiKey: '',
-  syncGroupId: '',
-  syncServerMode: 'default',
-  syncServerUrl: 'wss://turn.wholphin.net/ws',
-  enableSync: false,
-  deviceId: Math.random().toString(36).substring(2, 15),
-  deviceName: '',
-  deviceRole: 'owner' as DeviceRole,
-  connectedDevices: [],
+  language: 'ja', themeMode: 'system', saveHistory: true, enableAnimations: true, pageTransitionType: 'standard', resultsPerPage: 20, defaultSearchType: 'web', safeSearch: 'moderate', cacheTtl: 5, searchRegion: 'JP', searchLang: 'ja',
+  expImageSearch: false, expLenis: false, expUnlocked: false, expAiSummary: false, expKnowledgePanel: false, expGeminiFactCheck: false, expMergedAiPanel: false, expHomeCards: false, expCustomAccentColor: false, accentColor: '', expCustomFontSize: false, fontSizeBase: 17, expAiHistorySummary: false, expLongPressMenu: false, expWeatherCard: false, expSettingsExportImport: false, expScrollHeader: false, expLongPressRelated: false, expScreenshotShare: false, expHistoryExport: false, expHistoryHeatmap: false, expFocusMode: false, expContextMemory: false, expQueryExpansion: false, expSwipeActions: false, expViewDensity: false, viewDensity: 'comfortable', expSearchLater: false, expWikiQuickJump: false, expMiniBrowser: false, expPrivateMode: false, expEncryptedStorage: false, expColorBlindMode: false,
+  expSpringCard: false, expBottomSheet: false, expPeekAndPop: false, expLiquidTabBar: false, expBreadcrumbsNav: false, expSwipeBack: false, expMorphingSearch: false, expFocusBlur: false, expTypingIndicator: false, expPersonalizedSkeleton: false, expHoverElevation: false, expReadProgress: false, expCopyToast: false, expErrorShake: false, expEnhancedRipple: false, expDynamicGradient: false, expFrostGlass: false, expJustifyText: false, expEnhancedAnimations: false, expLowEndMode: false, expProgressiveRender: true, expUseInvidious: false, invidiousInstance: 'https://inv.nadeko.net/', customInvidiousUrl: '', expNewsMarkdown: false, markdownApiEndpoint: 'http://localhost:8000/convert', markdownApiMethod: 'POST',
+  searchServerMode: 'default', customSearchServer: 'https://api.wholphin.net',
+  expMicroSparks: false, expCommandPalette: false, expVoiceWaveform: false, expHideNavOnScroll: false, expBionicReading: false, expReadingTimeBadge: false, expLiquidPtr: false, expGyroParallax: false, expSwipeMultiSelect: false, expSonicUi: false, expThumbFab: false, expCursorHalo: false, expChameleonTheme: false, expMarkerHighlight: false, expFlipImageZoom: false, expKineticTypography: false,
+  exp3dTouch: false, expNativeScrollBounce: false, expNativePageTransition: false, expNativeHapticFeedback: false, expNativeContextMenu: false, expNativePullToRefresh: false,
+  lastResultCount: 10, hasCompletedSetup: false, notifications: [{ id: 'welcome', title: 'Wholphinへようこそ', message: '最新の検索体験をお楽しみください。', date: Date.now(), read: false, type: 'update' }],
+  activeHomeCards: ['weather', 'trending', 'features'], widgetSizes: {}, thirdPartyWidgets: [], rssFeeds: ['https://news.yahoo.co.jp/rss/topics/it.xml'], worldClocks: ['America/New_York', 'Europe/London', 'Asia/Tokyo'], searchLaterList: [], geminiApiKey: '', geminiFactCheckApiKey: '',
+  syncGroupId: '', syncServerMode: 'default', syncServerUrl: 'wss://turn.wholphin.net/ws', enableSync: false,
+  deviceId: Math.random().toString(36).substring(2, 15), deviceName: '', deviceRole: 'owner' as DeviceRole, connectedDevices: [],
+  activeVideo: null, isVideoMinimized: false, videoPosition: { x: 0, y: 0 },
+  historyVersion: 0,
 });
 
 const getSavedSettings = () => {
@@ -407,40 +289,28 @@ const getSavedSettings = () => {
   } catch { return {}; }
 };
 
-let settingsCache: Record<string, any> = getSavedSettings();
-let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+let settingsCache: any = getSavedSettings();
+let saveTimeout: any = null;
 
 const saveSetting = (key: string, value: any) => {
-  if (settingsCache.expPrivateMode) {
-     if (key !== 'expPrivateMode') return;
-  }
+  if (settingsCache.expPrivateMode && key !== 'expPrivateMode') return;
   settingsCache[key] = value;
   if (saveTimeout) clearTimeout(saveTimeout);
   saveTimeout = setTimeout(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settingsCache));
-    } catch (e) { console.error('Failed to save settings', e); }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settingsCache)); } catch (e) { console.error('Failed to save settings', e); }
   }, 1000); 
 };
 
 const saved = settingsCache;
-const initialState = getInitialState();
+const initialState: any = getInitialState();
 
 export const useSearchStore = create<SearchState>((set, get) => ({
-  query: '',
-  type: 'web',
-  results: [],
-  isLoading: false,
-  isInitialLoading: false,
-  error: null,
-  pager: null,
-  selectedItem: null,
+  ...initialState,
   language: saved.language || initialState.language,
   themeMode: saved.themeMode || initialState.themeMode,
   saveHistory: saved.saveHistory !== undefined ? saved.saveHistory : initialState.saveHistory,
   enableAnimations: saved.enableAnimations !== undefined ? saved.enableAnimations : initialState.enableAnimations,
   pageTransitionType: saved.pageTransitionType || initialState.pageTransitionType,
-  page: 1,
   resultsPerPage: saved.resultsPerPage || initialState.resultsPerPage,
   defaultSearchType: saved.defaultSearchType || initialState.defaultSearchType,
   safeSearch: saved.safeSearch || initialState.safeSearch,
@@ -549,15 +419,8 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   deviceId: saved.deviceId || initialState.deviceId,
   deviceName: saved.deviceName || initialState.deviceName,
   deviceRole: saved.deviceRole || initialState.deviceRole,
-  connectedDevices: [],
 
-  activeVideo: null,
-  isVideoMinimized: false,
-  videoPosition: { x: 0, y: 0 },
-  setActiveVideo: (v) => set({ activeVideo: v }),
-  setVideoMinimized: (v) => set({ isVideoMinimized: v }),
-  setVideoPosition: (pos) => set({ videoPosition: pos }),
-
+  // Actions
   setQuery: (q) => set({ query: q }),
   setType: (t) => { set({ type: t, results: [], isInitialLoading: true, error: null }); saveSetting('type', t); },
   setSelectedItem: (item) => set({ selectedItem: item }),
@@ -637,152 +500,60 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   setExpNativePullToRefresh: (v) => { set({ expNativePullToRefresh: v }); saveSetting('expNativePullToRefresh', v); },
   setLastResultCount: (n) => { set({ lastResultCount: n }); saveSetting('lastResultCount', n); },
   setHasCompletedSetup: (v) => { set({ hasCompletedSetup: v }); saveSetting('hasCompletedSetup', v); },
-  addNotification: (n) => {
-    const notifications = [{ id: Math.random().toString(36).substring(7), ...n, date: Date.now(), read: false }, ...get().notifications];
-    set({ notifications });
-    saveSetting('notifications', notifications);
-  },
-  markNotificationRead: (id) => {
-    const notifications = get().notifications.map(n => n.id === id ? { ...n, read: true } : n);
-    set({ notifications });
-    saveSetting('notifications', notifications);
-  },
+  addNotification: (n) => { const notifications = [{ id: Math.random().toString(36).substring(7), ...n, date: Date.now(), read: false }, ...get().notifications]; set({ notifications }); saveSetting('notifications', notifications); },
+  markNotificationRead: (id) => { const notifications = get().notifications.map(n => n.id === id ? { ...n, read: true } : n); set({ notifications }); saveSetting('notifications', notifications); },
   clearNotifications: () => { set({ notifications: [] }); saveSetting('notifications', []); },
   setActiveHomeCards: (v) => { set({ activeHomeCards: v }); saveSetting('activeHomeCards', v); },
   setWidgetSizes: (v) => { set({ widgetSizes: v }); saveSetting('widgetSizes', v); },
   setThirdPartyWidgets: (v) => { set({ thirdPartyWidgets: v }); saveSetting('thirdPartyWidgets', v); },
   setRssFeeds: (v) => { set({ rssFeeds: v }); saveSetting('rssFeeds', v); },
+  setWorldClocks: (v) => { set({ worldClocks: v }); saveSetting('worldClocks', v); },
+  addSearchLater: (q) => { const list = [...get().searchLaterList, { id: Math.random().toString(), q, time: Date.now() }]; set({ searchLaterList: list }); saveSetting('searchLaterList', list); },
+  removeSearchLater: (id) => { const list = get().searchLaterList.filter((x) => x.id !== id); set({ searchLaterList: list }); saveSetting('searchLaterList', list); },
+  setGeminiApiKey: (key) => { set({ geminiApiKey: key }); saveSetting('geminiApiKey', key); },
+  setGeminiFactCheckApiKey: (key) => { set({ geminiFactCheckApiKey: key }); saveSetting('geminiFactCheckApiKey', key); },
   setExpUseInvidious: (v) => { set({ expUseInvidious: v }); saveSetting('expUseInvidious', v); },
   setInvidiousInstance: (v) => { set({ invidiousInstance: v }); saveSetting('invidiousInstance', v); },
   setCustomInvidiousUrl: (v) => { set({ customInvidiousUrl: v }); saveSetting('customInvidiousUrl', v); },
   setExpNewsMarkdown: (v) => { set({ expNewsMarkdown: v }); saveSetting('expNewsMarkdown', v); },
   setMarkdownApiEndpoint: (v) => { set({ markdownApiEndpoint: v }); saveSetting('markdownApiEndpoint', v); },
   setMarkdownApiMethod: (v) => { set({ markdownApiMethod: v }); saveSetting('markdownApiMethod', v); },
-  setSearchServerMode: (mode) => {
-    set({ searchServerMode: mode });
-    saveSetting('searchServerMode', mode);
-    const { customSearchServer } = get();
-    const url = mode === 'default' ? 'https://api.wholphin.net' : customSearchServer;
-    import('@yunfie/search-js').then(m => m.init({ API_BASE: url, TIMEOUT: 20000 }));
-  },
-  setCustomSearchServer: (server) => {
-    set({ customSearchServer: server });
-    saveSetting('customSearchServer', server);
-    if (get().searchServerMode === 'custom') {
-      import('@yunfie/search-js').then(m => m.init({ API_BASE: server, TIMEOUT: 20000 }));
-    }
-  },
-  setWorldClocks: (v) => { set({ worldClocks: v }); saveSetting('worldClocks', v); },
-  addSearchLater: (q) => {
-    const list = [...get().searchLaterList, { id: Math.random().toString(), q, time: Date.now() }];
-    set({ searchLaterList: list });
-    saveSetting('searchLaterList', list);
-  },
-  removeSearchLater: (id) => {
-    const list = get().searchLaterList.filter((x) => x.id !== id);
-    set({ searchLaterList: list });
-    saveSetting('searchLaterList', list);
-  },
-  setGeminiApiKey: (key) => { set({ geminiApiKey: key }); saveSetting('geminiApiKey', key); },
-  setGeminiFactCheckApiKey: (key) => { set({ geminiFactCheckApiKey: key }); saveSetting('geminiFactCheckApiKey', key); },
-
-  performSearch: async (q, type, pageNum = 1) => {
-    if (!q) return;
-    const { resultsPerPage, searchLang } = get();
-    const cacheKey = `${q}:${type}:${searchLang}:${resultsPerPage}:${pageNum}`;
-    const cached = searchCache.get(cacheKey);
-    if (cached) {
-      set({ query: q, type, page: pageNum, results: cached.results, pager: cached.pager, isInitialLoading: false, error: null });
-      return;
-    }
-    const searchId = Math.random().toString(36).substring(7);
-    (window as any)._lastSearchId = searchId;
-    set({ query: q, type, page: pageNum, isInitialLoading: true, results: [], error: null });
-    try {
-      const pager = createPager({ q, type, lang: searchLang }, resultsPerPage);
-      set({ pager });
-      let result = null;
-      for (let i = 0; i < pageNum; i++) { result = await pager.next(); }
-      if ((window as any)._lastSearchId !== searchId) return;
-      const data = result?.data as any;
-      const items = Array.isArray(data) ? data : (data?.results || []);
-      if (result && result.ok && items.length > 0) {
-        set({ results: items, isInitialLoading: false });
-        searchCache.set(cacheKey, { results: items, pager: pager });
-        if (searchCache.size > 20) {
-          const firstKey = searchCache.keys().next().value;
-          if (firstKey !== undefined) searchCache.delete(firstKey);
-        }
-      } else { set({ results: [], error: result?.error || 'Search failed', isInitialLoading: false }); }
-    } catch (e) {
-      if ((window as any)._lastSearchId !== searchId) return;
-      set({ results: [], error: 'An unexpected error occurred', isInitialLoading: false });
-    }
-  },
+  setSearchServerMode: (mode) => { set({ searchServerMode: mode }); saveSetting('searchServerMode', mode); const { customSearchServer } = get(); const url = mode === 'default' ? 'https://api.wholphin.net' : customSearchServer; import('@yunfie/search-js').then(m => m.init({ API_BASE: url, TIMEOUT: 20000 })); },
+  setCustomSearchServer: (server) => { set({ customSearchServer: server }); saveSetting('customSearchServer', server); if (get().searchServerMode === 'custom') { import('@yunfie/search-js').then(m => m.init({ API_BASE: server, TIMEOUT: 20000 })); } },
+  setActiveVideo: (v) => set({ activeVideo: v }),
+  setVideoMinimized: (v) => set({ isVideoMinimized: v }),
+  setVideoPosition: (pos) => set({ videoPosition: pos }),
+  performSearch: async (q, type, pageNum = 1) => { if (!q) return; const { resultsPerPage, searchLang } = get(); const cacheKey = `${q}:${type}:${searchLang}:${resultsPerPage}:${pageNum}`; const cached = searchCache.get(cacheKey); if (cached) { set({ query: q, type, page: pageNum, results: cached.results, pager: cached.pager, isInitialLoading: false, error: null }); return; } const searchId = Math.random().toString(36).substring(7); (window as any)._lastSearchId = searchId; set({ query: q, type, page: pageNum, isInitialLoading: true, results: [], error: null }); try { const pager = createPager({ q, type, lang: searchLang }, resultsPerPage); set({ pager }); let result = null; for (let i = 0; i < pageNum; i++) { result = await pager.next(); } if ((window as any)._lastSearchId !== searchId) return; const data = result?.data as any; const items = Array.isArray(data) ? data : (data?.results || []); if (result && result.ok && items.length > 0) { set({ results: items, isInitialLoading: false }); searchCache.set(cacheKey, { results: items, pager: pager }); if (searchCache.size > 20) { const firstKey = searchCache.keys().next().value; if (firstKey !== undefined) searchCache.delete(firstKey); } } else { set({ results: [], error: result?.error || 'Search failed', isInitialLoading: false }); } } catch (e) { if ((window as any)._lastSearchId !== searchId) return; set({ results: [], error: 'An unexpected error occurred', isInitialLoading: false }); } },
   resetSearch: () => { set({ results: [], pager: null, error: null, isInitialLoading: false, isLoading: false }); },
-
-  resetAllData: () => {
-    localStorage.removeItem(STORAGE_KEY);
-    clearHistory();
-    const state = getInitialState();
-    set({ 
-      ...state, 
-      triggerFullSync: get().triggerFullSync,
-      regenerateDeviceId: get().regenerateDeviceId
-    } as any);
-  },
-  exportData: () => {
-    const history = getHistory();
-    // ゲストの場合は設定を含めず履歴のみにする
-    if (get().deviceRole === 'guest') {
-      return JSON.stringify({ history, deviceId: get().deviceId, deviceName: get().deviceName, role: 'guest' });
-    }
-    return JSON.stringify({ ...settingsCache, history, role: 'owner' });
-  },
+  resetAllData: () => { localStorage.removeItem(STORAGE_KEY); clearHistory(); const state = getInitialState(); set({ ...state, triggerFullSync: get().triggerFullSync, regenerateDeviceId: get().regenerateDeviceId, notifyHistoryChange: get().notifyHistoryChange } as any); },
+  exportData: () => { const history = getHistory(); if (get().deviceRole === 'guest') { return JSON.stringify({ history, deviceId: get().deviceId, deviceName: get().deviceName, role: 'guest' }); } return JSON.stringify({ ...settingsCache, history, role: 'owner' }); },
   importData: (json: string) => {
     try {
       const data = JSON.parse(json);
       if (typeof data !== 'object' || data === null) return false;
-      
-      const { history, deviceId, deviceName, connectedDevices, role, ...settings } = data;
-      
-      // 自分がゲストなら履歴だけ反映し、設定は無視する
+      const { history, deviceId, deviceName, connectedDevices, role, hasCompletedSetup, enableSync, ...settings } = data;
       if (get().deviceRole === 'guest') {
-        if (Array.isArray(history)) localStorage.setItem('wholphin_history', JSON.stringify(history));
+        if (Array.isArray(history)) {
+          localStorage.setItem('wholphin_history', JSON.stringify(history));
+          get().notifyHistoryChange();
+        }
         return true;
       }
-
-      // 自分がオーナーなら設定も履歴も反映する
-      settingsCache = { ...initialState, ...settings, deviceId: get().deviceId, deviceName: get().deviceName, deviceRole: get().deviceRole };
+      const updated = { ...initialState, ...settings, deviceId: get().deviceId, deviceName: get().deviceName, deviceRole: get().deviceRole, connectedDevices: get().connectedDevices, hasCompletedSetup: get().hasCompletedSetup, enableSync: get().enableSync };
+      settingsCache = updated;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settingsCache));
-      set(settingsCache as any);
-      
+      set(updated as any);
       if (Array.isArray(history)) {
         localStorage.setItem('wholphin_history', JSON.stringify(history));
+        get().notifyHistoryChange();
       }
-      
       return true;
     } catch (e) { return false; }
   },
-
-  triggerFullSync: () => {
-    const syncUtils = (window as any)._syncUtils;
-    if (syncUtils && syncUtils.broadcastSync && syncUtils.exportData) {
-      syncUtils.broadcastSync(JSON.parse(syncUtils.exportData()));
-    }
-  },
-
-  regenerateDeviceId: () => {
-    const newId = Math.random().toString(36).substring(2, 15);
-    set({ deviceId: newId });
-    saveSetting('deviceId', newId);
-  },
-
-  setSyncGroupId: (id) => { 
-    const finalId = id || Math.random().toString(36).substring(2, 10).toUpperCase();
-    set({ syncGroupId: finalId }); 
-    saveSetting('syncGroupId', finalId); 
-  },
+  triggerFullSync: () => { const syncUtils = (window as any)._syncUtils; if (syncUtils && syncUtils.broadcastSync && syncUtils.exportData) { syncUtils.broadcastSync(JSON.parse(syncUtils.exportData())); } },
+  regenerateDeviceId: () => { const newId = Math.random().toString(36).substring(2, 15); set({ deviceId: newId }); saveSetting('deviceId', newId); },
+  notifyHistoryChange: () => set((state) => ({ historyVersion: state.historyVersion + 1 })),
+  setSyncGroupId: (id) => { const finalId = id || Math.random().toString(36).substring(2, 10).toUpperCase(); set({ syncGroupId: finalId }); saveSetting('syncGroupId', finalId); },
   setSyncServerUrl: (url) => { set({ syncServerUrl: url }); saveSetting('syncServerUrl', url); },
   setSyncServerMode: (mode) => { set({ syncServerMode: mode }); saveSetting('syncServerMode', mode); },
   setEnableSync: (v) => { set({ enableSync: v }); saveSetting('enableSync', v); },

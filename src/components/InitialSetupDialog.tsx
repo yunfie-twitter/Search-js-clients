@@ -22,6 +22,7 @@ import {
 import { useSearchStore } from '../store/useSearchStore';
 import { useShallow } from 'zustand/react/shallow';
 import { triggerHaptic } from '../utils/haptics';
+import translations from '../translations';
 import jsQR from 'jsqr';
 
 const slideUp = keyframes`
@@ -52,7 +53,7 @@ const InitialSetupDialog: React.FC<Props> = ({ open, onClose }) => {
     expFrostGlass, setExpFrostGlass,
     expScrollHeader, setExpScrollHeader,
     resultsPerPage, setResultsPerPage,
-    importData
+    importData, setSyncGroupId, setSyncServerUrl, setEnableSync
   } = useSearchStore(useShallow(s => ({
     language: s.language,
     setLanguage: s.setLanguage,
@@ -71,8 +72,13 @@ const InitialSetupDialog: React.FC<Props> = ({ open, onClose }) => {
     setExpScrollHeader: s.setExpScrollHeader,
     resultsPerPage: s.resultsPerPage,
     setResultsPerPage: s.setResultsPerPage,
-    importData: s.importData
+    importData: s.importData,
+    setSyncGroupId: s.setSyncGroupId,
+    setSyncServerUrl: s.setSyncServerUrl,
+    setEnableSync: s.setEnableSync
   })));
+
+  const t: any = (translations as any)[language];
 
   const premiumButtonStyle = {
     borderRadius: '12px',
@@ -115,9 +121,7 @@ const InitialSetupDialog: React.FC<Props> = ({ open, onClose }) => {
         if (importData(json)) {
           triggerHaptic();
           window.location.reload();
-        } else {
-          alert('Invalid file');
-        }
+        } else { alert('Invalid file'); }
       } catch (err) { alert('Invalid file'); }
     };
     reader.readAsText(file);
@@ -145,24 +149,46 @@ const InitialSetupDialog: React.FC<Props> = ({ open, onClose }) => {
     if (videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
       const canvas = canvasRef.current;
       const video = videoRef.current;
-      canvas.height = video.videoHeight;
-      canvas.width = video.videoWidth;
+      const scale = 0.5;
+      canvas.width = video.videoWidth * scale;
+      canvas.height = video.videoHeight * scale;
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (ctx) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
         if (code) {
-          if (importData(code.data)) {
-            triggerHaptic();
-            stopScan();
-            window.location.reload();
-            return;
-          }
+          if (handleScannedResult(code.data)) return;
         }
       }
     }
     requestAnimationFrame(scanFrame);
+  };
+
+  const handleScannedResult = (data: string): boolean => {
+    // 1. 同期ペアリングQRのチェック
+    try {
+      const syncObj = JSON.parse(data);
+      if (syncObj.id && syncObj.srv) {
+        setSyncGroupId(syncObj.id);
+        setSyncServerUrl(syncObj.srv);
+        setEnableSync(true);
+        setHasCompletedSetup(true);
+        triggerHaptic();
+        stopScan();
+        window.location.reload();
+        return true;
+      }
+    } catch (e) { /* ignore */ }
+
+    // 2. フルバックアップQRのチェック
+    if (importData(data)) {
+      triggerHaptic();
+      stopScan();
+      window.location.reload();
+      return true;
+    }
+    return false;
   };
 
   const stopScan = () => {
@@ -230,7 +256,7 @@ const InitialSetupDialog: React.FC<Props> = ({ open, onClose }) => {
         <Stack spacing={1.5} sx={{ mt: 1 }}>
           {(hasExportFile === null || hasExportFile === 'no') ? (
             <Stack spacing={1}>
-              <Button fullWidth variant="outlined" onClick={() => { triggerHaptic(); setHasExportFile('yes'); }} sx={{ ...premiumButtonStyle, py: 1.4, border: '2px solid', fontWeight: 700 }}>ファイルを持っている</Button>
+              <Button fullWidth variant="outlined" onClick={() => { triggerHaptic(); setHasExportFile('yes'); }} sx={{ ...premiumButtonStyle, py: 1.4, border: '2px solid', fontWeight: 700 }}>ファイルを選択</Button>
               <Button fullWidth variant="outlined" onClick={handleStartScan} startIcon={<ScanIcon />} sx={{ ...premiumButtonStyle, py: 1.4, border: '2px solid', fontWeight: 700 }}>QRコードで引き継ぐ</Button>
               <Button fullWidth variant="text" onClick={() => { triggerHaptic(); setActiveStep(4); }} sx={{ mt: 1, fontWeight: 600, color: 'text.secondary' }}>最初から設定する</Button>
             </Stack>
